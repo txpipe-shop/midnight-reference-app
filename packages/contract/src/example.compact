@@ -1,0 +1,20 @@
+pragma language_version 0.20;
+
+import CompactStandardLibrary;
+
+export ledger counter: Counter;
+
+constructor() {
+  counter.increment(1);
+}
+
+export circuit returnTrue(): Boolean {
+  counter.increment(1);
+  return true;
+}
+
+export circuit publicKey(sk: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<2, Bytes<32>>>([pad(32, "example:pk:"), sk]);
+}
+
+witness foo(x: Boolean): Boolean;
