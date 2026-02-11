@@ -8,3 +8,5 @@ managed/
 .turbo/
 
 tsconfig.tsbuildinfo
+
+logs/

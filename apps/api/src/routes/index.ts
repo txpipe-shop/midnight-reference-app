@@ -1,9 +1,9 @@
-import express from 'express';
-import { deploy } from './deploy';
-import { getTrue } from './get-true';
+import { Router } from 'express';
+import { deploy } from './deploy.js';
+import { getTrue } from './get-true.js';
 
 // TODO: Improve (add) error handling
-const router = express.Router();
+const router: Router = Router();
 
 router.post('/deploy', async (req, res) => {
   try {

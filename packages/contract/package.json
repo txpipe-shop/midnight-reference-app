@@ -1,5 +1,6 @@
 {
   "name": "@midnight-reference-app/contract",
+  "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "browser": "dist/index.js",
@@ -18,7 +19,10 @@
   },
   "dependencies": {
     "@midnight-ntwrk/compact-js": "^2.4.0",
-    "@midnight-ntwrk/compact-runtime": "^0.14.0"
+    "@midnight-ntwrk/compact-runtime": "^0.14.0",
+    "@midnight-ntwrk/midnight-js-contracts": "^3.0.0",
+    "@midnight-ntwrk/midnight-js-types": "^3.0.0",
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
