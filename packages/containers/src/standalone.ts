@@ -1,20 +1,22 @@
 import { Wait, WaitStrategy } from "testcontainers";
 
 class DelayedWaitStrategy {
+  name: string;
   delayMs;
   delegate;
   startupTimeoutMs = 60_000;
   startupTimeoutSet = false;
-  constructor(delayMs: number, delegate: WaitStrategy) {
+  constructor(name: string, delayMs: number, delegate: WaitStrategy) {
+    this.name = name;
     this.delayMs = delayMs;
     this.delegate = delegate;
   }
   async waitUntilReady(...args: Parameters<WaitStrategy['waitUntilReady']>) {
-    console.log(`[DelayedWaitStrategy] Starting ${this.delayMs}ms delay before health check...`);
+    console.log(`[DelayedWaitStrategy] (${this.name}) Starting ${this.delayMs}ms delay before health check...`);
     await new Promise((resolve) => setTimeout(resolve, this.delayMs));
-    console.log(`[DelayedWaitStrategy] Delay complete, now checking health...`);
+    console.log(`[DelayedWaitStrategy] (${this.name}) Delay complete, now checking health...`);
     await this.delegate.waitUntilReady(...args);
-    console.log(`[DelayedWaitStrategy] Health check passed`);
+    console.log(`[DelayedWaitStrategy] (${this.name}) Health check passed`);
   }
   withStartupTimeout(startupTimeoutMs: number) {
     this.startupTimeoutMs = startupTimeoutMs;
@@ -31,8 +33,8 @@ class DelayedWaitStrategy {
 }
 
 const WaitStrategies = {
-  forDelayedStrategy(delayMs: number, delegate: WaitStrategy) {
-    return new DelayedWaitStrategy(delayMs, delegate);
+  forDelayedStrategy(name: string, delayMs: number, delegate: WaitStrategy) {
+    return new DelayedWaitStrategy(name, delayMs, delegate);
   }
 };
 
@@ -48,12 +50,12 @@ export const standaloneConfig = (currentWorkingDir: string, fileName: string) =>
     node: {
       name: 'node',
       port: 9944,
-      waitStrategy: WaitStrategies.forDelayedStrategy(20_000, Wait.forHealthCheck())
+      waitStrategy: WaitStrategies.forDelayedStrategy("node", 20_000, Wait.forHealthCheck())
     },
     indexer: {
       name: 'indexer',
       port: 8088,
-      waitStrategy: Wait.forListeningPorts()
+      waitStrategy: WaitStrategies.forDelayedStrategy("indexer", 20_000, Wait.forHealthCheck())
     }
   }
 })

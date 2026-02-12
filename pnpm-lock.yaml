@@ -63,57 +63,6 @@ importers:
 
   apps/cli:
     dependencies:
-      '@midnight-ntwrk/ledger-v7':
-        specifier: 7.0.1
-        version: 7.0.1
-      '@midnight-ntwrk/midnight-js-http-client-proof-provider':
-        specifier: 3.1.0
-        version: 3.1.0
-      '@midnight-ntwrk/midnight-js-indexer-public-data-provider':
-        specifier: 3.1.0
-        version: 3.1.0
-      '@midnight-ntwrk/midnight-js-level-private-state-provider':
-        specifier: 3.1.0
-        version: 3.1.0
-      '@midnight-ntwrk/midnight-js-network-id':
-        specifier: 3.1.0
-        version: 3.1.0
-      '@midnight-ntwrk/midnight-js-node-zk-config-provider':
-        specifier: 3.1.0
-        version: 3.1.0
-      '@midnight-ntwrk/midnight-js-types':
-        specifier: 3.1.0
-        version: 3.1.0
-      '@midnight-ntwrk/midnight-js-utils':
-        specifier: 3.1.0
-        version: 3.1.0
-      '@midnight-ntwrk/testkit-js':
-        specifier: 3.1.0
-        version: 3.1.0
-      '@midnight-ntwrk/wallet':
-        specifier: 5.0.0
-        version: 5.0.0
-      '@midnight-ntwrk/wallet-api':
-        specifier: 5.0.0
-        version: 5.0.0(rxjs@7.8.2)
-      '@midnight-ntwrk/wallet-sdk-abstractions':
-        specifier: 1.0.0
-        version: 1.0.0
-      '@midnight-ntwrk/wallet-sdk-address-format':
-        specifier: 3.0.0
-        version: 3.0.0
-      '@midnight-ntwrk/wallet-sdk-dust-wallet':
-        specifier: 1.0.0
-        version: 1.0.0(ws@8.19.0)
-      '@midnight-ntwrk/wallet-sdk-facade':
-        specifier: 1.0.0
-        version: 1.0.0(ws@8.19.0)
-      '@midnight-ntwrk/wallet-sdk-shielded':
-        specifier: 1.0.0
-        version: 1.0.0
-      '@midnight-ntwrk/wallet-sdk-unshielded-wallet':
-        specifier: 1.0.0
-        version: 1.0.0(ws@8.19.0)
       '@midnight-reference-app/containers':
         specifier: workspace:*
         version: link:../../packages/containers
@@ -123,18 +72,18 @@ importers:
       '@midnight-reference-app/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@midnight-reference-app/wallet':
+        specifier: workspace:*
+        version: link:../../packages/wallet
       axios:
         specifier: ^1.13.5
         version: 1.13.5
       pino:
         specifier: ^10.3.1
         version: 10.3.1
-      rxjs:
-        specifier: ^7.8.2
-        version: 7.8.2
       testcontainers:
-        specifier: ^11.11.0
-        version: 11.11.0
+        specifier: 11.10.0
+        version: 11.10.0
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
@@ -173,12 +122,6 @@ importers:
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.11
-      dotenv:
-        specifier: ^17.2.4
-        version: 17.2.4
-      tsx:
-        specifier: ^4.21.0
-        version: 4.21.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -224,25 +167,50 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-packages:
+  packages/wallet:
+    dependencies:
+      '@midnight-ntwrk/ledger-v7':
+        specifier: 7.0.0
+        version: 7.0.0
+      '@midnight-ntwrk/midnight-js-network-id':
+        specifier: 3.1.0
+        version: 3.1.0
+      '@midnight-ntwrk/wallet-sdk-address-format':
+        specifier: 3.0.0
+        version: 3.0.0
+      '@midnight-ntwrk/wallet-sdk-dust-wallet':
+        specifier: 1.0.0
+        version: 1.0.0(ws@8.19.0)
+      '@midnight-ntwrk/wallet-sdk-facade':
+        specifier: 1.0.0
+        version: 1.0.0(ws@8.19.0)
+      '@midnight-ntwrk/wallet-sdk-hd':
+        specifier: 3.0.0
+        version: 3.0.0
+      '@midnight-ntwrk/wallet-sdk-shielded':
+        specifier: 1.0.0
+        version: 1.0.0
+      '@midnight-ntwrk/wallet-sdk-unshielded-wallet':
+        specifier: 1.0.0
+        version: 1.0.0(ws@8.19.0)
+      rxjs:
+        specifier: ^7.8.2
+        version: 7.8.2
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.11
+      dotenv:
+        specifier: ^17.2.4
+        version: 17.2.4
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
-  '@apollo/client@3.14.0':
-    resolution: {integrity: sha512-0YQKKRIxiMlIou+SekQqdCo0ZTHxOcES+K8vKB53cIDpwABNR0P0yRzPgsbgcj3zRJniD93S/ontsnZsCLZrxQ==}
-    peerDependencies:
-      graphql: ^15.0.0 || ^16.0.0
-      graphql-ws: ^5.5.5 || ^6.0.3
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || >=19.0.0-rc
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || >=19.0.0-rc
-      subscriptions-transport-ws: ^0.9.0 || ^0.11.0
-    peerDependenciesMeta:
-      graphql-ws:
-        optional: true
-      react:
-        optional: true
-      react-dom:
-        optional: true
-      subscriptions-transport-ws:
-        optional: true
+packages:
 
   '@balena/dockerignore@1.0.2':
     resolution: {integrity: sha512-wMue2Sy4GAVTk6Ic4tJVcnfdau+gx2EnG7S+uAEe+TWJFqE4YoWN4/H8MSLj4eYJKxGg26lZwboEniNiNwZQ6Q==}
@@ -516,34 +484,14 @@ packages:
   '@midnight-ntwrk/ledger-v7@7.0.0':
     resolution: {integrity: sha512-9rch1jU0T9pwt64nR79PhrnrT/mwrS1EKGh4J3q0UT0sBqmylw0c2eREdd26Mq9Kf4FOfAdKxJUaV+IlNh5yUA==}
 
-  '@midnight-ntwrk/ledger-v7@7.0.1':
-    resolution: {integrity: sha512-SLqONECRNjsAlVSv94tyP3lrRCWGPxGvTI3ZzRRm2O0AE9/cHlEsT0ZqaZ9imG5n5ena7VicBozMLxJl0Z1xOg==}
-
-  '@midnight-ntwrk/midnight-js-compact@3.1.0':
-    resolution: {integrity: sha512-PppJSwjLcMX+J3V+6YUY+73qgbqqheFYpcBfXC+cr6eL2VtHaLB/Oh/sOQ/E/JA4ZLqnt794lX2pgAsCAbJgQw==}
-    engines: {node: '>=22.0.0'}
-    hasBin: true
-
   '@midnight-ntwrk/midnight-js-contracts@3.1.0':
     resolution: {integrity: sha512-yofuzxbOKedjzz/jocZZLo+XkMGEChlXwkMZksWBwmn/zluTgJfei8isb3HnChpPPdycF/MJeGpUXm/hKqfdug==}
-
-  '@midnight-ntwrk/midnight-js-http-client-proof-provider@3.1.0':
-    resolution: {integrity: sha512-wa/ZOoABcDzH+E71K8brMH9PHSzeNQ1b6wXTEOT8xpgQXYrs2xxrHjDiDN8ZBk7a9Oh4NOn+5HZcMKTgzrT8wQ==}
-
-  '@midnight-ntwrk/midnight-js-indexer-public-data-provider@3.1.0':
-    resolution: {integrity: sha512-TJ/QyuiHp22L3x5rfoQHe9t6aa/lGWe4mDMXfX5Ih1AEiZqNN/dd5Hjb25owadG+TTOLE9e7NJRkf1zXUQG5DQ==}
-
-  '@midnight-ntwrk/midnight-js-level-private-state-provider@3.1.0':
-    resolution: {integrity: sha512-cXicv28clIHLS86P8lghYoXobV0pTDDNLG6+Ssv5xaZlnzvnKvEzv25fPYETb13OCFJRU9iGjPubvtxlU0jpBQ==}
 
   '@midnight-ntwrk/midnight-js-network-id@3.0.0':
     resolution: {integrity: sha512-IaAi14qzUgaPZcsvcIbniY+WUjwcYWVGK5kNNOm/xIPY/agx4DlshPYoRuhxbWdkCNvcOnlpKTw8MUL1y/ccRA==}
 
   '@midnight-ntwrk/midnight-js-network-id@3.1.0':
     resolution: {integrity: sha512-ImDa6igGofV5116K1UiKhfiu0/5+YFGajRCRt9Gpfcokn5QMFT/jfaPInKt3MZ0hHYdw2plYeo/nITQp1mrkCQ==}
-
-  '@midnight-ntwrk/midnight-js-node-zk-config-provider@3.1.0':
-    resolution: {integrity: sha512-eLd1kOG12nYdmSsLhKVcy9PVZF5P/6eWTtRxL17Vjqjg2qyLA5jw6xKvsi9dbPmRDE5TYAF+UoM75w/wKq0eUA==}
 
   '@midnight-ntwrk/midnight-js-types@3.0.0':
     resolution: {integrity: sha512-NP4aG3c44/x+s3E0QtfWhukzZbkahyvfKmrA5hRYCnrTEGE7TqEF1BBW1T86HG59go0nnKjWfo5VFQ62qRzCyw==}
@@ -560,29 +508,11 @@ packages:
   '@midnight-ntwrk/platform-js@2.2.0':
     resolution: {integrity: sha512-HWwS7bWnkRvufHowxutk4QA+nlLK0UVjxFCIfCkxVKLEO5UzgrfIUx2mY+P6BFnzGJZ0R6tZDTyJ2jh1Go258w==}
 
-  '@midnight-ntwrk/testkit-js@3.1.0':
-    resolution: {integrity: sha512-1j5I79fva/p2zbRpPNLjHRf9Kyo793vpVquoyRpujDyz57V/wp4PZlgCRxiKzEvTLzT/ymLDAsIeLL8aH3kWJA==}
-
-  '@midnight-ntwrk/wallet-api@5.0.0':
-    resolution: {integrity: sha512-L5Z9+v+ouqTtPLoXpngtBVHZ0SmC3zLrCZbuYnd/ul6p9UbwUQ3AQeqMhclv2jhwFRNYsL0fBOqpD5dvs4SvLQ==}
-    peerDependencies:
-      rxjs: 7.x
-
   '@midnight-ntwrk/wallet-sdk-abstractions@1.0.0':
     resolution: {integrity: sha512-kJb3I1jYCuI3y1nvCixPlw4QwThrUnv0RT/eHUFB36Zir49qW4qIa5a7g2vDLXW2PL2tbh8m5xoTDFQirThI9w==}
 
-  '@midnight-ntwrk/wallet-sdk-address-format@2.0.0':
-    resolution: {integrity: sha512-S/3uIfXXUcklYocO0UPey+15uI095CFuCyJRYgxnTmkIXrgjOn8IfSHnReHDtE6JKkvdN2EXlYVt4ufRdCMuPA==}
-    peerDependencies:
-      '@midnight-ntwrk/zswap': 4.0.0
-
   '@midnight-ntwrk/wallet-sdk-address-format@3.0.0':
     resolution: {integrity: sha512-h46Dq+vY6Ymbll58tZyHJGd0dJmNE/Ae2PJKslP3Mb8rpDG0HhiGcqYkGvRxH6Tc/MqM0yABgAcQetjcvIe8qA==}
-
-  '@midnight-ntwrk/wallet-sdk-capabilities@2.0.0':
-    resolution: {integrity: sha512-zl1uZwy8bMlpNfze6rRTEMZiOCKr4dYBYoIVKLPkck1vKcz3nhsjFAkNfsYtFyND/K7/7mLZBtuHxGWX4gYxXQ==}
-    peerDependencies:
-      '@midnight-ntwrk/zswap': 4.0.0
 
   '@midnight-ntwrk/wallet-sdk-capabilities@3.0.0':
     resolution: {integrity: sha512-iVNIb7TTzEFdipHu37ppSSl1CZ4vXcJz5kwWxI3szwMJhPrRJp0ZTiD//mA4PdXNNO0CrarPo3hn5QOxCZir5Q==}
@@ -616,12 +546,6 @@ packages:
 
   '@midnight-ntwrk/wallet-sdk-utilities@1.0.0':
     resolution: {integrity: sha512-lL7D/F9TvWVYXJMBUNkhsKi8gR3VWr5IB3f3ylJkGrhhJhQ0nUv0IBDR9omiKtAmZKg55cL+vYsZZqviY380ew==}
-
-  '@midnight-ntwrk/wallet@5.0.0':
-    resolution: {integrity: sha512-30NjR0w4lOtFrJmwrV0MiFg6QtoKLmCd3e0vy5RxKOvdE8Au6N7O9jiEyZc13c2pk4Pj9ShKL8qukybQhhCuTQ==}
-
-  '@midnight-ntwrk/zswap@4.0.0':
-    resolution: {integrity: sha512-yKfzp4M/wUkqxUJv1D2SizojYdWYnF3FDeKaxPehLPOFC4BrR9KnLZsNR2Y/occ8a4yFDtQXf7bN1QvK5k7Grw==}
 
   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.3':
     resolution: {integrity: sha512-QZHtlVgbAdy2zAqNA9Gu1UpIuI8Xvsd1v8ic6B2pZmeFnFcMWiPLfWXh7TVw4eGEZ/C9TH281KwhVoeQUKbyjw==}
@@ -988,32 +912,9 @@ packages:
   '@types/ssh2@1.15.5':
     resolution: {integrity: sha512-N1ASjp/nXH3ovBHddRJpli4ozpk6UdDYIX4RJWFa9L1YKnzdhTlVmiGHm4DZnj/jLbqZpes4aeR30EFGQtvhQQ==}
 
-  '@types/zen-observable@0.8.3':
-    resolution: {integrity: sha512-fbF6oTd4sGGy0xjHPKAt+eS2CrxJ3+6gQ3FGcBoIJR2TLAyCkCyI8JqZNy+FeON0AhVgNJoUumVoZQjBFUqHkw==}
-
-  '@wry/caches@1.0.1':
-    resolution: {integrity: sha512-bXuaUNLVVkD20wcGBWRyo7j9N3TxePEWFZj2Y+r9OoUzfqmavM84+mFykRicNsBqatba5JLay1t48wxaXaWnlA==}
-    engines: {node: '>=8'}
-
-  '@wry/context@0.7.4':
-    resolution: {integrity: sha512-jmT7Sb4ZQWI5iyu3lobQxICu2nC/vbUhP0vIdd6tHC9PTfenmRmuIFqktc6GH9cgi+ZHnsLWPvfSvc4DrYmKiQ==}
-    engines: {node: '>=8'}
-
-  '@wry/equality@0.5.7':
-    resolution: {integrity: sha512-BRFORjsTuQv5gxcXsuDXx6oGRhuVsEGwZy6LOzRRfgu+eSfxbhUQ9L9YtSEIuIjY/o7g3iWFjrc5eSY1GXP2Dw==}
-    engines: {node: '>=8'}
-
-  '@wry/trie@0.5.0':
-    resolution: {integrity: sha512-FNoYzHawTMk/6KMQoEG5O4PuioX19UbwdQKF44yw0nLfOypfQdjtfZzo/UIJWAJ23sNIFbD1Ug9lbaDGMwbqQA==}
-    engines: {node: '>=8'}
-
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
     engines: {node: '>=6.5'}
-
-  abstract-level@3.1.1:
-    resolution: {integrity: sha512-CW2gKbJFTuX1feMvOrvsVMmijAOgI9kg2Ie9Dq3gOcMt/dVVoVmqNlLcEUCT13NxHFMEajcUcVBIplbyDroDiw==}
-    engines: {node: '>=18'}
 
   accepts@2.0.0:
     resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
@@ -1150,9 +1051,6 @@ packages:
   brace-expansion@2.0.2:
     resolution: {integrity: sha512-Jt0vHyM+jmUBqojB7E1NIYadt0vI0Qxjxd2TErW94wDz+E2LAm5vKMXXwg6ZZBTHPuUlDgQHKXvjGBdfcF1ZDQ==}
 
-  browser-level@3.0.0:
-    resolution: {integrity: sha512-kGXtLh29jMwqKaskz5xeDLtCtN1KBz/DbQSqmvH7QdJiyGRC7RAM8PPg6gvUiNMa+wVnaxS9eSmEtP/f5ajOVw==}
-
   buffer-crc32@1.0.0:
     resolution: {integrity: sha512-Db1SbgBS/fg/392AblrMJk97KggmvYhr4pB5ZIMTWtaivCPMWLkmb7m21cJvpvgK+J3nsU2CmmixNBZx4vFj/w==}
     engines: {node: '>=8.0.0'}
@@ -1185,10 +1083,6 @@ packages:
 
   chownr@1.1.4:
     resolution: {integrity: sha512-jJ0bqzaylmJtVnNgzTeSOs8DPavpbYgEr/b0YL8/2GO3xJEhInFmhKMUnEJQjZumK7KXGFhUy89PrsJWlakBVg==}
-
-  classic-level@3.0.0:
-    resolution: {integrity: sha512-yGy8j8LjPbN0Bh3+ygmyYvrmskVita92pD/zCoalfcC9XxZj6iDtZTAnz+ot7GG8p9KLTG+MZ84tSA4AhkgVZQ==}
-    engines: {node: '>=18'}
 
   cliui@8.0.1:
     resolution: {integrity: sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ==}
@@ -1228,10 +1122,6 @@ packages:
     resolution: {integrity: sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w==}
     engines: {node: '>= 0.6'}
 
-  copy-anything@4.0.5:
-    resolution: {integrity: sha512-7Vv6asjS4gMOuILabD3l739tsaxFQmC+a7pLZm02zyvs8p977bL3zEgq3yDk5rn9B0PbYgIv++jmHcuUab4RhA==}
-    engines: {node: '>=18'}
-
   core-util-is@1.0.3:
     resolution: {integrity: sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==}
 
@@ -1254,9 +1144,6 @@ packages:
 
   create-require@1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
-
-  cross-fetch@4.1.0:
-    resolution: {integrity: sha512-uKm5PU+MHTootlWEY+mZ4vvXoCn4fLQxT9dSc1sXVMSFkINTJVN8cAQROpwcKm8bJ/c7rgZVIBWzH5T78sNZZw==}
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
@@ -1461,9 +1348,6 @@ packages:
     resolution: {integrity: sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ==}
     engines: {node: ^12.20 || >= 14.13}
 
-  fetch-retry@6.0.0:
-    resolution: {integrity: sha512-BUFj1aMubgib37I3v4q78fYo63Po7t4HUPTpQ6/QE6yK6cIQrP+W43FYToeTEyg5m2Y7eFUtijUuAv/PDlWuag==}
-
   file-entry-cache@8.0.0:
     resolution: {integrity: sha512-XXTUwCvisa5oacNGRP9SfNtYBNAMi+RPwBFmblZEF7N7swHYQS6/Zfk7SRwx4D5j3CH211YNRco1DEMNVfZCnQ==}
     engines: {node: '>=16.0.0'}
@@ -1510,9 +1394,6 @@ packages:
   forwarded@0.2.0:
     resolution: {integrity: sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==}
     engines: {node: '>= 0.6'}
-
-  fp-ts@2.16.11:
-    resolution: {integrity: sha512-LaI+KaX2NFkfn1ZGHoKCmcfv7yrZsC3b8NtWsTVQeHkq4F27vI5igUuO53sxqDEa2gNQMHFPmpojDw/1zmUK7w==}
 
   fresh@2.0.0:
     resolution: {integrity: sha512-Rx/WycZ60HOaqLKAi6cHRKKI7zxWbJ31MhntmtwMoaTeF7XFH9hhBp8vITaMidfljRQ6eYWCKkaTK+ykVJHP2A==}
@@ -1570,12 +1451,6 @@ packages:
     peerDependencies:
       graphql: '>=0.11 <=16'
 
-  graphql-tag@2.12.6:
-    resolution: {integrity: sha512-FdSNcu2QQcWnM2VNvSCCDCVS5PpPqpzgFT8+GXzqJuoDd0CBncxCY278u4mhRO7tMgo2JjgJA5aZ+nWSQ/Z+xg==}
-    engines: {node: '>=10'}
-    peerDependencies:
-      graphql: ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
-
   graphql-ws@6.0.7:
     resolution: {integrity: sha512-yoLRW+KRlDmnnROdAu7sX77VNLC0bsFoZyGQJLy1cF+X/SkLg/fWkRGrEEYQK8o2cafJ2wmEaMqMEZB3U3DYDg==}
     engines: {node: '>=20'}
@@ -1611,9 +1486,6 @@ packages:
   help-me@5.0.0:
     resolution: {integrity: sha512-7xgomUX6ADmcYzFik0HzAxh/73YlKR9bmFzf51CZwR+b6YtzU2m0u49hQCqV6SvlqIqsaxovfwdvbnsw3b/zpg==}
 
-  hoist-non-react-statics@3.3.2:
-    resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
-
   http-errors@2.0.1:
     resolution: {integrity: sha512-4FbRdAX+bSdmo4AUFuS0WNiPz8NgFt+r8ThgNWmlrjQjt1Q7ZR9+zTlce2859x4KSXrwIsaeTqDoKQmtP8pLmQ==}
     engines: {node: '>= 0.8'}
@@ -1636,18 +1508,9 @@ packages:
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
 
-  io-ts@2.2.22:
-    resolution: {integrity: sha512-FHCCztTkHoV9mdBsHpocLpdTAfh956ZQcIkWQxxS0U5HT53vtrcuYdQneEJKH6xILaLNzXVl2Cvwtoy8XNN0AA==}
-    peerDependencies:
-      fp-ts: ^2.5.0
-
   ipaddr.js@1.9.1:
     resolution: {integrity: sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==}
     engines: {node: '>= 0.10'}
-
-  is-buffer@2.0.5:
-    resolution: {integrity: sha512-i2R6zNFDwgEHJyQUtJEk0XFi1i0dPFn/oqjK3/vPCcDeJvW5NQ83V8QbicfF1SupOaB0h8ntgBC2YiE7dfyctQ==}
-    engines: {node: '>=4'}
 
   is-extglob@2.1.1:
     resolution: {integrity: sha512-SbKbANkN603Vi4jEZv49LeVJMn4yGwsbzZworEoyEiutsN3nJYdbO36zfhGJ6QEDpOZIFkDtnq5JRxmvl3jsoQ==}
@@ -1668,10 +1531,6 @@ packages:
     resolution: {integrity: sha512-hFoiJiTl63nn+kstHGBtewWSKnQLpyb155KHheA1l39uvtO9nWIop1p3udqPcUd/xbF1VLMO4n7OI6p7RbngDg==}
     engines: {node: '>=8'}
 
-  is-what@5.5.0:
-    resolution: {integrity: sha512-oG7cgbmg5kLYae2N5IVd3jm2s+vldjxJzK1pcu9LfpGuQ93MQSzo0okvRna+7y5ifrD+20FE8FvjusyGaz14fw==}
-    engines: {node: '>=18'}
-
   isarray@1.0.0:
     resolution: {integrity: sha512-VLghIWNM6ELQzo7zwmcg0NmTVyWKYjvIeM83yjp0wRDTmUnrM678fQbcKBo6n2CJEF0szoG//ytg+TKla89ALQ==}
 
@@ -1689,9 +1548,6 @@ packages:
   joycon@3.1.1:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
     engines: {node: '>=10'}
-
-  js-tokens@4.0.0:
-    resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
   json-buffer@3.0.1:
     resolution: {integrity: sha512-4bV5BfR2mqfQTJm+V5tPPdf+ZpuhiIvTuAB5g8kcrXOZpTT/QwwVRWBywX1ozr6lEuPdbHxwaJlm9G6mI2sfSQ==}
@@ -1712,18 +1568,6 @@ packages:
     resolution: {integrity: sha512-b94GiNHQNy6JNTrt5w6zNyffMrNkXZb3KTkCZJb2V1xaEGCk093vkZ2jk3tpaeP33/OiXC+WvK9AxUebnf5nbw==}
     engines: {node: '>= 0.6.3'}
 
-  level-supports@6.2.0:
-    resolution: {integrity: sha512-QNxVXP0IRnBmMsJIh+sb2kwNCYcKciQZJEt+L1hPCHrKNELllXhvrlClVHXBYZVT+a7aTSM6StgNXdAldoab3w==}
-    engines: {node: '>=16'}
-
-  level-transcoder@1.0.1:
-    resolution: {integrity: sha512-t7bFwFtsQeD8cl8NIoQ2iwxA0CL/9IFw7/9gAjOonH0PWTTiRfY7Hq+Ejbsxh86tXobDQ6IOiddjNYIfOBs06w==}
-    engines: {node: '>=12'}
-
-  level@10.0.0:
-    resolution: {integrity: sha512-aZJvdfRr/f0VBbSRF5C81FHON47ZsC2TkGxbBezXpGGXAUEL/s6+GP73nnhAYRSCIqUNsmJjfeOF4lzRDKbUig==}
-    engines: {node: '>=18'}
-
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
@@ -1741,10 +1585,6 @@ packages:
   long@5.3.2:
     resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
 
-  loose-envify@1.4.0:
-    resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
-    hasBin: true
-
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
 
@@ -1754,10 +1594,6 @@ packages:
   math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
     engines: {node: '>= 0.4'}
-
-  maybe-combine-errors@1.0.0:
-    resolution: {integrity: sha512-eefp6IduNPT6fVdwPp+1NgD0PML1NU5P6j1Mj5nz1nidX8/sWY7119WL8vTAHgqfsY74TzW0w1XPgdYEKkGZ5A==}
-    engines: {node: '>=10'}
 
   media-typer@1.1.0:
     resolution: {integrity: sha512-aisnrDP4GNe06UcKFnV5bfMNPBUw4jsLGaWwWfnH3v02GnBuXX2MCVn5RbrWo0j3pczUilYblq7fQ7Nw2t5XKw==}
@@ -1814,10 +1650,6 @@ packages:
     resolution: {integrity: sha512-qxBgB7Qa2sEQgHFjj0dSigq7fX4k6Saisd5Nelwp2q8mlbAFh5dHV9JTTlF8viYJLSSWgMCZFUom8PJcMNBoJw==}
     engines: {node: '>= 8'}
 
-  module-error@1.0.2:
-    resolution: {integrity: sha512-0yuvsqSCv8LbaOKhnsQ/T5JhyFlCYLPXK3U2sgV10zoKQwzs/MyfuQUOZQ1V/6OCOJsK/TRgNVrPuPDqtdMFtA==}
-    engines: {node: '>=10'}
-
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
 
@@ -1833,9 +1665,6 @@ packages:
 
   nan@2.25.0:
     resolution: {integrity: sha512-0M90Ag7Xn5KMLLZ7zliPWP3rT90P6PN+IzVFS0VqmnPktBk3700xUVv8Ikm9EUaUE5SDWdp/BIxdENzVznpm1g==}
-
-  napi-macros@2.2.2:
-    resolution: {integrity: sha512-hmEVtAGYzVQpCKdbQea4skABsdXW4RUh5t5mJ2zzqowJS2OyXZTU1KhDVFhx+NlWZ4ap9mqR9TcDO3LTTttd+g==}
 
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
@@ -1853,25 +1682,12 @@ packages:
     engines: {node: '>=10.5.0'}
     deprecated: Use your platform's native DOMException instead
 
-  node-fetch@2.7.0:
-    resolution: {integrity: sha512-c4FRfUm/dbcWZ7U+1Wq0AwCyFL+3nt2bEw05wfxSz+DWpWsitgmSgYmy2dQdWyKC1694ELPqMs/YzUSNozLt8A==}
-    engines: {node: 4.x || >=6.0.0}
-    peerDependencies:
-      encoding: ^0.1.0
-    peerDependenciesMeta:
-      encoding:
-        optional: true
-
   node-fetch@3.3.2:
     resolution: {integrity: sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
   node-gyp-build-optional-packages@5.2.2:
     resolution: {integrity: sha512-s+w+rBWnpTMwSFbaE0UXsRlg7hU4FjekKU4eyAih5T8nJuNZT1nNsskXpxmeqSK9UzkBl6UgRlnKc8hz8IEqOw==}
-    hasBin: true
-
-  node-gyp-build@4.8.4:
-    resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
     hasBin: true
 
   normalize-path@3.0.0:
@@ -1896,9 +1712,6 @@ packages:
 
   once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
-
-  optimism@0.18.1:
-    resolution: {integrity: sha512-mLXNwWPa9dgFyDqkNi54sjDyNJ9/fTI6WGBLgnXku1vdKY/jovHfZT5r+aiVeFFLOz+foPNOm5YJ4mqgld2GBQ==}
 
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
@@ -1971,9 +1784,6 @@ packages:
     resolution: {integrity: sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==}
     engines: {node: '>= 0.6.0'}
 
-  prop-types@15.8.1:
-    resolution: {integrity: sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==}
-
   propagate@2.0.1:
     resolution: {integrity: sha512-vGrhOavPSTz4QVNuBNdcNXePNdNMaO1xj9yBeH1ScQPjk/rhg9sSlCXPhMkFuaNNW/syTvYqsnbIJxMBfRbbag==}
     engines: {node: '>= 8'}
@@ -2021,9 +1831,6 @@ packages:
     resolution: {integrity: sha512-K5zQjDllxWkf7Z5xJdV0/B0WTNqx6vxG70zJE4N0kBs4LovmEYWJzQGxC9bS9RAKu3bgM40lrd5zoLJ12MQ5BA==}
     engines: {node: '>= 0.10'}
 
-  react-is@16.13.1:
-    resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
-
   readable-stream@2.3.8:
     resolution: {integrity: sha512-8p0AUk4XODgIewSi0l8Epjs+EVnWiK7NoDIEGU0HhE7+ZyY8D1IMY7odu5lRrFXGg71L15KG8QrPmum45RTtdA==}
 
@@ -2041,17 +1848,6 @@ packages:
   real-require@0.2.0:
     resolution: {integrity: sha512-57frrGM/OCTLqLOAh0mhVA9VBMHd+9U7Zb2THMGdBUoZVOtGbJzjxsYGDJ3A9AYYCP4hn6y1TVbaOfzWtm5GFg==}
     engines: {node: '>= 12.13.0'}
-
-  rehackt@0.1.0:
-    resolution: {integrity: sha512-7kRDOuLHB87D/JESKxQoRwv4DzbIdwkAGQ7p6QKGdVlY1IZheUnVhlk/4UZlNUVxdAXpyxikE3URsG067ybVzw==}
-    peerDependencies:
-      '@types/react': '*'
-      react: '*'
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-      react:
-        optional: true
 
   require-directory@2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
@@ -2185,14 +1981,6 @@ packages:
     resolution: {integrity: sha512-1tB5mhVo7U+ETBKNf92xT4hrQa3pm0MZ0PQvuDnWgAAGHDsfp4lPSpiS6psrSiet87wyGPh9ft6wmhOMQ0hDiw==}
     engines: {node: '>=14.16'}
 
-  superjson@2.2.6:
-    resolution: {integrity: sha512-H+ue8Zo4vJmV2nRjpx86P35lzwDT3nItnIsocgumgr0hHMQ+ZGq5vrERg9kJBo5AWGmxZDhzDo+WVIJqkB0cGA==}
-    engines: {node: '>=16'}
-
-  symbol-observable@4.0.0:
-    resolution: {integrity: sha512-b19dMThMV4HVFynSAM1++gBHAbk2Tc/osgLIBZMKsyqh34jb2e8Os7T6ZW/Bt3pJFdBTd2JwAnAAEQV7rSNvcQ==}
-    engines: {node: '>=0.10'}
-
   tar-fs@2.1.4:
     resolution: {integrity: sha512-mDAjwmZdh7LTT6pNleZ05Yt65HC3E+NiQzl672vQG38jIrehtJk/J3mNwIg+vShQPcLF/LV7CMnDW6vjj6sfYQ==}
 
@@ -2209,9 +1997,6 @@ packages:
   testcontainers@11.10.0:
     resolution: {integrity: sha512-8hwK2EnrOZfrHPpDC7CPe03q7H8Vv8j3aXdcmFFyNV8dzpBzgZYmqyDtduJ8YQ5kbzj+A+jUXMQ6zI8B5U3z+g==}
 
-  testcontainers@11.11.0:
-    resolution: {integrity: sha512-nKTJn3n/gkyGg/3SVkOwX+isPOGSHlfI+CWMobSmvQrsj7YW01aWvl2pYIfV4LMd+C8or783yYrzKSK2JlP+Qw==}
-
   text-decoder@1.2.3:
     resolution: {integrity: sha512-3/o9z3X0X0fTupwsYvR03pJ/DjWuqqrfwBgTQzdWDiQSm9KitAyz/9WqsT2JQW7KV2m+bC2ol/zqpW37NHxLaA==}
 
@@ -2226,13 +2011,6 @@ packages:
   toidentifier@1.0.1:
     resolution: {integrity: sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==}
     engines: {node: '>=0.6'}
-
-  tr46@0.0.3:
-    resolution: {integrity: sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==}
-
-  ts-invariant@0.10.3:
-    resolution: {integrity: sha512-uivwYcQaxAucv1CzRp2n/QdYPo4ILf9VXgH19zEIjFx2EJufV16P0JtJVpYHy89DItG6Kwj2oIUjrcK5au+4tQ==}
-    engines: {node: '>=8'}
 
   ts-node@10.9.2:
     resolution: {integrity: sha512-f0FFpIdcHgn8zcPSbf1dRevwt047YMnaiJM3u2w2RewrB+fob/zePZcrOyQoLMMO7aBIddLcQIEK5dYjkLnGrQ==}
@@ -2341,12 +2119,6 @@ packages:
     resolution: {integrity: sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw==}
     engines: {node: '>= 8'}
 
-  webidl-conversions@3.0.1:
-    resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
-
-  whatwg-url@5.0.0:
-    resolution: {integrity: sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw==}
-
   which@2.0.2:
     resolution: {integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}
     engines: {node: '>= 8'}
@@ -2404,41 +2176,11 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  zen-observable-ts@1.1.0:
-    resolution: {integrity: sha512-1h4zlLSqI2cRLPJUHJFL8bCWHhkpuXkF+dbGkRaWjgDIG26DmzyshUMrdV/rL3UnR+mhaX4fRq8LPouq0MYYIA==}
-
-  zen-observable-ts@1.2.5:
-    resolution: {integrity: sha512-QZWQekv6iB72Naeake9hS1KxHlotfRpe+WGNbNx5/ta+R3DNjVO2bswf63gXlWDcs+EMd7XY8HfVQyP1X6T4Zg==}
-
-  zen-observable@0.8.15:
-    resolution: {integrity: sha512-PQ2PC7R9rslx84ndNBZB/Dkv8V8fZEpk83RLgXtYd0fwUgEjseMn1Dgajh2x6S8QbZAFa9p2qVCEuYZNgve0dQ==}
-
   zip-stream@6.0.1:
     resolution: {integrity: sha512-zK7YHHz4ZXpW89AHXUPbQVGKI7uvkd3hzusTdotCg1UxyaVtg0zFJSTfW/Dq5f7OBBVnq6cZIaC8Ti4hb6dtCA==}
     engines: {node: '>= 14'}
 
 snapshots:
-
-  '@apollo/client@3.14.0(graphql-ws@6.0.7(graphql@16.12.0)(ws@8.19.0))(graphql@16.12.0)':
-    dependencies:
-      '@graphql-typed-document-node/core': 3.2.0(graphql@16.12.0)
-      '@wry/caches': 1.0.1
-      '@wry/equality': 0.5.7
-      '@wry/trie': 0.5.0
-      graphql: 16.12.0
-      graphql-tag: 2.12.6(graphql@16.12.0)
-      hoist-non-react-statics: 3.3.2
-      optimism: 0.18.1
-      prop-types: 15.8.1
-      rehackt: 0.1.0
-      symbol-observable: 4.0.0
-      ts-invariant: 0.10.3
-      tslib: 2.8.1
-      zen-observable-ts: 1.2.5
-    optionalDependencies:
-      graphql-ws: 6.0.7(graphql@16.12.0)(ws@8.19.0)
-    transitivePeerDependencies:
-      - '@types/react'
 
   '@balena/dockerignore@1.0.2': {}
 
@@ -2645,10 +2387,6 @@ snapshots:
 
   '@midnight-ntwrk/ledger-v7@7.0.0': {}
 
-  '@midnight-ntwrk/ledger-v7@7.0.1': {}
-
-  '@midnight-ntwrk/midnight-js-compact@3.1.0': {}
-
   '@midnight-ntwrk/midnight-js-contracts@3.1.0':
     dependencies:
       '@midnight-ntwrk/compact-js': 2.4.0
@@ -2656,61 +2394,9 @@ snapshots:
       '@midnight-ntwrk/midnight-js-types': 3.1.0
       '@midnight-ntwrk/midnight-js-utils': 3.1.0
 
-  '@midnight-ntwrk/midnight-js-http-client-proof-provider@3.1.0':
-    dependencies:
-      '@midnight-ntwrk/midnight-js-contracts': 3.1.0
-      '@midnight-ntwrk/midnight-js-network-id': 3.1.0
-      '@midnight-ntwrk/midnight-js-types': 3.1.0
-      '@midnight-ntwrk/midnight-js-utils': 3.1.0
-      cross-fetch: 4.1.0
-      fetch-retry: 6.0.0
-      lodash: 4.17.23
-    transitivePeerDependencies:
-      - encoding
-
-  '@midnight-ntwrk/midnight-js-indexer-public-data-provider@3.1.0':
-    dependencies:
-      '@apollo/client': 3.14.0(graphql-ws@6.0.7(graphql@16.12.0)(ws@8.19.0))(graphql@16.12.0)
-      '@midnight-ntwrk/midnight-js-network-id': 3.1.0
-      '@midnight-ntwrk/midnight-js-types': 3.1.0
-      '@midnight-ntwrk/midnight-js-utils': 3.1.0
-      buffer: 6.0.3
-      cross-fetch: 4.1.0
-      graphql: 16.12.0
-      graphql-ws: 6.0.7(graphql@16.12.0)(ws@8.19.0)
-      isomorphic-ws: 5.0.0(ws@8.19.0)
-      rxjs: 7.8.2
-      ws: 8.19.0
-      zen-observable-ts: 1.1.0
-    transitivePeerDependencies:
-      - '@fastify/websocket'
-      - '@types/react'
-      - bufferutil
-      - crossws
-      - encoding
-      - react
-      - react-dom
-      - subscriptions-transport-ws
-      - utf-8-validate
-
-  '@midnight-ntwrk/midnight-js-level-private-state-provider@3.1.0':
-    dependencies:
-      '@midnight-ntwrk/midnight-js-types': 3.1.0
-      abstract-level: 3.1.1
-      buffer: 6.0.3
-      fp-ts: 2.16.11
-      io-ts: 2.2.22(fp-ts@2.16.11)
-      level: 10.0.0
-      lodash: 4.17.23
-      superjson: 2.2.6
-
   '@midnight-ntwrk/midnight-js-network-id@3.0.0': {}
 
   '@midnight-ntwrk/midnight-js-network-id@3.1.0': {}
-
-  '@midnight-ntwrk/midnight-js-node-zk-config-provider@3.1.0':
-    dependencies:
-      '@midnight-ntwrk/midnight-js-types': 3.1.0
 
   '@midnight-ntwrk/midnight-js-types@3.0.0':
     dependencies:
@@ -2737,57 +2423,15 @@ snapshots:
       effect: 3.19.16
       tslib: 2.8.1
 
-  '@midnight-ntwrk/testkit-js@3.1.0':
-    dependencies:
-      '@midnight-ntwrk/compact-js': 2.4.0
-      '@midnight-ntwrk/ledger-v7': 7.0.0
-      '@midnight-ntwrk/midnight-js-compact': 3.1.0
-      '@midnight-ntwrk/midnight-js-contracts': 3.1.0
-      '@midnight-ntwrk/midnight-js-http-client-proof-provider': 3.1.0
-      '@midnight-ntwrk/midnight-js-indexer-public-data-provider': 3.1.0
-      '@midnight-ntwrk/midnight-js-level-private-state-provider': 3.1.0
-      '@midnight-ntwrk/midnight-js-network-id': 3.1.0
-      '@midnight-ntwrk/midnight-js-node-zk-config-provider': 3.1.0
-      '@midnight-ntwrk/midnight-js-types': 3.1.0
-      '@midnight-ntwrk/midnight-js-utils': 3.1.0
-      buffer: 6.0.3
-      cross-fetch: 4.1.0
-      rxjs: 7.8.2
-      ws: 8.19.0
-    transitivePeerDependencies:
-      - '@fastify/websocket'
-      - '@types/react'
-      - bufferutil
-      - crossws
-      - encoding
-      - react
-      - react-dom
-      - subscriptions-transport-ws
-      - utf-8-validate
-
-  '@midnight-ntwrk/wallet-api@5.0.0(rxjs@7.8.2)':
-    dependencies:
-      '@midnight-ntwrk/zswap': 4.0.0
-      rxjs: 7.8.2
-
   '@midnight-ntwrk/wallet-sdk-abstractions@1.0.0':
     dependencies:
       effect: 3.19.16
-
-  '@midnight-ntwrk/wallet-sdk-address-format@2.0.0(@midnight-ntwrk/zswap@4.0.0)':
-    dependencies:
-      '@midnight-ntwrk/zswap': 4.0.0
-      '@scure/base': 1.2.6
 
   '@midnight-ntwrk/wallet-sdk-address-format@3.0.0':
     dependencies:
       '@midnight-ntwrk/ledger-v7': 7.0.0
       '@scure/base': 1.2.6
       '@subsquid/scale-codec': 4.0.1
-
-  '@midnight-ntwrk/wallet-sdk-capabilities@2.0.0(@midnight-ntwrk/zswap@4.0.0)':
-    dependencies:
-      '@midnight-ntwrk/zswap': 4.0.0
 
   '@midnight-ntwrk/wallet-sdk-capabilities@3.0.0':
     dependencies:
@@ -2882,7 +2526,7 @@ snapshots:
       bn.js: 5.2.2
       effect: 3.19.16
       rxjs: 7.8.2
-      testcontainers: 11.11.0
+      testcontainers: 11.10.0
     transitivePeerDependencies:
       - bare-abort-controller
       - bare-buffer
@@ -2969,29 +2613,12 @@ snapshots:
       effect: 3.19.16
       portfinder: 1.0.38
       rxjs: 7.8.2
-      testcontainers: 11.11.0
+      testcontainers: 11.10.0
     transitivePeerDependencies:
       - bare-abort-controller
       - bare-buffer
       - react-native-b4a
       - supports-color
-
-  '@midnight-ntwrk/wallet@5.0.0':
-    dependencies:
-      '@midnight-ntwrk/wallet-api': 5.0.0(rxjs@7.8.2)
-      '@midnight-ntwrk/wallet-sdk-address-format': 2.0.0(@midnight-ntwrk/zswap@4.0.0)
-      '@midnight-ntwrk/wallet-sdk-capabilities': 2.0.0(@midnight-ntwrk/zswap@4.0.0)
-      '@midnight-ntwrk/zswap': 4.0.0
-      isomorphic-ws: 5.0.0(ws@8.19.0)
-      node-fetch: 3.3.2
-      rxjs: 7.8.2
-      scale-ts: 1.6.1
-      ws: 8.19.0
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
-  '@midnight-ntwrk/zswap@4.0.0': {}
 
   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.3':
     optional: true
@@ -3518,36 +3145,9 @@ snapshots:
     dependencies:
       '@types/node': 18.19.130
 
-  '@types/zen-observable@0.8.3': {}
-
-  '@wry/caches@1.0.1':
-    dependencies:
-      tslib: 2.8.1
-
-  '@wry/context@0.7.4':
-    dependencies:
-      tslib: 2.8.1
-
-  '@wry/equality@0.5.7':
-    dependencies:
-      tslib: 2.8.1
-
-  '@wry/trie@0.5.0':
-    dependencies:
-      tslib: 2.8.1
-
   abort-controller@3.0.0:
     dependencies:
       event-target-shim: 5.0.1
-
-  abstract-level@3.1.1:
-    dependencies:
-      buffer: 6.0.3
-      is-buffer: 2.0.5
-      level-supports: 6.2.0
-      level-transcoder: 1.0.1
-      maybe-combine-errors: 1.0.0
-      module-error: 1.0.2
 
   accepts@2.0.0:
     dependencies:
@@ -3699,10 +3299,6 @@ snapshots:
     dependencies:
       balanced-match: 1.0.2
 
-  browser-level@3.0.0:
-    dependencies:
-      abstract-level: 3.1.1
-
   buffer-crc32@1.0.0: {}
 
   buffer@5.7.1:
@@ -3733,13 +3329,6 @@ snapshots:
       get-intrinsic: 1.3.0
 
   chownr@1.1.4: {}
-
-  classic-level@3.0.0:
-    dependencies:
-      abstract-level: 3.1.1
-      module-error: 1.0.2
-      napi-macros: 2.2.2
-      node-gyp-build: 4.8.4
 
   cliui@8.0.1:
     dependencies:
@@ -3775,10 +3364,6 @@ snapshots:
 
   cookie@0.7.2: {}
 
-  copy-anything@4.0.5:
-    dependencies:
-      is-what: 5.5.0
-
   core-util-is@1.0.3: {}
 
   cors@2.8.6:
@@ -3800,12 +3385,6 @@ snapshots:
       readable-stream: 4.7.0
 
   create-require@1.1.1: {}
-
-  cross-fetch@4.1.0:
-    dependencies:
-      node-fetch: 2.7.0
-    transitivePeerDependencies:
-      - encoding
 
   cross-spawn@7.0.6:
     dependencies:
@@ -4066,8 +3645,6 @@ snapshots:
       node-domexception: 1.0.0
       web-streams-polyfill: 3.3.3
 
-  fetch-retry@6.0.0: {}
-
   file-entry-cache@8.0.0:
     dependencies:
       flat-cache: 4.0.1
@@ -4117,8 +3694,6 @@ snapshots:
       fetch-blob: 3.2.0
 
   forwarded@0.2.0: {}
-
-  fp-ts@2.16.11: {}
 
   fresh@2.0.0: {}
 
@@ -4176,11 +3751,6 @@ snapshots:
     dependencies:
       graphql: 16.12.0
 
-  graphql-tag@2.12.6(graphql@16.12.0):
-    dependencies:
-      graphql: 16.12.0
-      tslib: 2.8.1
-
   graphql-ws@6.0.7(graphql@16.12.0)(ws@8.19.0):
     dependencies:
       graphql: 16.12.0
@@ -4200,10 +3770,6 @@ snapshots:
       function-bind: 1.1.2
 
   help-me@5.0.0: {}
-
-  hoist-non-react-statics@3.3.2:
-    dependencies:
-      react-is: 16.13.1
 
   http-errors@2.0.1:
     dependencies:
@@ -4225,13 +3791,7 @@ snapshots:
 
   inherits@2.0.4: {}
 
-  io-ts@2.2.22(fp-ts@2.16.11):
-    dependencies:
-      fp-ts: 2.16.11
-
   ipaddr.js@1.9.1: {}
-
-  is-buffer@2.0.5: {}
 
   is-extglob@2.1.1: {}
 
@@ -4244,8 +3804,6 @@ snapshots:
   is-promise@4.0.0: {}
 
   is-stream@2.0.1: {}
-
-  is-what@5.5.0: {}
 
   isarray@1.0.0: {}
 
@@ -4263,8 +3821,6 @@ snapshots:
 
   joycon@3.1.1: {}
 
-  js-tokens@4.0.0: {}
-
   json-buffer@3.0.1: {}
 
   json-schema-traverse@0.4.1: {}
@@ -4281,19 +3837,6 @@ snapshots:
     dependencies:
       readable-stream: 2.3.8
 
-  level-supports@6.2.0: {}
-
-  level-transcoder@1.0.1:
-    dependencies:
-      buffer: 6.0.3
-      module-error: 1.0.2
-
-  level@10.0.0:
-    dependencies:
-      abstract-level: 3.1.1
-      browser-level: 3.0.0
-      classic-level: 3.0.0
-
   levn@0.4.1:
     dependencies:
       prelude-ls: 1.2.1
@@ -4309,17 +3852,11 @@ snapshots:
 
   long@5.3.2: {}
 
-  loose-envify@1.4.0:
-    dependencies:
-      js-tokens: 4.0.0
-
   lru-cache@10.4.3: {}
 
   make-error@1.3.6: {}
 
   math-intrinsics@1.1.0: {}
-
-  maybe-combine-errors@1.0.0: {}
 
   media-typer@1.1.0: {}
 
@@ -4359,8 +3896,6 @@ snapshots:
 
   mock-socket@9.3.1: {}
 
-  module-error@1.0.2: {}
-
   ms@2.1.3: {}
 
   msgpackr-extract@3.0.3:
@@ -4384,8 +3919,6 @@ snapshots:
   nan@2.25.0:
     optional: true
 
-  napi-macros@2.2.2: {}
-
   natural-compare@1.4.0: {}
 
   negotiator@1.0.0: {}
@@ -4400,10 +3933,6 @@ snapshots:
 
   node-domexception@1.0.0: {}
 
-  node-fetch@2.7.0:
-    dependencies:
-      whatwg-url: 5.0.0
-
   node-fetch@3.3.2:
     dependencies:
       data-uri-to-buffer: 4.0.1
@@ -4414,8 +3943,6 @@ snapshots:
     dependencies:
       detect-libc: 2.1.2
     optional: true
-
-  node-gyp-build@4.8.4: {}
 
   normalize-path@3.0.0: {}
 
@@ -4432,13 +3959,6 @@ snapshots:
   once@1.4.0:
     dependencies:
       wrappy: 1.0.2
-
-  optimism@0.18.1:
-    dependencies:
-      '@wry/caches': 1.0.1
-      '@wry/context': 0.7.4
-      '@wry/trie': 0.5.0
-      tslib: 2.8.1
 
   optionator@0.9.4:
     dependencies:
@@ -4525,12 +4045,6 @@ snapshots:
 
   process@0.11.10: {}
 
-  prop-types@15.8.1:
-    dependencies:
-      loose-envify: 1.4.0
-      object-assign: 4.1.1
-      react-is: 16.13.1
-
   propagate@2.0.1: {}
 
   proper-lockfile@4.1.2:
@@ -4589,8 +4103,6 @@ snapshots:
       iconv-lite: 0.7.2
       unpipe: 1.0.0
 
-  react-is@16.13.1: {}
-
   readable-stream@2.3.8:
     dependencies:
       core-util-is: 1.0.3
@@ -4620,8 +4132,6 @@ snapshots:
       minimatch: 5.1.6
 
   real-require@0.2.0: {}
-
-  rehackt@0.1.0: {}
 
   require-directory@2.1.1: {}
 
@@ -4790,12 +4300,6 @@ snapshots:
 
   strip-json-comments@5.0.3: {}
 
-  superjson@2.2.6:
-    dependencies:
-      copy-anything: 4.0.5
-
-  symbol-observable@4.0.0: {}
-
   tar-fs@2.1.4:
     dependencies:
       chownr: 1.1.4
@@ -4855,29 +4359,6 @@ snapshots:
       - react-native-b4a
       - supports-color
 
-  testcontainers@11.11.0:
-    dependencies:
-      '@balena/dockerignore': 1.0.2
-      '@types/dockerode': 3.3.47
-      archiver: 7.0.1
-      async-lock: 1.4.1
-      byline: 5.0.0
-      debug: 4.4.3
-      docker-compose: 1.3.1
-      dockerode: 4.0.9
-      get-port: 7.1.0
-      proper-lockfile: 4.1.2
-      properties-reader: 2.3.0
-      ssh-remote-port-forward: 1.0.4
-      tar-fs: 3.1.1
-      tmp: 0.2.5
-      undici: 7.21.0
-    transitivePeerDependencies:
-      - bare-abort-controller
-      - bare-buffer
-      - react-native-b4a
-      - supports-color
-
   text-decoder@1.2.3:
     dependencies:
       b4a: 1.7.3
@@ -4891,12 +4372,6 @@ snapshots:
   tmp@0.2.5: {}
 
   toidentifier@1.0.1: {}
-
-  tr46@0.0.3: {}
-
-  ts-invariant@0.10.3:
-    dependencies:
-      tslib: 2.8.1
 
   ts-node@10.9.2(@types/node@22.19.11)(typescript@5.9.3):
     dependencies:
@@ -4988,13 +4463,6 @@ snapshots:
 
   web-streams-polyfill@3.3.3: {}
 
-  webidl-conversions@3.0.1: {}
-
-  whatwg-url@5.0.0:
-    dependencies:
-      tr46: 0.0.3
-      webidl-conversions: 3.0.1
-
   which@2.0.2:
     dependencies:
       isexe: 2.0.0
@@ -5036,17 +4504,6 @@ snapshots:
   yn@3.1.1: {}
 
   yocto-queue@0.1.0: {}
-
-  zen-observable-ts@1.1.0:
-    dependencies:
-      '@types/zen-observable': 0.8.3
-      zen-observable: 0.8.15
-
-  zen-observable-ts@1.2.5:
-    dependencies:
-      zen-observable: 0.8.15
-
-  zen-observable@0.8.15: {}
 
   zip-stream@6.0.1:
     dependencies:
