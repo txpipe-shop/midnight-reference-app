@@ -8,6 +8,8 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "^0.14.0",
+    "@midnight-ntwrk/midnight-js-contracts": "^3.0.0",
     "@midnight-reference-app/containers": "workspace:*",
     "@midnight-reference-app/contract": "workspace:*",
     "@midnight-reference-app/logger": "workspace:*",

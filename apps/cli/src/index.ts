@@ -1,6 +1,8 @@
 import { TestContainers } from "@midnight-reference-app/containers";
 import { createLogger } from "@midnight-reference-app/logger";
-import { buildWallet } from "@midnight-reference-app/wallet";
+import { buildWallet, type WalletContext } from "@midnight-reference-app/wallet";
+import { stdin as input, stdout as output } from "node:process";
+import { createInterface } from "readline/promises";
 import { runCli } from "./cli/index.js";
 import { env, StandaloneConfig } from "./config.js";
 import { GENESIS_MINT_WALLET_SEED } from "./utils/constants.js";
@@ -13,9 +15,18 @@ const main = async () => {
   try {
     const startedContainers = await testContainers.start();
     config.updateConfigURLs(testContainers);
-    const wallet = await buildWallet(config, GENESIS_MINT_WALLET_SEED);
+    const walletCtx: WalletContext = await buildWallet(config, GENESIS_MINT_WALLET_SEED);
 
-    await runCli(config, startedContainers, logger);
+    try {
+      const rli = createInterface({ input, output, terminal: true });
+      await runCli(config, startedContainers, walletCtx, logger, rli);
+    } catch (error) {
+      console.error("Error:", error);
+      process.exit(1);
+    } finally {
+      await walletCtx.wallet.stop();
+    }
+
   } catch (error) {
     console.error("Error:", error);
     process.exit(1);

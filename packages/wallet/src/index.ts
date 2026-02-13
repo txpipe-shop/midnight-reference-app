@@ -1,5 +1,6 @@
 import * as ledger from "@midnight-ntwrk/ledger-v7";
 import { getNetworkId } from "@midnight-ntwrk/midnight-js-network-id";
+import { type MidnightProvider, type WalletProvider } from '@midnight-ntwrk/midnight-js-types';
 import { DustWallet } from "@midnight-ntwrk/wallet-sdk-dust-wallet";
 import { WalletFacade } from "@midnight-ntwrk/wallet-sdk-facade";
 import { Roles } from "@midnight-ntwrk/wallet-sdk-hd";
@@ -9,6 +10,7 @@ import {
   PublicKey,
   UnshieldedWallet,
 } from "@midnight-ntwrk/wallet-sdk-unshielded-wallet";
+import * as Rx from "rxjs";
 import {
   buildDustConfig,
   buildShieldedConfig,
@@ -17,6 +19,7 @@ import {
 import {
   deriveKeysFromSeed,
   registerForDustGeneration,
+  signTransactionIntents,
   waitForFunds,
   waitForSync,
   withStatus,
@@ -80,3 +83,46 @@ export const buildWallet = async (
 
   return { wallet, shieldedSecretKeys, dustSecretKey, unshieldedKeystore };
 };
+
+/**
+ * Create the unified WalletProvider & MidnightProvider for midnight-js.
+ * This bridges the wallet-sdk-facade to the midnight-js contract API by
+ * implementing balance, sign, finalize, and submit operations.
+ */
+export const createWalletAndMidnightProvider = async (
+  ctx: WalletContext,
+): Promise<WalletProvider & MidnightProvider> => {
+  const state = await Rx.firstValueFrom(ctx.wallet.state().pipe(Rx.filter((s) => s.isSynced)));
+  return {
+    getCoinPublicKey() {
+      return state.shielded.coinPublicKey.toHexString();
+    },
+    getEncryptionPublicKey() {
+      return state.shielded.encryptionPublicKey.toHexString();
+    },
+    async balanceTx(tx, ttl?) {
+      const recipe = await ctx.wallet.balanceUnboundTransaction(
+        tx,
+        { shieldedSecretKeys: ctx.shieldedSecretKeys, dustSecretKey: ctx.dustSecretKey },
+        { ttl: ttl ?? new Date(Date.now() + 30 * 60 * 1000) },
+      );
+
+      // Work around wallet SDK bug: signRecipe uses hardcoded 'pre-proof'
+      // marker when cloning intents, but proven (UnboundTransaction) intents
+      // have 'proof' data, causing "Failed to clone intent". We sign manually
+      // with the correct proof markers.
+      const signFn = (payload: Uint8Array) => ctx.unshieldedKeystore.signData(payload);
+      signTransactionIntents(recipe.baseTransaction, signFn, 'proof');
+      if (recipe.balancingTransaction) {
+        signTransactionIntents(recipe.balancingTransaction, signFn, 'pre-proof');
+      }
+
+      return ctx.wallet.finalizeRecipe(recipe);
+    },
+    submitTx(tx) {
+      return ctx.wallet.submitTransaction(tx) as any;
+    },
+  };
+};
+
+export { WalletContext } from "./utils/types.js";
