@@ -6,6 +6,29 @@
 - [Docker](https://docs.docker.com/get-docker/) with `docker compose` — used for the local proof server, node and indexer
 - [pnpm v10.29.3+](https://pnpm.io/) — `pnpm --version` to check. Version 10.29.3 is the only version that I have tested.
 
+## Compact Compiler (v0.28.0)
+
+The Compact compiler converts smart contracts into circuits. The `compact` version manager handles installing and invoking the compiler — you never need to call `compactc` directly.
+
+Install the version manager and compiler:
+
+```bash
+# Install the Compact version manager
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/midnightntwrk/compact/releases/download/compact-v0.4.0/compact-installer.sh | sh
+
+# Add to PATH
+source $HOME/.local/bin/env
+
+# Install the compiler version required by this project
+compact update 0.28.0
+
+# Verify
+compact --version    # expect: compact 0.4.0
+compact list         # should show → 0.28.0 as the selected version
+```
+
+> **Important**: You do not invoke `compactc` directly. The `compact` version manager finds and runs the correct compiler version for you. All compilation in this project uses `compact compile` via `npm run compact`.
+
 ## Setup
 
 1. Go to `apps/cli` and copy the `.env.example` file to `.env`
@@ -30,3 +53,8 @@ If you didn't change anything in the repo. The compose file is in the root of th
 
 1. Go to `packages/contract` and run `pnpm compact` to compile the contract
 2. TODO: Add instructions to update the types in the contract package
+
+## Useful Links
+
+- [Midnight Documentation](https://docs.midnight.network/) — Developer guide
+- [Compact Language Guide](https://docs.midnight.network/compact) — Smart contract language reference
