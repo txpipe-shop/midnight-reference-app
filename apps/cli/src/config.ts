@@ -36,7 +36,6 @@ export class StandaloneConfig implements Config {
 
 // TODO: validate env variables
 export const env = {
-  API_URL: process.env.API_URL || 'http://localhost:3000',
   COMPOSE_DIR: process.env.COMPOSE_DIR!,
   COMPOSE_FILE: process.env.COMPOSE_FILE!,
 }
