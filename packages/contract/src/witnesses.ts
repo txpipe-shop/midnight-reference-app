@@ -13,8 +13,7 @@ export type WitnessBase = WitnessContext<Ledger, PrivateState>;
  * that corresponds to the ledger declaration in the Compact code, and PS
  * is the private state type.
  *
- * A WitnessContext has three
- * fields:
+ * A WitnessContext has three fields:
  *  - ledger: T
  *  - privateState: PS
  *  - contractAddress: string

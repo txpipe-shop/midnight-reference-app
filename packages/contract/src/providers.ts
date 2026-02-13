@@ -14,6 +14,7 @@ import {
   PrivateStateId
 } from "./types.js";
 
+// TODO: Maybe we can improve how these variables are defined
 const currentDir = path.resolve(new URL(import.meta.url).pathname, "..");
 export const contractConfig = {
   privateStateStoreName: exampleContractPrivateStateKey,

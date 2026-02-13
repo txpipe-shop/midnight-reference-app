@@ -4,24 +4,24 @@ import {
   configureProviders,
   exampleContractPrivateStateKey,
   type ContractAddress,
-  type ContractType,
+  type ExampleContractDeployed,
   type ExampleContractProviders,
+  type ExampleContractType,
   type PrivateState
 } from "@midnight-reference-app/contract";
 import type { WalletContext } from "@midnight-reference-app/wallet";
 import assert from "node:assert";
-import type { ExampleContractInstance } from "../../../../packages/contract/dist/types.js";
 import type { StandaloneConfig } from "../config.js";
 
 export class ExampleContract {
   private static instance: ExampleContract | null = null;
 
   readonly providers: ExampleContractProviders;
-  readonly deployedContract: ExampleContractInstance | null = null;
+  readonly deployedContract: ExampleContractDeployed | null = null;
 
   private constructor(
     providers: ExampleContractProviders,
-    deployedContract: ExampleContractInstance
+    deployedContract: ExampleContractDeployed
   ) {
     this.providers = providers;
     this.deployedContract = deployedContract;
@@ -41,7 +41,7 @@ export class ExampleContract {
     });
 
 
-    const deployedContract = await deployContract<ContractType>(providers, {
+    const deployedContract = await deployContract<ExampleContractType>(providers, {
       compiledContract: CompactCompiledContract,
       privateStateId: exampleContractPrivateStateKey,
       initialPrivateState: privateState,
@@ -68,7 +68,7 @@ export class ExampleContract {
       proofServer: config.proofServer,
     });
 
-    const deployedContract = await findDeployedContract<ContractType>(
+    const deployedContract = await findDeployedContract<ExampleContractType>(
       providers,
       {
         contractAddress,

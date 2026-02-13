@@ -2,12 +2,40 @@ pragma language_version 0.20;
 
 import CompactStandardLibrary;
 
+/** 
+ * We can use enums and structs throughout the contract.
+ * enum Names {
+ *   ALICE,
+ *   BOB,
+ *   CHARLIE
+ * }
+
+ * struct CounterObj {
+ *   name: Opaque<"string">
+ *   counter: Counter;
+ * }
+ */
+
+/**
+ * The ledger is the public record of contract state.
+ * We can have multiple ledger declarations in a contract.
+ * And they can use structs and enums
+ */
 export ledger counter: Counter;
 
 constructor() {
   counter.increment(1);
 }
 
+/**
+ * Circuits are the 'functions' that are used to interact with the contract.
+ * We can have multiple circuits in a contract.
+ * They can be exported or not. Exported circuits are the ones that are used to interact with the contract.
+ *
+ * Circuits can be:
+ * - Pure: don't read/write ledger or call witnesses
+ * - Impure: interact with ledger or witnesses
+ */
 export circuit returnTrue(): Boolean {
   counter.increment(1);
   return true;
@@ -17,4 +45,10 @@ export circuit publicKey(sk: Bytes<32>): Bytes<32> {
   return persistentHash<Vector<2, Bytes<32>>>([pad(32, "example:pk:"), sk]);
 }
 
+/**
+ * You can declare witnesses functions in the contract, which are supplied
+ * in TypeScript and represent the interface to private/off-chain state.
+ * 
+ * Witnesses are not mandatory.
+ */
 witness foo(x: Boolean): Boolean;
