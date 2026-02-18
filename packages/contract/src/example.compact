@@ -35,6 +35,7 @@ struct Input {
   uint: Uint<64>;
   boolean: Boolean;
   bytes32: Bytes<32>;
+  field: Field;
 }
 
 struct ByteProp {
@@ -42,8 +43,14 @@ struct ByteProp {
   value: Bytes<32>;
 }
 
+struct FieldProp {
+  op: Eq;
+  value: Field;
+}
 
-type Proposition = Either<NumberProp, Either<BooleanProp, ByteProp>>;
+
+
+type Proposition = Either<NumberProp, Either<BooleanProp, Either<ByteProp, FieldProp>>>;
 
 type Conjunction<#n> = Maybe<Vector<n, Maybe<Proposition>>>;
 type Disjunction<#n, #m> = Vector<m, Conjunction<n>>;
@@ -79,13 +86,19 @@ circuit checkByteProp(rule: ByteProp, input: Input): Boolean {
   return rule.op == Eq.EQ ? input.bytes32 == rule.value : input.bytes32 != rule.value;
 }
 
+circuit checkFieldProp(rule: FieldProp, input: Input): Boolean {
+   return rule.op == Eq.EQ ? input.field == rule.value : input.field != rule.value;
+}
+
 circuit checkProp(rule: Proposition, input: Input): Boolean {
   if(rule.is_left) {
       return checkNumberProp(rule.left, input);
   } else if (rule.right.is_left) {
     return checkBooleanProp(rule.right.left, input);
+  } else if (rule.right.right.is_left){
+    return checkByteProp(rule.right.right.left, input);
   } else {
-    return checkByteProp(rule.right.right, input);
+    return checkFieldProp(rule.right.right.right, input);
   }
 }
 
