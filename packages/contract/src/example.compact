@@ -47,7 +47,7 @@ type Proposition = Either<NumberProp, Either<BooleanProp, ByteProp>>;
 
 type Conjunction<#n> = Maybe<Vector<n, Maybe<Proposition>>>;
 type Disjunction<#n, #m> = Vector<m, Conjunction<n>>;
-type Rules = Disjunction<20,10>;
+type Rules = Disjunction<3,2>;
 
 export ledger rules: Rules;
 
@@ -97,7 +97,7 @@ circuit satAnd(rule: Maybe<Proposition>, input: Input): Boolean {
   return true;
 }
 
-circuit satOr(clause: Conjunction<20>, input: Input): Boolean {
+circuit satOr(clause: Conjunction<3>, input: Input): Boolean {
   if (clause.is_some) {
     return fold((acc, and) => acc && satAnd(and, input), true, clause.value);
   }
