@@ -17,6 +17,7 @@ If it does, you will need to update the `witnesses` object to include the new wi
 For each witness you will write a function that takes a `WitnessBase` as first argument (named `context`) and then, the arguments of the witness function. The return value should be a tuple of the new private state and the declared return value.
 
 ```compact
+// Compact code
 witness foo(x: Boolean): Boolean;
 witness bar(y: Vector<2, Uint<8>>, z: Uint<8>): Uint<1>;
 ...
@@ -63,7 +64,7 @@ export type ExampleContractDeployed =
 export const exampleContractPrivateStateKey = "exampleContractPrivateState";
 export type PrivateStateId = typeof exampleContractPrivateStateKey;
 
-// Represents the exported (impure) circuits of the contract.
+// Represents the exported impure circuits of the contract.
 export type ExampleContractCircuitKeys = Exclude<
   keyof ExampleContractType["impureCircuits"],
   number | symbol

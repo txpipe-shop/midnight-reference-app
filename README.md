@@ -51,8 +51,7 @@ If you didn't change anything in the repo. The compose file is in the root of th
 
 ### I updated the contract, what should I do now?
 
-1. Go to `packages/contract` and run `pnpm compact` to compile the contract
-2. TODO: Add instructions to update the types in the contract package
+1. Go to `packages/contract` and check the instructions in the README.md file
 
 ## Useful Links
 

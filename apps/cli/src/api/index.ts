@@ -6,12 +6,12 @@ import {
   CompactCompiledContract,
   configureProviders,
   exampleContractPrivateStateKey,
+  pureCircuits,
   type ContractAddress,
   type ExampleContractDeployed,
   type ExampleContractProviders,
   type ExampleContractType,
   type PrivateState,
-  pureCircuits,
 } from "@midnight-reference-app/contract";
 import type { WalletContext } from "@midnight-reference-app/wallet";
 import assert from "assert";
@@ -82,7 +82,6 @@ export class ExampleContract {
     return result.private.result;
   }
 
-  // Little helper so you know where to find exported pure circuits
   publicKey(secretKey: Uint8Array<ArrayBufferLike>): Uint8Array<ArrayBufferLike> {
     return pureCircuits.publicKey(secretKey);
   }

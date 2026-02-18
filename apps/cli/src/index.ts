@@ -13,7 +13,7 @@ const testContainers = new TestContainers(env.COMPOSE_DIR, env.COMPOSE_FILE, log
 
 
 const main = async () => {
-  const startedContainers = await testContainers.start();
+  await testContainers.start();
   config.updateConfigURLs(testContainers);
   const walletCtx: WalletContext = await buildWallet(config, GENESIS_MINT_WALLET_SEED);
   const rli = createInterface({ input, output, terminal: true });
