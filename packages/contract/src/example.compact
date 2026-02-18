@@ -2,53 +2,61 @@ pragma language_version 0.20;
 
 import CompactStandardLibrary;
 
-/** 
- * We can use enums and structs throughout the contract.
- * enum Names {
- *   ALICE,
- *   BOB,
- *   CHARLIE
- * }
 
- * struct CounterObj {
- *   name: Opaque<"string">
- *   counter: Counter;
- * }
- */
-
-/**
- * The ledger is the public record of contract state.
- * We can have multiple ledger declarations in a contract.
- * And they can use structs and enums
- */
-export ledger counter: Counter;
-
-constructor() {
-  counter.increment(1);
+enum NumberComp {
+  GT,
+  LT,
+  EQ,
+  NEQ,
+  GTE,
+  LTE,
 }
 
-/**
- * Circuits are the 'functions' that are used to interact with the contract.
- * We can have multiple circuits in a contract.
- * They can be exported or not. Exported circuits are the ones that are used to interact with the contract.
- *
- * Circuits can be:
- * - Pure: don't read/write ledger or call witnesses
- * - Impure: interact with ledger or witnesses
- */
-export circuit returnTrue(): Boolean {
-  counter.increment(1);
+struct NumberProp {
+  op: NumberComp;
+  value: Uint<64>;
+}
+
+type AndRules<#n> = Vector<n, Maybe<NumberProp>>;
+type Conjunction<#n> = Maybe<AndRules<n>>;
+type Disjunction<#n, #m> = Vector<m, Conjunction<n>>;
+type Rules = Disjunction<2,2>;
+
+export ledger rules: Rules;
+
+constructor(contractRules: Rules) {
+  rules = disclose(contractRules);
+}
+
+circuit satAnd(rule: Maybe<NumberProp>, input: Uint<64>): Boolean {
+  if (rule.is_some) {
+    // TODO: add more types of rules
+    if(rule.value.op == NumberComp.GTE) {
+      return rule.value.value >= input;
+    } else if (rule.value.op == NumberComp.LTE) {
+      return rule.value.value <= input;
+    } else if (rule.value.op == NumberComp.LT) {
+      return rule.value.value < input;
+    } else if (rule.value.op == NumberComp.GT) {
+      return rule.value.value > input;
+    } else if (rule.value.op == NumberComp.NEQ) {
+      return !(rule.value.value == input);
+    }{
+      return rule.value.value == input;
+    }
+  }
+  // && neutral
   return true;
 }
 
-export circuit publicKey(sk: Bytes<32>): Bytes<32> {
-  return persistentHash<Vector<2, Bytes<32>>>([pad(32, "example:pk:"), sk]);
+circuit satOr(clause: Conjunction<2>, input: Uint<64>): Boolean {
+  if (clause.is_some) {
+    return fold((acc, and) => acc && satAnd(and, input), true, clause.value);
+  }
+  // || neutral
+  return false;
 }
 
-/**
- * You can declare witnesses functions in the contract, which are supplied
- * in TypeScript and represent the interface to private/off-chain state.
- * 
- * Witnesses are not mandatory.
- */
-witness foo(x: Boolean): Boolean;
+export circuit satisifes(input: Uint<64>): Boolean {
+  return fold((acc, or) => acc || satOr(or, input), false, rules);
+}
