@@ -1,4 +1,7 @@
-import { deployContract, findDeployedContract } from "@midnight-ntwrk/midnight-js-contracts";
+import {
+  deployContract,
+  findDeployedContract,
+} from "@midnight-ntwrk/midnight-js-contracts";
 import {
   CompactCompiledContract,
   configureProviders,
@@ -7,21 +10,19 @@ import {
   type ExampleContractDeployed,
   type ExampleContractProviders,
   type ExampleContractType,
-  type PrivateState
+  type PrivateState,
 } from "@midnight-reference-app/contract";
 import type { WalletContext } from "@midnight-reference-app/wallet";
-import assert from "node:assert";
+import assert from "assert";
 import type { StandaloneConfig } from "../config.js";
 
 export class ExampleContract {
-  private static instance: ExampleContract | null = null;
-
   readonly providers: ExampleContractProviders;
-  readonly deployedContract: ExampleContractDeployed | null = null;
+  readonly deployedContract: ExampleContractDeployed | null;
 
   private constructor(
     providers: ExampleContractProviders,
-    deployedContract: ExampleContractDeployed
+    deployedContract: ExampleContractDeployed | null
   ) {
     this.providers = providers;
     this.deployedContract = deployedContract;
@@ -32,24 +33,22 @@ export class ExampleContract {
     config: StandaloneConfig,
     privateState: PrivateState
   ): Promise<ExampleContract> {
-    if (ExampleContract.instance) return ExampleContract.instance;
 
     const providers = await configureProviders(walletCtx, {
       indexer: config.indexer,
       indexerWS: config.indexerWS,
       proofServer: config.proofServer,
     });
+    const deployedContract = await deployContract<ExampleContractType>(
+      providers,
+      {
+        compiledContract: CompactCompiledContract,
+        privateStateId: exampleContractPrivateStateKey,
+        initialPrivateState: privateState,
+      }
+    );
 
-
-    const deployedContract = await deployContract<ExampleContractType>(providers, {
-      compiledContract: CompactCompiledContract,
-      privateStateId: exampleContractPrivateStateKey,
-      initialPrivateState: privateState,
-    });
-
-
-    ExampleContract.instance = new ExampleContract(providers, deployedContract);
-    return ExampleContract.instance;
+    return new ExampleContract(providers, deployedContract);
   }
 
   static async join(
@@ -58,16 +57,11 @@ export class ExampleContract {
     contractAddress: ContractAddress,
     privateState: PrivateState
   ): Promise<ExampleContract> {
-    if (ExampleContract.instance) {
-      return ExampleContract.instance;
-    }
-
     const providers = await configureProviders(walletCtx, {
       indexer: config.indexer,
       indexerWS: config.indexerWS,
       proofServer: config.proofServer,
     });
-
     const deployedContract = await findDeployedContract<ExampleContractType>(
       providers,
       {
@@ -78,12 +72,11 @@ export class ExampleContract {
       }
     );
 
-    ExampleContract.instance = new ExampleContract(providers, deployedContract);
-    return ExampleContract.instance;
+    return new ExampleContract(providers, deployedContract);
   }
 
   async returnTrue(): Promise<boolean> {
-    assert(this.deployedContract !== null, "Contract not deployed");
+    assert(this.deployedContract, "Contract not deployed");
     const result = await this.deployedContract.callTx.returnTrue();
     return result.private.result;
   }

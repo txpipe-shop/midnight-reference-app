@@ -1,8 +1,6 @@
 import type { WalletContext } from "@midnight-reference-app/wallet";
-import assert from "node:assert";
 import { type Logger } from "pino";
 import type { Interface } from "readline/promises";
-import { StartedDockerComposeEnvironment } from "testcontainers";
 import { ExampleContract } from "../api/index.js";
 import { type Config } from "../config.js";
 import { circuitMenu, contractMenu } from "./menus.js";
@@ -25,12 +23,12 @@ async function handleCircuits(contract: ExampleContract, logger: Logger, rli: In
 
 export async function runCli(
   config: Config,
-  testContainers: StartedDockerComposeEnvironment,
   walletCtx: WalletContext,
   logger: Logger,
   rli: Interface
 ): Promise<void> {
   let contract: ExampleContract | null = null;
+
   while (true) {
     const choice = await rli.question(contractMenu);
 
@@ -53,11 +51,10 @@ export async function runCli(
       case "3":
         logger.info("Exiting...");
         return;
+      default:
+        continue;
     }
 
-    if (contract) break;
+    if (contract) await handleCircuits(contract, logger, rli);
   }
-
-  assert(contract, "Contract not deployed");
-  await handleCircuits(contract!, logger, rli);
 }
