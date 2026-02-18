@@ -11,14 +11,24 @@ enum NumberComp {
   LTE,
 }
 
+enum BooleanComp {
+  EQ,
+  NEQ,
+}
+
 struct NumberProp {
   op: NumberComp;
   value: Uint<64>;
-  not: Boolean;
 }
 
-type AndRules<#n> = Vector<n, Maybe<NumberProp>>;
-type Conjunction<#n> = Maybe<AndRules<n>>;
+struct BooleanProp {
+  op: BooleanComp;
+  value: Boolean;
+}
+
+type Proposition = Either<NumberProp, BooleanProp>;
+
+type Conjunction<#n> = Maybe<Vector<n, Maybe<Proposition>>>;
 type Disjunction<#n, #m> = Vector<m, Conjunction<n>>;
 type Rules = Disjunction<20,10>;
 
@@ -44,10 +54,21 @@ circuit checkNumberProp(rule: NumberProp, input: Uint<64>): Boolean {
   }
 }
 
-circuit satAnd(rule: Maybe<NumberProp>, input: Uint<64>): Boolean {
+circuit checkBooleanProp(rule: BooleanProp, input: Uint<64>): Boolean {
+    return true;
+}
+
+circuit checkProp(rule: Proposition, input: Uint<64>): Boolean {
+  if(rule.is_left) {
+      return checkNumberProp(rule.left, input);
+  } else {
+    return checkBooleanProp(rule.right, input);
+  }
+}
+
+circuit satAnd(rule: Maybe<Proposition>, input: Uint<64>): Boolean {
   if (rule.is_some) {
-    const ruleEval = checkNumberProp(rule.value, input);
-    return rule.value.not ? !ruleEval : ruleEval;
+    return checkProp(rule.value, input);
   }
   // && neutral
   return true;
