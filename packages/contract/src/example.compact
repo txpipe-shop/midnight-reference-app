@@ -2,6 +2,14 @@ pragma language_version 0.20;
 
 import CompactStandardLibrary;
 
+struct Input {
+  uint: Uint<64>;
+  boolean: Boolean;
+  bytes32: Bytes<32>;
+  field: Field;
+  nullifier: Bytes<32>;
+}
+
 enum Ord {
   GT,
   LT,
@@ -26,18 +34,6 @@ struct BooleanProp {
   value: Boolean;
 }
 
-struct BytesProp {
-  op: Eq;
-  value: Uint<64>;
-}
-
-struct Input {
-  uint: Uint<64>;
-  boolean: Boolean;
-  bytes32: Bytes<32>;
-  field: Field;
-}
-
 struct ByteProp {
   op: Eq;
   value: Bytes<32>;
@@ -48,13 +44,15 @@ struct FieldProp {
   value: Field;
 }
 
+struct NullifierProp {
+  op: Eq;
+  nullifier: Bytes<32>;
+}
 
-
-type Proposition = Either<NumberProp, Either<BooleanProp, Either<ByteProp, FieldProp>>>;
-
+type Proposition = Either<NumberProp, Either<BooleanProp, Either<ByteProp, Either<FieldProp, NullifierProp>>>>;
 type Conjunction<#n> = Maybe<Vector<n, Maybe<Proposition>>>;
 type Disjunction<#n, #m> = Vector<m, Conjunction<n>>;
-type Rules = Disjunction<3,2>;
+type Rules = Disjunction<10,2>;
 
 export ledger rules: Rules;
 
@@ -90,15 +88,22 @@ circuit checkFieldProp(rule: FieldProp, input: Input): Boolean {
    return rule.op == Eq.EQ ? input.field == rule.value : input.field != rule.value;
 }
 
+circuit checkNullifierProp(rule: NullifierProp, input: Input): Boolean {
+  const computed = disclose(nullifier(secretKey()));
+  return rule.op == Eq.EQ ? input.nullifier == computed : input.nullifier != computed;
+}
+
 circuit checkProp(rule: Proposition, input: Input): Boolean {
   if(rule.is_left) {
       return checkNumberProp(rule.left, input);
   } else if (rule.right.is_left) {
     return checkBooleanProp(rule.right.left, input);
-  } else if (rule.right.right.is_left){
+  } else if (rule.right.right.is_left) {
     return checkByteProp(rule.right.right.left, input);
+  } else if (rule.right.right.right.is_left){
+    return checkFieldProp(rule.right.right.right.left, input);
   } else {
-    return checkFieldProp(rule.right.right.right, input);
+    return checkNullifierProp(rule.right.right.right.right, input);
   }
 }
 
@@ -110,7 +115,7 @@ circuit satAnd(rule: Maybe<Proposition>, input: Input): Boolean {
   return true;
 }
 
-circuit satOr(clause: Conjunction<3>, input: Input): Boolean {
+circuit satOr(clause: Conjunction<10>, input: Input): Boolean {
   if (clause.is_some) {
     return fold((acc, and) => acc && satAnd(and, input), true, clause.value);
   }
@@ -121,3 +126,11 @@ circuit satOr(clause: Conjunction<3>, input: Input): Boolean {
 export circuit satisifes(input: Input): Boolean {
   return fold((acc, or) => acc || satOr(or, input), false, rules);
 }
+
+circuit nullifier(sk: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<2, Bytes<32>>>(
+    [pad(32, "native-scripts"), sk]
+  );
+}
+
+witness secretKey(): Bytes<32>;
