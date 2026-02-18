@@ -7,32 +7,18 @@ import { runCli } from "./cli/index.js";
 import { env, StandaloneConfig } from "./config.js";
 import { GENESIS_MINT_WALLET_SEED } from "./utils/constants.js";
 
+const config = new StandaloneConfig();
+const logger = createLogger(config.logDir);
+const testContainers = new TestContainers(env.COMPOSE_DIR, env.COMPOSE_FILE, logger);
+
+
 const main = async () => {
-  const config = new StandaloneConfig();
-  const logger = await createLogger(config.logDir);
-  const testContainers = new TestContainers(env.COMPOSE_DIR, env.COMPOSE_FILE, logger);
+  const startedContainers = await testContainers.start();
+  config.updateConfigURLs(testContainers);
+  const walletCtx: WalletContext = await buildWallet(config, GENESIS_MINT_WALLET_SEED);
+  const rli = createInterface({ input, output, terminal: true });
+  await runCli(config, startedContainers, walletCtx, logger, rli).finally(walletCtx.wallet.stop);
 
-  try {
-    const startedContainers = await testContainers.start();
-    config.updateConfigURLs(testContainers);
-    const walletCtx: WalletContext = await buildWallet(config, GENESIS_MINT_WALLET_SEED);
-
-    try {
-      const rli = createInterface({ input, output, terminal: true });
-      await runCli(config, startedContainers, walletCtx, logger, rli);
-    } catch (error) {
-      console.error("Error:", error);
-      process.exit(1);
-    } finally {
-      await walletCtx.wallet.stop();
-    }
-
-  } catch (error) {
-    console.error("Error:", error);
-    process.exit(1);
-  } finally {
-    await testContainers.stop();
-  }
 };
 
-main();
+await main().finally(testContainers.stop);
