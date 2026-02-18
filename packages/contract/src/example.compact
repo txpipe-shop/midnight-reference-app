@@ -20,7 +20,7 @@ struct NumberProp {
 type AndRules<#n> = Vector<n, Maybe<NumberProp>>;
 type Conjunction<#n> = Maybe<AndRules<n>>;
 type Disjunction<#n, #m> = Vector<m, Conjunction<n>>;
-type Rules = Disjunction<2,2>;
+type Rules = Disjunction<20,10>;
 
 export ledger rules: Rules;
 
@@ -53,7 +53,7 @@ circuit satAnd(rule: Maybe<NumberProp>, input: Uint<64>): Boolean {
   return true;
 }
 
-circuit satOr(clause: Conjunction<2>, input: Uint<64>): Boolean {
+circuit satOr(clause: Conjunction<20>, input: Uint<64>): Boolean {
   if (clause.is_some) {
     return fold((acc, and) => acc && satAnd(and, input), true, clause.value);
   }
