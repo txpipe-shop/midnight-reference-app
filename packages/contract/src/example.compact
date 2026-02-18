@@ -2,7 +2,6 @@ pragma language_version 0.20;
 
 import CompactStandardLibrary;
 
-
 enum NumberComp {
   GT,
   LT,
@@ -15,6 +14,7 @@ enum NumberComp {
 struct NumberProp {
   op: NumberComp;
   value: Uint<64>;
+  not: Boolean;
 }
 
 type AndRules<#n> = Vector<n, Maybe<NumberProp>>;
@@ -28,22 +28,26 @@ constructor(contractRules: Rules) {
   rules = disclose(contractRules);
 }
 
+circuit checkNumberProp(rule: NumberProp, input: Uint<64>): Boolean {
+  if(rule.op == NumberComp.GTE) {
+    return rule.value >= input;
+  } else if (rule.op == NumberComp.LTE) {
+    return rule.value <= input;
+  } else if (rule.op == NumberComp.LT) {
+    return rule.value < input;
+  } else if (rule.op == NumberComp.GT) {
+    return rule.value > input;
+  } else if (rule.op == NumberComp.NEQ) {
+    return rule.value != input;
+  }{
+    return rule.value == input;
+  }
+}
+
 circuit satAnd(rule: Maybe<NumberProp>, input: Uint<64>): Boolean {
   if (rule.is_some) {
-    // TODO: add more types of rules
-    if(rule.value.op == NumberComp.GTE) {
-      return rule.value.value >= input;
-    } else if (rule.value.op == NumberComp.LTE) {
-      return rule.value.value <= input;
-    } else if (rule.value.op == NumberComp.LT) {
-      return rule.value.value < input;
-    } else if (rule.value.op == NumberComp.GT) {
-      return rule.value.value > input;
-    } else if (rule.value.op == NumberComp.NEQ) {
-      return !(rule.value.value == input);
-    }{
-      return rule.value.value == input;
-    }
+    const ruleEval = checkNumberProp(rule.value, input);
+    return rule.value.not ? !ruleEval : ruleEval;
   }
   // && neutral
   return true;
