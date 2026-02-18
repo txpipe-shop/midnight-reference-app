@@ -17,7 +17,7 @@ const main = async () => {
   config.updateConfigURLs(testContainers);
   const walletCtx: WalletContext = await buildWallet(config, GENESIS_MINT_WALLET_SEED);
   const rli = createInterface({ input, output, terminal: true });
-  await runCli(config, startedContainers, walletCtx, logger, rli).finally(walletCtx.wallet.stop);
+  await runCli(config, walletCtx, logger, rli).finally(walletCtx.wallet.stop);
 
 };
 
