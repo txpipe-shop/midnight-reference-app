@@ -39,7 +39,7 @@ circuit checkNumberProp(rule: NumberProp, input: Uint<64>): Boolean {
     return rule.value > input;
   } else if (rule.op == NumberComp.NEQ) {
     return rule.value != input;
-  }{
+  } else {
     return rule.value == input;
   }
 }
