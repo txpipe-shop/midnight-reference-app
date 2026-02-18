@@ -2,7 +2,7 @@ pragma language_version 0.20;
 
 import CompactStandardLibrary;
 
-enum PartialOrd {
+enum Ord {
   GT,
   LT,
   EQ,
@@ -17,7 +17,7 @@ enum Eq {
 }
 
 struct NumberProp {
-  op: PartialOrd;
+  op: Ord;
   value: Uint<64>;
 }
 
@@ -34,10 +34,16 @@ struct BytesProp {
 struct Input {
   uint: Uint<64>;
   boolean: Boolean;
+  bytes32: Bytes<32>;
+}
+
+struct ByteProp {
+  op: Eq;
+  value: Bytes<32>;
 }
 
 
-type Proposition = Either<NumberProp, BooleanProp>;
+type Proposition = Either<NumberProp, Either<BooleanProp, ByteProp>>;
 
 type Conjunction<#n> = Maybe<Vector<n, Maybe<Proposition>>>;
 type Disjunction<#n, #m> = Vector<m, Conjunction<n>>;
@@ -50,15 +56,15 @@ constructor(contractRules: Rules) {
 }
 
 circuit checkNumberProp(rule: NumberProp, input: Input): Boolean {
-  if(rule.op == PartialOrd.GTE) {
+  if(rule.op == Ord.GTE) {
     return rule.value >= input.uint;
-  } else if (rule.op == PartialOrd.LTE) {
+  } else if (rule.op == Ord.LTE) {
     return rule.value <= input.uint;
-  } else if (rule.op == PartialOrd.LT) {
+  } else if (rule.op == Ord.LT) {
     return rule.value < input.uint;
-  } else if (rule.op == PartialOrd.GT) {
+  } else if (rule.op == Ord.GT) {
     return rule.value > input.uint;
-  } else if (rule.op == PartialOrd.NEQ) {
+  } else if (rule.op == Ord.NEQ) {
     return rule.value != input.uint;
   } else {
     return rule.value == input.uint;
@@ -69,11 +75,17 @@ circuit checkBooleanProp(rule: BooleanProp, input: Input): Boolean {
   return rule.op == Eq.EQ ? input.boolean == rule.value : input.boolean != rule.value;
 }
 
+circuit checkByteProp(rule: ByteProp, input: Input): Boolean {
+  return rule.op == Eq.EQ ? input.bytes32 == rule.value : input.bytes32 != rule.value;
+}
+
 circuit checkProp(rule: Proposition, input: Input): Boolean {
   if(rule.is_left) {
       return checkNumberProp(rule.left, input);
+  } else if (rule.right.is_left) {
+    return checkBooleanProp(rule.right.left, input);
   } else {
-    return checkBooleanProp(rule.right, input);
+    return checkByteProp(rule.right.right, input);
   }
 }
 
