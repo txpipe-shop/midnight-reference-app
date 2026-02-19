@@ -1,5 +1,5 @@
 {
-  "name": "midnight-reference-app/cli",
+  "name": "@midnight-sentinel/cli",
   "type": "module",
   "scripts": {
     "clean": "rm -rf dist",
@@ -11,7 +11,7 @@
     "@midnight-ntwrk/compact-runtime": "^0.14.0",
     "@midnight-ntwrk/midnight-js-contracts": "^3.0.0",
     "@midnight-reference-app/containers": "workspace:*",
-    "@midnight-reference-app/contract": "workspace:*",
+    "@midnight-sentinel/contract": "workspace:*",
     "@midnight-reference-app/logger": "workspace:*",
     "@midnight-reference-app/wallet": "workspace:*",
     "axios": "^1.13.5",

@@ -5,24 +5,24 @@ import {
 import {
   CompactCompiledContract,
   configureProviders,
-  exampleContractPrivateStateKey,
+  sentinelContractPrivateStateKey,
   type ContractAddress,
-  type ExampleContractDeployed,
-  type ExampleContractProviders,
-  type ExampleContractType,
+  type SentinelContractDeployed,
+  type SentinelContractProviders,
+  type SentinelContractType,
   type PrivateState,
-} from "@midnight-reference-app/contract";
+} from "@midnight-sentinel/contract";
 import type { WalletContext } from "@midnight-reference-app/wallet";
 import assert from "assert";
 import type { StandaloneConfig } from "../config.js";
 
 export class ExampleContract {
-  readonly providers: ExampleContractProviders;
-  readonly deployedContract: ExampleContractDeployed | null;
+  readonly providers: SentinelContractProviders;
+  readonly deployedContract: SentinelContractDeployed | null;
 
   private constructor(
-    providers: ExampleContractProviders,
-    deployedContract: ExampleContractDeployed | null
+    providers: SentinelContractProviders,
+    deployedContract: SentinelContractDeployed | null
   ) {
     this.providers = providers;
     this.deployedContract = deployedContract;
@@ -39,11 +39,11 @@ export class ExampleContract {
       indexerWS: config.indexerWS,
       proofServer: config.proofServer,
     });
-    const deployedContract = await deployContract<ExampleContractType>(
+    const deployedContract = await deployContract<SentinelContractType>(
       providers,
       {
         compiledContract: CompactCompiledContract,
-        privateStateId: exampleContractPrivateStateKey,
+        privateStateId: sentinelContractPrivateStateKey,
         initialPrivateState: privateState,
       }
     );
@@ -62,12 +62,12 @@ export class ExampleContract {
       indexerWS: config.indexerWS,
       proofServer: config.proofServer,
     });
-    const deployedContract = await findDeployedContract<ExampleContractType>(
+    const deployedContract = await findDeployedContract<SentinelContractType>(
       providers,
       {
         contractAddress,
         compiledContract: CompactCompiledContract,
-        privateStateId: exampleContractPrivateStateKey,
+        privateStateId: sentinelContractPrivateStateKey,
         initialPrivateState: privateState,
       }
     );

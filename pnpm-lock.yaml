@@ -32,15 +32,15 @@ importers:
       '@midnight-reference-app/containers':
         specifier: workspace:*
         version: link:../../packages/containers
-      '@midnight-reference-app/contract':
-        specifier: workspace:*
-        version: link:../../packages/contract
       '@midnight-reference-app/logger':
         specifier: workspace:*
         version: link:../../packages/logger
       '@midnight-reference-app/wallet':
         specifier: workspace:*
         version: link:../../packages/wallet
+      '@midnight-sentinel/contract':
+        specifier: workspace:*
+        version: link:../../packages/contract
       axios:
         specifier: ^1.13.5
         version: 1.13.5
