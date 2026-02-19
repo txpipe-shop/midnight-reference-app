@@ -7,10 +7,10 @@ const tag = "SentinelContract";
 export const CompactCompiledContract =
   CompiledContract.make<SentinelContractType>(
     tag,
-    SentinelContractConstructor
+    SentinelContractConstructor,
   ).pipe(
     CompiledContract.withWitnesses(witnesses),
-    CompiledContract.withCompiledFileAssets(contractConfig.zkConfigPath)
+    CompiledContract.withCompiledFileAssets(contractConfig.zkConfigPath),
   );
 
 export { type ContractAddress } from "@midnight-ntwrk/compact-runtime";
@@ -23,6 +23,8 @@ export type {
   SentinelContractDeployed,
   SentinelContractProviders,
   SentinelContractType,
-  PrivateStateId
+  PrivateStateId,
+  SentinelRules,
 } from "./types.js";
-export { witnesses }
+export { SentinelEqOp, SentinelOrdOp } from "./types.js";
+export { witnesses };

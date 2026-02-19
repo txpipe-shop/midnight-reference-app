@@ -1,4 +1,4 @@
-import * as ledger from '@midnight-ntwrk/ledger-v7';
+import * as ledger from "@midnight-ntwrk/ledger-v7";
 import { WalletFacade } from "@midnight-ntwrk/wallet-sdk-facade";
 import { UnshieldedKeystore } from "@midnight-ntwrk/wallet-sdk-unshielded-wallet";
 

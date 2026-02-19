@@ -11,7 +11,7 @@ import {
   SentinelContractCircuitKeys,
   sentinelContractPrivateStateKey,
   SentinelContractProviders,
-  PrivateStateId
+  PrivateStateId,
 } from "./types.js";
 
 // TODO: Maybe we can improve how these variables are defined
@@ -23,10 +23,14 @@ export const contractConfig = {
 
 export const configureProviders = async (
   walletCtx: WalletContext,
-  config: { indexer: string; indexerWS: string; proofServer: string }
+  config: { indexer: string; indexerWS: string; proofServer: string },
 ): Promise<SentinelContractProviders> => {
-  const walletAndMidnightProvider = await createWalletAndMidnightProvider(walletCtx);
-  const zkConfigProvider = new NodeZkConfigProvider<SentinelContractCircuitKeys>(contractConfig.zkConfigPath);
+  const walletAndMidnightProvider =
+    await createWalletAndMidnightProvider(walletCtx);
+  const zkConfigProvider =
+    new NodeZkConfigProvider<SentinelContractCircuitKeys>(
+      contractConfig.zkConfigPath,
+    );
 
   return {
     privateStateProvider: levelPrivateStateProvider<PrivateStateId>({
@@ -35,12 +39,12 @@ export const configureProviders = async (
     }),
     publicDataProvider: indexerPublicDataProvider(
       config.indexer,
-      config.indexerWS
+      config.indexerWS,
     ),
     zkConfigProvider,
     proofProvider: httpClientProofProvider(
       config.proofServer,
-      zkConfigProvider
+      zkConfigProvider,
     ),
     walletProvider: walletAndMidnightProvider,
     midnightProvider: walletAndMidnightProvider,

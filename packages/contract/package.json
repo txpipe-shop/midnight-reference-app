@@ -14,7 +14,9 @@
   },
   "scripts": {
     "compact": "compact compile src/sentinel.compact ./src/managed/sentinel",
+    "compact:no-zk": "compact compile --skip-zk src/sentinel.compact ./src/managed/sentinel",
     "clean": "rm -rf dist",
+    "check": "pnpm clean && pnpm compact:no-zk && mkdir -p dist && tsc --project ./tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/sentinel.compact ./dist",
     "build": "pnpm clean && pnpm compact && mkdir -p dist && tsc --project ./tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/sentinel.compact ./dist"
   },
   "dependencies": {

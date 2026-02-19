@@ -1,6 +1,9 @@
 import * as ledger from "@midnight-ntwrk/ledger-v7";
 import { getNetworkId } from "@midnight-ntwrk/midnight-js-network-id";
-import { type MidnightProvider, type WalletProvider } from '@midnight-ntwrk/midnight-js-types';
+import {
+  type MidnightProvider,
+  type WalletProvider,
+} from "@midnight-ntwrk/midnight-js-types";
 import { DustWallet } from "@midnight-ntwrk/wallet-sdk-dust-wallet";
 import { WalletFacade } from "@midnight-ntwrk/wallet-sdk-facade";
 import { Roles } from "@midnight-ntwrk/wallet-sdk-hd";
@@ -29,7 +32,7 @@ import { Config, WalletContext } from "./utils/types.js";
 
 export const buildWallet = async (
   config: Config,
-  seed: string
+  seed: string,
 ): Promise<WalletContext> => {
   console.log("");
 
@@ -38,25 +41,30 @@ export const buildWallet = async (
     await withStatus("Building wallet", async () => {
       const keys = deriveKeysFromSeed(seed);
 
-      const shieldedSecretKeys = ledger.ZswapSecretKeys.fromSeed(keys[Roles.Zswap]);
+      const shieldedSecretKeys = ledger.ZswapSecretKeys.fromSeed(
+        keys[Roles.Zswap],
+      );
       const dustSecretKey = ledger.DustSecretKey.fromSeed(keys[Roles.Dust]);
-      const unshieldedKeystore = createKeystore(keys[Roles.NightExternal], getNetworkId());
+      const unshieldedKeystore = createKeystore(
+        keys[Roles.NightExternal],
+        getNetworkId(),
+      );
 
       const shieldedWallet = ShieldedWallet(
-        buildShieldedConfig(config)
+        buildShieldedConfig(config),
       ).startWithSecretKeys(shieldedSecretKeys);
       const unshieldedWallet = UnshieldedWallet(
-        buildUnshieldedConfig(config)
+        buildUnshieldedConfig(config),
       ).startWithPublicKey(PublicKey.fromKeyStore(unshieldedKeystore));
       const dustWallet = DustWallet(buildDustConfig(config)).startWithSecretKey(
         dustSecretKey,
-        ledger.LedgerParameters.initialParameters().dust
+        ledger.LedgerParameters.initialParameters().dust,
       );
 
       const wallet = new WalletFacade(
         shieldedWallet,
         unshieldedWallet,
-        dustWallet
+        dustWallet,
       );
       await wallet.start(shieldedSecretKeys, dustSecretKey);
 
@@ -65,7 +73,7 @@ export const buildWallet = async (
 
   // Wait for the wallet to sync with the network
   const syncedState = await withStatus("Syncing with network", () =>
-    waitForSync(wallet)
+    waitForSync(wallet),
   );
 
   // Display the full wallet summary with all addresses and balances
@@ -92,7 +100,9 @@ export const buildWallet = async (
 export const createWalletAndMidnightProvider = async (
   ctx: WalletContext,
 ): Promise<WalletProvider & MidnightProvider> => {
-  const state = await Rx.firstValueFrom(ctx.wallet.state().pipe(Rx.filter((s) => s.isSynced)));
+  const state = await Rx.firstValueFrom(
+    ctx.wallet.state().pipe(Rx.filter((s) => s.isSynced)),
+  );
   return {
     getCoinPublicKey() {
       return state.shielded.coinPublicKey.toHexString();
@@ -103,7 +113,10 @@ export const createWalletAndMidnightProvider = async (
     async balanceTx(tx, ttl?) {
       const recipe = await ctx.wallet.balanceUnboundTransaction(
         tx,
-        { shieldedSecretKeys: ctx.shieldedSecretKeys, dustSecretKey: ctx.dustSecretKey },
+        {
+          shieldedSecretKeys: ctx.shieldedSecretKeys,
+          dustSecretKey: ctx.dustSecretKey,
+        },
         { ttl: ttl ?? new Date(Date.now() + 30 * 60 * 1000) },
       );
 
@@ -111,10 +124,15 @@ export const createWalletAndMidnightProvider = async (
       // marker when cloning intents, but proven (UnboundTransaction) intents
       // have 'proof' data, causing "Failed to clone intent". We sign manually
       // with the correct proof markers.
-      const signFn = (payload: Uint8Array) => ctx.unshieldedKeystore.signData(payload);
-      signTransactionIntents(recipe.baseTransaction, signFn, 'proof');
+      const signFn = (payload: Uint8Array) =>
+        ctx.unshieldedKeystore.signData(payload);
+      signTransactionIntents(recipe.baseTransaction, signFn, "proof");
       if (recipe.balancingTransaction) {
-        signTransactionIntents(recipe.balancingTransaction, signFn, 'pre-proof');
+        signTransactionIntents(
+          recipe.balancingTransaction,
+          signFn,
+          "pre-proof",
+        );
       }
 
       return ctx.wallet.finalizeRecipe(recipe);

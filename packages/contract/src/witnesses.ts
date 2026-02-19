@@ -5,5 +5,10 @@ import { PrivateState } from "./private-state.js";
 export type WitnessBase = WitnessContext<Ledger, PrivateState>;
 
 export const witnesses = {
-  secretKey: ({ privateState }: WitnessContext<Ledger, PrivateState>): [PrivateState, Uint8Array] => ([privateState, privateState.secretKey]),
+  secretKey: ({
+    privateState,
+  }: WitnessContext<Ledger, PrivateState>): [PrivateState, Uint8Array] => [
+    privateState,
+    privateState.secretKey,
+  ],
 };
