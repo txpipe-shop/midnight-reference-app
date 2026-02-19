@@ -55,13 +55,13 @@ type Disjunction<#n, #m> = Vector<m, Conjunction<n>>;
 type Rules = Disjunction<2,2>;
 
 export ledger rules: Rules;
-export ledger baseNonce: Bytes<32>;
-export ledger mintCount: Counter;
+//export ledger baseNonce: Bytes<32>;
+// export ledger mintCount: Counter;
 
 constructor(contractRules: Rules, initialBaseNonce: Bytes<32>) {
   rules = disclose(contractRules);
   // TODO: research if baseNonce can be safely public 
-  baseNonce = disclose(initialBaseNonce);
+  // baseNonce = disclose(initialBaseNonce);
 }
 
 circuit checkNumberProp(rule: NumberProp, input: Input): Boolean {
@@ -135,14 +135,14 @@ export circuit mintSpecialToken(input: Input, address: UserAddress): [] {
   assert(satisifes(input), "Not allowed to mint tokens");
 
 
-  // TODO: use coin base nonce here
-  const nonce = evolveNonce(20, baseNonce);
 
 
   const amount: Uint<64> = 1;
 
   //TODO: shielded mints don't work on latest version
   //const recipientPk = ownPublicKey();
+  // TODO: use coin base nonce here
+  //const nonce = evolveNonce(mintCount, baseNonce);
   ///const recipient = left<ZswapCoinPublicKey, ContractAddress>(recipientPk);
   //const _coin = mintShieldedToken(disclose(input.bytes32), amount, nonce, recipient);
 
