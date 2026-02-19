@@ -80,11 +80,81 @@ export class SentinelContract {
               },
             },
           },
+          {
+            is_some: true,
+            value: {
+              is_left: true,
+              left: {
+                op: SentinelOrdOp.EQ,
+                value: 123n,
+              },
+              right: {
+                is_left: false,
+                right: {
+                  is_left: false,
+                  left: {
+                    op: SentinelEqOp.EQ,
+                    value: new Uint8Array(32).fill(0),
+                  },
+                  right: {
+                    right: {
+                      op: SentinelEqOp.EQ,
+                      nullifier: new Uint8Array(32).fill(0),
+                    },
+                    is_left: false,
+                    left: {
+                      op: SentinelEqOp.EQ,
+                      value: 1n,
+                    },
+                  },
+                },
+                left: {
+                  value: true,
+                  op: SentinelEqOp.EQ,
+                },
+              },
+            },
+          },
         ],
       },
       {
         is_some: true,
         value: [
+          {
+            is_some: true,
+            value: {
+              is_left: true,
+              left: {
+                op: SentinelOrdOp.EQ,
+                value: 123n,
+              },
+              right: {
+                is_left: false,
+                right: {
+                  is_left: false,
+                  left: {
+                    op: SentinelEqOp.EQ,
+                    value: new Uint8Array(32).fill(0),
+                  },
+                  right: {
+                    right: {
+                      op: SentinelEqOp.EQ,
+                      nullifier: new Uint8Array(32).fill(0),
+                    },
+                    is_left: false,
+                    left: {
+                      op: SentinelEqOp.EQ,
+                      value: 1n,
+                    },
+                  },
+                },
+                left: {
+                  value: true,
+                  op: SentinelEqOp.EQ,
+                },
+              },
+            },
+          },
           {
             is_some: true,
             value: {
@@ -134,13 +204,6 @@ export class SentinelContract {
       },
     );
 
-    console.dir(
-      {
-        publicInfo: deployedContract.deployTxData.public,
-        privateInfo: deployedContract.deployTxData.private,
-      },
-      { depth: null },
-    );
     return new SentinelContract(providers, deployedContract);
   }
 
