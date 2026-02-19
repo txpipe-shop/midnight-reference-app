@@ -230,4 +230,19 @@ export class SentinelContract {
 
     return new SentinelContract(providers, deployedContract);
   }
+
+  async mintToken(uint: bigint, address: Uint8Array) {
+    const tx = await this.deployedContract?.callTx.mintSpecialToken({
+      nullifier: new Uint8Array(32).fill(0),
+      boolean: true,
+      bytes32: new Uint8Array(32).fill(0),
+      field: 12312312312n,
+      uint
+    }, { bytes: address });
+
+    return tx;
+
+  }
+
+
 }

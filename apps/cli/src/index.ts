@@ -22,7 +22,7 @@ const main = async () => {
   console.log("Starting");
   await testContainers.start();
   console.log("Test containers began");
-  config.updateConfigURLs(testContainers);
+  // config.updateConfigURLs(testContainers);
   const walletCtx: WalletContext = await buildWallet(
     config,
     GENESIS_MINT_WALLET_SEED,
@@ -32,8 +32,9 @@ const main = async () => {
   await runCli(config, walletCtx, logger, rli).finally(
     walletCtx.wallet.stop.bind(walletCtx.wallet),
   );
+  process.exit(0)
 };
 
 await main()
-  .catch(console.error)
-  .finally(testContainers.stop.bind(testContainers));
+  .catch(console.error);
+// .finally(testContainers.stop.bind(testContainers));

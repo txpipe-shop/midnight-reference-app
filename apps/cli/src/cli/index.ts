@@ -3,10 +3,11 @@ import { type Logger } from "pino";
 import type { Interface } from "readline/promises";
 import { SentinelContract } from "../api/index.js";
 import { type Config } from "../config.js";
-import { circuitMenu, contractMenu } from "./menus.js";
+import { circuitMenu, contractMenu, enterNumber } from "./menus.js";
 
 async function handleCircuits(
   contract: SentinelContract,
+  walletCtx: WalletContext,
   logger: Logger,
   rli: Interface,
 ) {
@@ -15,7 +16,14 @@ async function handleCircuits(
 
     switch (choice) {
       case "1":
-        logger.info("Exiting...");
+        try {
+          const input = await rli.question(enterNumber);
+          const address = await walletCtx.wallet.unshielded.getAddress();
+          const tx = await contract.mintToken(BigInt(input), Buffer.from(address.hexString, 'hex'));
+          logger.info(`Minting tx hash: ${tx?.public.txHash}`);
+        } catch (err) {
+          console.log(err)
+        }
         return;
     }
   }
@@ -37,6 +45,7 @@ export async function runCli(
         contract = await SentinelContract.deploy(walletCtx, config, {
           secretKey: new Uint8Array(32).fill(0),
         });
+        logger.info(`[Contract Address]: ${contract.deployedContract?.deployTxData.public.contractAddress}`);
         break;
       case "2":
         try {
@@ -64,6 +73,6 @@ export async function runCli(
         continue;
     }
 
-    if (contract) await handleCircuits(contract, logger, rli);
+    if (contract) await handleCircuits(contract, walletCtx, logger, rli);
   }
 }

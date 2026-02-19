@@ -11,7 +11,14 @@ ${DIVIDER}
 
 export const circuitMenu: string = `
 ${DIVIDER}
-  [1] Return True
+  [1] Mint a token
   [2] Exit
 ${DIVIDER}
 `;
+
+export const enterNumber: string = `
+${DIVIDER}
+   Enter the secret number
+${DIVIDER}
+`;
+

@@ -15,7 +15,7 @@ export class TestContainers {
   constructor(composeDir: string, composeFile: string, logger: Logger) {
     this.composeDir = composeDir;
     this.composeFile = composeFile;
-    this.uid = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER).toString();
+    this.uid = "shared";
 
     this.logger = logger;
 
@@ -36,6 +36,8 @@ export class TestContainers {
         `${config.container.indexer.name}_${this.uid}`,
         config.container.indexer.waitStrategy,
       )
+      .withNoRecreate()
+      .withProjectName("midnight-reference-app")
       .withEnvironment({
         TESTCONTAINERS_UID: this.uid,
         NETWORK_ID: "undeployed",

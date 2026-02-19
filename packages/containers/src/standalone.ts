@@ -52,14 +52,14 @@ export const standaloneConfig = (
     proofServer: {
       name: "proof-server",
       port: 6300,
-      waitStrategy: Wait.forListeningPorts().withStartupTimeout(3 * 60_000),
+      waitStrategy: Wait.forListeningPorts().withStartupTimeout(0),
     },
     node: {
       name: "node",
       port: 9944,
       waitStrategy: WaitStrategies.forDelayedStrategy(
         "node",
-        20_000,
+        0,
         Wait.forHealthCheck(),
       ),
     },
@@ -68,7 +68,7 @@ export const standaloneConfig = (
       port: 8088,
       waitStrategy: WaitStrategies.forDelayedStrategy(
         "indexer",
-        20_000,
+        0,
         Wait.forHealthCheck(),
       ),
     },
