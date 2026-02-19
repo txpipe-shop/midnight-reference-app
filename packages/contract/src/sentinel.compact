@@ -55,9 +55,13 @@ type Disjunction<#n, #m> = Vector<m, Conjunction<n>>;
 type Rules = Disjunction<2,2>;
 
 export ledger rules: Rules;
+export ledger baseNonce: Bytes<32>;
+export ledger mintCount: Counter;
 
-constructor(contractRules: Rules) {
+constructor(contractRules: Rules, initialBaseNonce: Bytes<32>) {
   rules = disclose(contractRules);
+  // TODO: research if baseNonce can be safely public 
+  baseNonce = disclose(initialBaseNonce);
 }
 
 circuit checkNumberProp(rule: NumberProp, input: Input): Boolean {
@@ -123,8 +127,26 @@ circuit satOr(clause: Conjunction<2>, input: Input): Boolean {
   return false;
 }
 
-export circuit satisifes(input: Input): Boolean {
+circuit satisifes(input: Input): Boolean {
   return fold((acc, or) => acc || satOr(or, input), false, rules);
+}
+
+export circuit mintSpecialToken(input: Input): [] {
+  assert(satisifes(input), "Not allowed to mint tokens");
+
+  const idx: Uint<64> = mintCount;
+  mintCount.increment(1);
+
+  const nonce = evolveNonce(idx, baseNonce);
+
+  const domainSep: Bytes<32> = pad(32, "native-scripts:special-token");
+
+  const amount: Uint<64> = 1 as Uint<64>;
+
+  const recipientPk = ownPublicKey();
+  const recipient = left<ZswapCoinPublicKey, ContractAddress>(recipientPk);
+
+  const _coin = mintShieldedToken(domainSep, amount, nonce, recipient);
 }
 
 circuit nullifier(sk: Bytes<32>): Bytes<32> {

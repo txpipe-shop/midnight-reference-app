@@ -200,7 +200,7 @@ export class SentinelContract {
         compiledContract: CompactCompiledContract,
         privateStateId: sentinelContractPrivateStateKey,
         initialPrivateState: privateState,
-        args: [args],
+        args: [args, new Uint8Array(32).fill(0)],
       },
     );
 
