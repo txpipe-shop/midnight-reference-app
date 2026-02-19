@@ -21,4 +21,3 @@ ${DIVIDER}
    Enter the secret number
 ${DIVIDER}
 `;
-

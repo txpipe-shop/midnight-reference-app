@@ -19,10 +19,13 @@ async function handleCircuits(
         try {
           const input = await rli.question(enterNumber);
           const address = await walletCtx.wallet.unshielded.getAddress();
-          const tx = await contract.mintToken(BigInt(input), Buffer.from(address.hexString, 'hex'));
+          const tx = await contract.mintToken(
+            BigInt(input),
+            Buffer.from(address.hexString, "hex"),
+          );
           logger.info(`Minting tx hash: ${tx?.public.txHash}`);
         } catch (err) {
-          console.log(err)
+          console.log(err);
         }
         return;
     }
@@ -45,7 +48,9 @@ export async function runCli(
         contract = await SentinelContract.deploy(walletCtx, config, {
           secretKey: new Uint8Array(32).fill(0),
         });
-        logger.info(`[Contract Address]: ${contract.deployedContract?.deployTxData.public.contractAddress}`);
+        logger.info(
+          `[Contract Address]: ${contract.deployedContract?.deployTxData.public.contractAddress}`,
+        );
         break;
       case "2":
         try {

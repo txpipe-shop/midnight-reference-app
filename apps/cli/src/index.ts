@@ -1,9 +1,6 @@
 import { TestContainers } from "@midnight-sentinel/containers";
 import { createLogger } from "@midnight-sentinel/logger";
-import {
-  buildWallet,
-  type WalletContext,
-} from "@midnight-sentinel/wallet";
+import { buildWallet, type WalletContext } from "@midnight-sentinel/wallet";
 import { stdin as input, stdout as output } from "node:process";
 import { createInterface } from "readline/promises";
 import { runCli } from "./cli/index.js";
@@ -32,8 +29,9 @@ const main = async () => {
   await runCli(config, walletCtx, logger, rli).finally(
     walletCtx.wallet.stop.bind(walletCtx.wallet),
   );
-  process.exit(0)
+  process.exit(0);
 };
 
 await main()
-  .catch(console.error).finally(testContainers.stop.bind(testContainers));
+  .catch(console.error)
+  .finally(testContainers.stop.bind(testContainers));

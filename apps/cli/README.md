@@ -26,9 +26,11 @@ pnpm run dev
 ### Menu Flow
 
 When starting the CLI, you will be presented with the main menu:
+
 1. **Deploy contract**: Deploys a new `SentinelContract` and displays its network address.
 2. **Join contract**: Prompts for a contract address to attach to an existing deployment.
 3. **Exit**: Gracefully shuts down containers and exits.
 
 After deploying or joining a contract, you have access to the circuit menu:
+
 1. **Mint Token**: Prompts for a numeric input. The CLI constructs the transaction invoking `mintSpecialToken` passing the input to see if it satisfies the contract rules. If successful, you will receive a transaction hash.

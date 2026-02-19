@@ -232,17 +232,17 @@ export class SentinelContract {
   }
 
   async mintToken(uint: bigint, address: Uint8Array) {
-    const tx = await this.deployedContract?.callTx.mintSpecialToken({
-      nullifier: new Uint8Array(32).fill(0),
-      boolean: true,
-      bytes32: new Uint8Array(32).fill(0),
-      field: 12312312312n,
-      uint
-    }, { bytes: address });
+    const tx = await this.deployedContract?.callTx.mintSpecialToken(
+      {
+        nullifier: new Uint8Array(32).fill(0),
+        boolean: true,
+        bytes32: new Uint8Array(32).fill(0),
+        field: 12312312312n,
+        uint,
+      },
+      { bytes: address },
+    );
 
     return tx;
-
   }
-
-
 }
