@@ -25,3 +25,7 @@ export type SentinelContractCircuitKeys = Exclude<
 >;
 
 export type SentinelContractProviders = ContractProviders<SentinelContractType>;
+
+// NOTE: maybe there is a better way to access this types but I did not want to waste time on that just yet
+export type SentinelRules = Parameters<SentinelContractType['initialState']>[1];
+
