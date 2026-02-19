@@ -16,7 +16,7 @@ import type { WalletContext } from "@midnight-reference-app/wallet";
 import assert from "assert";
 import type { StandaloneConfig } from "../config.js";
 
-export class ExampleContract {
+export class SentinelContract {
   readonly providers: SentinelContractProviders;
   readonly deployedContract: SentinelContractDeployed | null;
 
@@ -32,7 +32,7 @@ export class ExampleContract {
     walletCtx: WalletContext,
     config: StandaloneConfig,
     privateState: PrivateState
-  ): Promise<ExampleContract> {
+  ): Promise<SentinelContract> {
 
     const providers = await configureProviders(walletCtx, {
       indexer: config.indexer,
@@ -48,7 +48,7 @@ export class ExampleContract {
       }
     );
 
-    return new ExampleContract(providers, deployedContract);
+    return new SentinelContract(providers, deployedContract);
   }
 
   static async join(
@@ -56,7 +56,7 @@ export class ExampleContract {
     config: StandaloneConfig,
     contractAddress: ContractAddress,
     privateState: PrivateState
-  ): Promise<ExampleContract> {
+  ): Promise<SentinelContract> {
     const providers = await configureProviders(walletCtx, {
       indexer: config.indexer,
       indexerWS: config.indexerWS,
@@ -72,7 +72,7 @@ export class ExampleContract {
       }
     );
 
-    return new ExampleContract(providers, deployedContract);
+    return new SentinelContract(providers, deployedContract);
   }
 
   async returnTrue(): Promise<boolean> {
