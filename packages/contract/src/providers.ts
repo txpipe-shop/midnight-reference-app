@@ -5,7 +5,7 @@ import { NodeZkConfigProvider } from "@midnight-ntwrk/midnight-js-node-zk-config
 import {
   type WalletContext,
   createWalletAndMidnightProvider,
-} from "@midnight-reference-app/wallet";
+} from "@midnight-sentinel/wallet";
 import path from "node:path";
 import {
   SentinelContractCircuitKeys,

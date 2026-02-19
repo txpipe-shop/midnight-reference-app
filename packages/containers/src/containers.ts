@@ -37,7 +37,7 @@ export class TestContainers {
         config.container.indexer.waitStrategy,
       )
       .withNoRecreate()
-      .withProjectName("midnight-reference-app")
+      .withProjectName("midnight-sentinel")
       .withEnvironment({
         TESTCONTAINERS_UID: this.uid,
         NETWORK_ID: "undeployed",

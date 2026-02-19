@@ -15,7 +15,7 @@ import {
   type SentinelRules,
   type PrivateState,
 } from "@midnight-sentinel/contract";
-import type { WalletContext } from "@midnight-reference-app/wallet";
+import type { WalletContext } from "@midnight-sentinel/wallet";
 import type { StandaloneConfig } from "../config.js";
 
 export class SentinelContract {

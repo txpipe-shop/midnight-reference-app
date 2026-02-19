@@ -28,13 +28,13 @@ importers:
       "@midnight-ntwrk/midnight-js-contracts":
         specifier: ^3.0.0
         version: 3.1.0
-      "@midnight-reference-app/containers":
+      "@midnight-sentinel/containers":
         specifier: workspace:*
         version: link:../../packages/containers
-      "@midnight-reference-app/logger":
+      "@midnight-sentinel/logger":
         specifier: workspace:*
         version: link:../../packages/logger
-      "@midnight-reference-app/wallet":
+      "@midnight-sentinel/wallet":
         specifier: workspace:*
         version: link:../../packages/wallet
       "@midnight-sentinel/contract":
@@ -74,7 +74,7 @@ importers:
       "@midnight-ntwrk/wallet-sdk-abstractions":
         specifier: 1.0.0
         version: 1.0.0
-      "@midnight-reference-app/logger":
+      "@midnight-sentinel/logger":
         specifier: workspace:*
         version: link:../logger
       pino:
@@ -117,7 +117,7 @@ importers:
       "@midnight-ntwrk/midnight-js-types":
         specifier: ^3.0.0
         version: 3.0.0
-      "@midnight-reference-app/wallet":
+      "@midnight-sentinel/wallet":
         specifier: workspace:*
         version: link:../wallet
       rxjs:

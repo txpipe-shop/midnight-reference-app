@@ -1,5 +1,5 @@
 {
-  "name": "@midnight-reference-app/logger",
+  "name": "@midnight-sentinel/logger",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",

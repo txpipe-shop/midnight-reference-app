@@ -135,6 +135,7 @@ export circuit mintSpecialToken(input: Input, address: UserAddress): [] {
   assert(satisifes(input), "Not allowed to mint tokens");
 
 
+  // TODO: use coin base nonce here
   const nonce = evolveNonce(20, baseNonce);
 
 

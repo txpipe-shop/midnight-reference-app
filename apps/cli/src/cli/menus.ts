@@ -3,8 +3,8 @@ const DIVIDER =
 
 export const contractMenu: string = `
 ${DIVIDER}
-  [1] Deploy a new example contract
-  [2] Join an existing example contract
+  [1] Deploy a new sentinel contract
+  [2] Join an existing sentinel contract
   [3] Exit
 ${DIVIDER}
 `;

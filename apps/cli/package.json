@@ -10,10 +10,10 @@
   "dependencies": {
     "@midnight-ntwrk/compact-runtime": "^0.14.0",
     "@midnight-ntwrk/midnight-js-contracts": "^3.0.0",
-    "@midnight-reference-app/containers": "workspace:*",
+    "@midnight-sentinel/containers": "workspace:*",
     "@midnight-sentinel/contract": "workspace:*",
-    "@midnight-reference-app/logger": "workspace:*",
-    "@midnight-reference-app/wallet": "workspace:*",
+    "@midnight-sentinel/logger": "workspace:*",
+    "@midnight-sentinel/wallet": "workspace:*",
     "axios": "^1.13.5",
     "pino": "^10.3.1",
     "testcontainers": "11.10.0"

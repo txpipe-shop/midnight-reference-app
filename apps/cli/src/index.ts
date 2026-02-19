@@ -1,9 +1,9 @@
-import { TestContainers } from "@midnight-reference-app/containers";
-import { createLogger } from "@midnight-reference-app/logger";
+import { TestContainers } from "@midnight-sentinel/containers";
+import { createLogger } from "@midnight-sentinel/logger";
 import {
   buildWallet,
   type WalletContext,
-} from "@midnight-reference-app/wallet";
+} from "@midnight-sentinel/wallet";
 import { stdin as input, stdout as output } from "node:process";
 import { createInterface } from "readline/promises";
 import { runCli } from "./cli/index.js";
@@ -36,5 +36,4 @@ const main = async () => {
 };
 
 await main()
-  .catch(console.error);
-// .finally(testContainers.stop.bind(testContainers));
+  .catch(console.error).finally(testContainers.stop.bind(testContainers));

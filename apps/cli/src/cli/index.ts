@@ -1,4 +1,4 @@
-import type { WalletContext } from "@midnight-reference-app/wallet";
+import type { WalletContext } from "@midnight-sentinel/wallet";
 import { type Logger } from "pino";
 import type { Interface } from "readline/promises";
 import { SentinelContract } from "../api/index.js";

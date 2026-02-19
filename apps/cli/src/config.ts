@@ -1,4 +1,4 @@
-import type { TestContainers } from "@midnight-reference-app/containers";
+import type { TestContainers } from "@midnight-sentinel/containers";
 import { sentinelContractPrivateStateKey } from "@midnight-sentinel/contract";
 import "dotenv/config";
 import path from "node:path";
@@ -34,7 +34,7 @@ export class StandaloneConfig implements Config {
     "contract",
     "dist",
     "managed",
-    "example",
+    "sentinel",
   );
   indexer = "http://127.0.0.1:8088/api/v3/graphql";
   indexerWS = "ws://127.0.0.1:8088/api/v3/graphql/ws";

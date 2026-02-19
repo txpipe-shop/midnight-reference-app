@@ -1,5 +1,5 @@
 {
-  "name": "@midnight-reference-app/wallet",
+  "name": "@midnight-sentinel/wallet",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

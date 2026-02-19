@@ -1,4 +1,4 @@
-import { createLogger } from "@midnight-reference-app/logger";
+import { createLogger } from "@midnight-sentinel/logger";
 import "dotenv/config";
 import path from "node:path";
 import { TestContainers } from "./containers.js";
@@ -15,7 +15,7 @@ async function main() {
         "COMPOSE_DIR and COMPOSE_FILE must be set in the .env file",
       );
 
-    const logger = await createLogger(
+    const logger = createLogger(
       path.resolve(composeDir, "..", "logs", "containers.log"),
     );
     const testContainers = new TestContainers(composeDir, composeFile, logger);
