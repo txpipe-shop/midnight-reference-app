@@ -52,7 +52,7 @@ struct NullifierProp {
 type Proposition = Either<NumberProp, Either<BooleanProp, Either<ByteProp, Either<FieldProp, NullifierProp>>>>;
 type Conjunction<#n> = Maybe<Vector<n, Maybe<Proposition>>>;
 type Disjunction<#n, #m> = Vector<m, Conjunction<n>>;
-type Rules = Disjunction<10,2>;
+type Rules = Disjunction<2,2>;
 
 export ledger rules: Rules;
 
@@ -61,7 +61,7 @@ constructor(contractRules: Rules) {
 }
 
 circuit checkNumberProp(rule: NumberProp, input: Input): Boolean {
-  if(rule.op == Ord.GTE) {
+  if (rule.op == Ord.GTE) {
     return rule.value >= input.uint;
   } else if (rule.op == Ord.LTE) {
     return rule.value <= input.uint;
@@ -94,7 +94,7 @@ circuit checkNullifierProp(rule: NullifierProp, input: Input): Boolean {
 }
 
 circuit checkProp(rule: Proposition, input: Input): Boolean {
-  if(rule.is_left) {
+  if (rule.is_left) {
       return checkNumberProp(rule.left, input);
   } else if (rule.right.is_left) {
     return checkBooleanProp(rule.right.left, input);
@@ -115,7 +115,7 @@ circuit satAnd(rule: Maybe<Proposition>, input: Input): Boolean {
   return true;
 }
 
-circuit satOr(clause: Conjunction<10>, input: Input): Boolean {
+circuit satOr(clause: Conjunction<2>, input: Input): Boolean {
   if (clause.is_some) {
     return fold((acc, and) => acc && satAnd(and, input), true, clause.value);
   }

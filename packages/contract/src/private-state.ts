@@ -1,3 +1,4 @@
+
 export type PrivateState = {
   readonly secretKey: Uint8Array;
 }

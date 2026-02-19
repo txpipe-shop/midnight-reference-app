@@ -1,5 +1,5 @@
 {
-  "name": "@midnight-reference-app/contract",
+  "name": "@midnight-sentinel/contract",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -13,9 +13,9 @@
     }
   },
   "scripts": {
-    "compact": "compact compile src/example.compact ./src/managed/example",
+    "compact": "compact compile src/sentinel.compact ./src/managed/sentinel",
     "clean": "rm -rf dist",
-    "build": "pnpm clean && pnpm compact && mkdir -p dist && tsc --project ./tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/example.compact ./dist"
+    "build": "pnpm clean && pnpm compact && mkdir -p dist && tsc --project ./tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/sentinel.compact ./dist"
   },
   "dependencies": {
     "@midnight-ntwrk/compact-js": "^2.4.0",
