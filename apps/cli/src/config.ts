@@ -1,5 +1,5 @@
 import type { TestContainers } from "@midnight-reference-app/containers";
-import { exampleContractPrivateStateKey } from "@midnight-reference-app/contract";
+import { sentinelContractPrivateStateKey } from "@midnight-sentinel/contract";
 import "dotenv/config";
 import path from 'node:path';
 
@@ -18,7 +18,7 @@ export interface Config {
 export const currentDir = path.resolve(new URL(import.meta.url).pathname, '..');
 // TODO: fix harcoded values
 export class StandaloneConfig implements Config {
-  privateStateStoreName = exampleContractPrivateStateKey;
+  privateStateStoreName = sentinelContractPrivateStateKey;
   logDir = path.resolve(currentDir, '..', 'logs', 'standalone', `${new Date().toISOString()}.log`);
   zkConfigPath = path.resolve(currentDir, '..', '..', 'packages', 'contract', 'dist', 'managed', 'example');
   indexer = 'http://127.0.0.1:8088/api/v3/graphql';
