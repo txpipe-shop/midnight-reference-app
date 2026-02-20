@@ -286,7 +286,16 @@ export class SentinelContract {
         compiledContract: CompactCompiledContract,
         privateStateId: sentinelContractPrivateStateKey,
         initialPrivateState: privateState,
-        args: [args, new Uint8Array(32).fill(0), { bytes: Buffer.from(providers.walletProvider.getCoinPublicKey(), 'hex') }],
+        args: [
+          args,
+          new Uint8Array(32).fill(0),
+          {
+            bytes: Buffer.from(
+              providers.walletProvider.getCoinPublicKey(),
+              "hex",
+            ),
+          },
+        ],
       },
     );
 
