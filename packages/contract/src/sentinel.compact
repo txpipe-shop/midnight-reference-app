@@ -67,7 +67,6 @@ constructor(contractRules: Rules, initialBaseNonce: Bytes<32>, pubKey: ZswapCoin
   // baseNonce = disclose(initialBaseNonce);
 }
 
-
 // Exported so you can actually test this
 export circuit assertOwner(): [] {
   assert(ownPublicKey() == owner.left, "You are not the owner of this contract");
@@ -79,6 +78,7 @@ export circuit updateOwner(newOwner: Either<ZswapCoinPublicKey, ContractAddress>
 }
 
 export circuit update(newRules: Rules): [] {
+  assertOwner();
   rules = disclose(newRules);
 }
 

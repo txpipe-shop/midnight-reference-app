@@ -35,6 +35,15 @@ async function handleCircuits(
           console.log(err);
         }
         return;
+      case "2":
+        try {
+          await contract.updateRules();
+        } catch (err) {
+          console.log(err);
+        }
+        break;
+      case "3":
+        return;
     }
   }
 }

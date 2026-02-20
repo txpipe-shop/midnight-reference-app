@@ -5,19 +5,19 @@ import {
 import {
   CompactCompiledContract,
   configureProviders,
+  pureCircuits,
   sentinelContractPrivateStateKey,
-  Eq as SentinelEqOp,
-  Ord as SentinelOrdOp,
   type ContractAddress,
+  type PrivateState,
   type SentinelContractDeployed,
   type SentinelContractProviders,
   type SentinelContractType,
   type Rules as SentinelRules,
-  type PrivateState,
-  pureCircuits,
 } from "@midnight-sentinel/contract";
 import type { WalletContext } from "@midnight-sentinel/wallet";
 import type { StandaloneConfig } from "../config.js";
+import { newRules } from "../rules.js";
+import { rules as rulesBuilder } from "../scripts/humanRulesToCompact.js";
 
 export class SentinelContract {
   readonly providers: SentinelContractProviders;
@@ -25,7 +25,7 @@ export class SentinelContract {
 
   private constructor(
     providers: SentinelContractProviders,
-    deployedContract: SentinelContractDeployed | null,
+    deployedContract: SentinelContractDeployed | null
   ) {
     this.providers = providers;
     this.deployedContract = deployedContract;
@@ -115,7 +115,7 @@ export class SentinelContract {
   static async deploy(
     walletCtx: WalletContext,
     config: StandaloneConfig,
-    privateState: PrivateState,
+    privateState: PrivateState
   ): Promise<SentinelContract> {
     const providers = await configureProviders(walletCtx, {
       indexer: config.indexer,
@@ -123,160 +123,10 @@ export class SentinelContract {
       proofServer: config.proofServer,
     });
 
-    const args: SentinelRules = [
-      {
-        is_some: true,
-        value: [
-          {
-            is_some: true,
-            value: {
-              is_left: true,
-              left: {
-                op: SentinelOrdOp.EQ,
-                value: 123n,
-              },
-              right: {
-                is_left: false,
-                right: {
-                  is_left: false,
-                  left: {
-                    op: SentinelEqOp.EQ,
-                    value: new Uint8Array(32).fill(0),
-                  },
-                  right: {
-                    right: {
-                      op: SentinelEqOp.EQ,
-                      nullifier: new Uint8Array(32).fill(0),
-                    },
-                    is_left: false,
-                    left: {
-                      op: SentinelEqOp.EQ,
-                      value: 1n,
-                    },
-                  },
-                },
-                left: {
-                  value: true,
-                  op: SentinelEqOp.EQ,
-                },
-              },
-            },
-          },
-          {
-            is_some: true,
-            value: {
-              is_left: true,
-              left: {
-                op: SentinelOrdOp.EQ,
-                value: 123n,
-              },
-              right: {
-                is_left: false,
-                right: {
-                  is_left: false,
-                  left: {
-                    op: SentinelEqOp.EQ,
-                    value: new Uint8Array(32).fill(0),
-                  },
-                  right: {
-                    right: {
-                      op: SentinelEqOp.EQ,
-                      nullifier: new Uint8Array(32).fill(0),
-                    },
-                    is_left: false,
-                    left: {
-                      op: SentinelEqOp.EQ,
-                      value: 1n,
-                    },
-                  },
-                },
-                left: {
-                  value: true,
-                  op: SentinelEqOp.EQ,
-                },
-              },
-            },
-          },
-        ],
-      },
-      {
-        is_some: true,
-        value: [
-          {
-            is_some: true,
-            value: {
-              is_left: false,
-              left: {
-                op: SentinelOrdOp.EQ,
-                value: 123n,
-              },
-              right: {
-                is_left: false,
-                right: {
-                  is_left: false,
-                  left: {
-                    op: SentinelEqOp.EQ,
-                    value: new Uint8Array(32).fill(0),
-                  },
-                  right: {
-                    right: {
-                      op: SentinelEqOp.EQ,
-                      nullifier: pureCircuits.nullifier(
-                        new Uint8Array(32).fill(0),
-                      ),
-                    },
-                    is_left: false,
-                    left: {
-                      op: SentinelEqOp.EQ,
-                      value: 1n,
-                    },
-                  },
-                },
-                left: {
-                  value: true,
-                  op: SentinelEqOp.EQ,
-                },
-              },
-            },
-          },
-          {
-            is_some: false,
-            value: {
-              is_left: true,
-              left: {
-                op: SentinelOrdOp.EQ,
-                value: 123n,
-              },
-              right: {
-                is_left: false,
-                right: {
-                  is_left: false,
-                  left: {
-                    op: SentinelEqOp.EQ,
-                    value: new Uint8Array(32).fill(0),
-                  },
-                  right: {
-                    right: {
-                      op: SentinelEqOp.EQ,
-                      nullifier: new Uint8Array(32).fill(0),
-                    },
-                    is_left: false,
-                    left: {
-                      op: SentinelEqOp.EQ,
-                      value: 1n,
-                    },
-                  },
-                },
-                left: {
-                  value: true,
-                  op: SentinelEqOp.EQ,
-                },
-              },
-            },
-          },
-        ],
-      },
-    ];
+    const args: SentinelRules = rulesBuilder()
+      .when((r) => r.uint.eq(123).and((r) => r.uint.eq(123)))
+      .or((r) => r.nullifier.eq(pureCircuits.nullifier(new Uint8Array(32).fill(0))))
+      .build();
 
     console.log(this.prettyRules(args));
 
@@ -286,8 +136,17 @@ export class SentinelContract {
         compiledContract: CompactCompiledContract,
         privateStateId: sentinelContractPrivateStateKey,
         initialPrivateState: privateState,
-        args: [args, new Uint8Array(32).fill(0), { bytes: Buffer.from(providers.walletProvider.getCoinPublicKey(), 'hex') }],
-      },
+        args: [
+          args,
+          new Uint8Array(32).fill(0),
+          {
+            bytes: Buffer.from(
+              providers.walletProvider.getCoinPublicKey(),
+              "hex"
+            ),
+          },
+        ],
+      }
     );
 
     return new SentinelContract(providers, deployedContract);
@@ -297,7 +156,7 @@ export class SentinelContract {
     walletCtx: WalletContext,
     config: StandaloneConfig,
     contractAddress: ContractAddress,
-    privateState: PrivateState,
+    privateState: PrivateState
   ): Promise<SentinelContract> {
     const providers = await configureProviders(walletCtx, {
       indexer: config.indexer,
@@ -311,7 +170,7 @@ export class SentinelContract {
         compiledContract: CompactCompiledContract,
         privateStateId: sentinelContractPrivateStateKey,
         initialPrivateState: privateState,
-      },
+      }
     );
 
     return new SentinelContract(providers, deployedContract);
@@ -327,9 +186,14 @@ export class SentinelContract {
         field: 12312312312n,
         uint,
       },
-      { bytes: address },
+      { bytes: address }
     );
 
     return tx;
+  }
+
+  async updateRules(): Promise<void> {
+    console.log(SentinelContract.prettyRules(newRules));
+    await this.deployedContract?.callTx.update(newRules);
   }
 }
