@@ -64,6 +64,11 @@ constructor(contractRules: Rules, initialBaseNonce: Bytes<32>) {
   // baseNonce = disclose(initialBaseNonce);
 }
 
+// TODO: use ownable from OpenZeppelin here
+export circuit update(newRules: Rules): [] {
+  rules = disclose(newRules);
+}
+
 circuit checkNumberProp(rule: NumberProp, input: Input): Boolean {
   if (rule.op == Ord.GTE) {
     return rule.value >= input.uint;
@@ -133,9 +138,6 @@ circuit satisifes(input: Input): Boolean {
 
 export circuit mintSpecialToken(input: Input, address: UserAddress): [] {
   assert(satisifes(input), "Not allowed to mint tokens");
-
-
-
 
   const amount: Uint<64> = 1;
 
