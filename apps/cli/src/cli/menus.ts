@@ -21,3 +21,8 @@ ${DIVIDER}
    Enter the secret number
 ${DIVIDER}
 `;
+export const nullifierSecret: string = `
+${DIVIDER}
+   Enter the nullifier secret
+${DIVIDER}
+`;

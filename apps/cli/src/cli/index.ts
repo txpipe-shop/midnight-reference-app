@@ -3,7 +3,7 @@ import { type Logger } from "pino";
 import type { Interface } from "readline/promises";
 import { SentinelContract } from "../api/index.js";
 import { type Config } from "../config.js";
-import { circuitMenu, contractMenu, enterNumber } from "./menus.js";
+import { circuitMenu, contractMenu, enterNumber, nullifierSecret } from "./menus.js";
 
 async function handleCircuits(
   contract: SentinelContract,
@@ -18,9 +18,11 @@ async function handleCircuits(
       case "1":
         try {
           const input = await rli.question(enterNumber);
+          const nullifierInput = await rli.question(nullifierSecret);
           const address = await walletCtx.wallet.unshielded.getAddress();
           const tx = await contract.mintToken(
             BigInt(input),
+            Number.parseInt(nullifierInput),
             Buffer.from(address.hexString, "hex"),
           );
           logger.info(`Minting tx hash: ${tx?.public.txHash}`);
