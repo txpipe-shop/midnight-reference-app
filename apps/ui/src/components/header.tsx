@@ -20,7 +20,7 @@ export function Header() {
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container flex h-14 items-center justify-between mx-auto px-4">
                 <div className="flex items-center space-x-4">
-                    <span className="font-bold">Midnight dApp</span>
+                    <span className="font-bold">Sentinel</span>
                 </div>
 
                 <div className="flex items-center space-x-4">

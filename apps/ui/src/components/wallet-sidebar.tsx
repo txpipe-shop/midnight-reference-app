@@ -4,24 +4,35 @@ import {
     SidebarContent,
     SidebarHeader,
     SidebarGroup,
-    SidebarGroupLabel,
     SidebarGroupContent,
 } from "@/components/ui/sidebar";
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion";
 
 function DisplayValue({ value }: { value: any }) {
     if (value === undefined || value === null) {
-        return <span className="italic">--</span>;
+        return <span className="italic text-muted-foreground">--</span>;
     }
     if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-        return <>{String(value)}</>;
+        return <span className="text-foreground">{String(value)}</span>;
     }
     return (
-        <pre className="whitespace-pre-wrap font-mono text-xs">
+        <pre className="whitespace-pre-wrap font-mono text-xs overflow-x-auto bg-muted p-3 rounded-md border text-muted-foreground">
             {JSON.stringify(value, (_key, val) =>
                 typeof val === 'bigint' ? val.toString() : val, 2)}
         </pre>
     );
 }
+
+const formatLabel = (key: string) => {
+    return key
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, str => str.toUpperCase());
+};
 
 export function WalletSidebar() {
     const { wallet } = useWallet();
@@ -31,6 +42,7 @@ export function WalletSidebar() {
     }
 
     const { details } = wallet;
+    const entries = Object.entries(details);
 
     return (
         <Sidebar side="right">
@@ -38,79 +50,22 @@ export function WalletSidebar() {
                 <div className="font-bold px-4 py-4 border-b">Wallet Details</div>
             </SidebarHeader>
             <SidebarContent>
-
                 <SidebarGroup>
-                    <SidebarGroupLabel>Connection Status</SidebarGroupLabel>
                     <SidebarGroupContent>
-                        <div className="p-2 px-2 text-sm text-muted-foreground break-all">
-                            <DisplayValue value={details.connectionStatus} />
-                        </div>
+                        <Accordion type="multiple" className="w-full">
+                            {entries.map(([key, value]) => (
+                                <AccordionItem value={key} key={key} className="border-b-0 px-2">
+                                    <AccordionTrigger className="text-sm font-medium py-3 hover:no-underline">
+                                        {formatLabel(key)}
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pb-3 text-sm break-all">
+                                        <DisplayValue value={value} />
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
                     </SidebarGroupContent>
                 </SidebarGroup>
-
-                <SidebarGroup>
-                    <SidebarGroupLabel>Configuration</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <div className="p-2 px-2 text-sm text-muted-foreground break-all">
-                            <DisplayValue value={details.configuration} />
-                        </div>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-
-                <SidebarGroup>
-                    <SidebarGroupLabel>Dust Address</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <div className="p-2 px-2 text-sm text-muted-foreground break-all">
-                            <DisplayValue value={details.dustAddress} />
-                        </div>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-
-                <SidebarGroup>
-                    <SidebarGroupLabel>Dust Balance</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <div className="p-2 px-2 text-sm text-muted-foreground break-all">
-                            <DisplayValue value={details.dustBalance} />
-                        </div>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-
-                <SidebarGroup>
-                    <SidebarGroupLabel>Shielded Addresses</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <div className="p-2 px-2 text-sm text-muted-foreground break-all">
-                            <DisplayValue value={details.shieldedAddress} />
-                        </div>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-
-                <SidebarGroup>
-                    <SidebarGroupLabel>Shielded Balances</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <div className="p-2 px-2 text-sm text-muted-foreground break-all">
-                            <DisplayValue value={details.shieldedBalances} />
-                        </div>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-
-                <SidebarGroup>
-                    <SidebarGroupLabel>Unshielded Address</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <div className="p-2 px-2 text-sm text-muted-foreground break-all">
-                            <DisplayValue value={details.unshieldedAddress} />
-                        </div>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-
-                <SidebarGroup>
-                    <SidebarGroupLabel>Unshielded Balances</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <div className="p-2 px-2 text-sm text-muted-foreground break-all">
-                            <DisplayValue value={details.unshieldedBalances} />
-                        </div>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-
             </SidebarContent>
         </Sidebar>
     );
