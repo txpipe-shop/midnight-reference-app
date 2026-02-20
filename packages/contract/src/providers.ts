@@ -6,7 +6,6 @@ import {
   type WalletContext,
   createWalletAndMidnightProvider,
 } from "@midnight-reference-app/wallet";
-import path from "node:path";
 import {
   ExampleContractCircuitKeys,
   exampleContractPrivateStateKey,
@@ -15,18 +14,17 @@ import {
 } from "./types.js";
 
 // TODO: Maybe we can improve how these variables are defined
-const currentDir = path.resolve(new URL(import.meta.url).pathname, "..");
 export const contractConfig = {
   privateStateStoreName: exampleContractPrivateStateKey,
-  zkConfigPath: path.resolve(currentDir, "managed", "example"),
 };
 
 export const configureProviders = async (
   walletCtx: WalletContext,
-  config: { indexer: string; indexerWS: string; proofServer: string }
+  config: { indexer: string; indexerWS: string; proofServer: string },
+  zkConfigPath: string
 ): Promise<ExampleContractProviders> => {
   const walletAndMidnightProvider = await createWalletAndMidnightProvider(walletCtx);
-  const zkConfigProvider = new NodeZkConfigProvider<ExampleContractCircuitKeys>(contractConfig.zkConfigPath);
+  const zkConfigProvider = new NodeZkConfigProvider<ExampleContractCircuitKeys>(zkConfigPath);
 
   return {
     privateStateProvider: levelPrivateStateProvider<PrivateStateId>({

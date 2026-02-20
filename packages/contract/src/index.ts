@@ -1,5 +1,4 @@
 import { CompiledContract } from "@midnight-ntwrk/compact-js";
-import { contractConfig } from "./providers.js";
 import { ExampleContractConstructor, ExampleContractType } from "./types.js";
 import { witnesses } from "./witnesses.js";
 
@@ -10,7 +9,8 @@ export const CompactCompiledContract =
     ExampleContractConstructor
   ).pipe(
     CompiledContract.withWitnesses(witnesses),
-    CompiledContract.withCompiledFileAssets(contractConfig.zkConfigPath)
+    // TODO: How can improve this?
+    CompiledContract.withCompiledFileAssets("./managed/example")
   );
 
 export { type ContractAddress } from "@midnight-ntwrk/compact-runtime";
