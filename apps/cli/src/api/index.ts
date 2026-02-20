@@ -15,8 +15,11 @@ import {
 } from "@midnight-reference-app/contract";
 import type { WalletContext } from "@midnight-reference-app/wallet";
 import assert from "assert";
+import path from "path";
 import type { StandaloneConfig } from "../config.js";
 
+const currentDir = path.resolve(new URL(import.meta.url).pathname, "..");
+const zkConfigPath = path.resolve(currentDir, '..', '..', 'packages', 'contract', 'dist', 'managed', 'example');
 export class ExampleContract {
   readonly providers: ExampleContractProviders;
   readonly deployedContract: ExampleContractDeployed | null;
@@ -39,7 +42,7 @@ export class ExampleContract {
       indexer: config.indexer,
       indexerWS: config.indexerWS,
       proofServer: config.proofServer,
-    });
+    }, zkConfigPath);
     const deployedContract = await deployContract<ExampleContractType>(
       providers,
       {
@@ -62,7 +65,7 @@ export class ExampleContract {
       indexer: config.indexer,
       indexerWS: config.indexerWS,
       proofServer: config.proofServer,
-    });
+    }, zkConfigPath);
     const deployedContract = await findDeployedContract<ExampleContractType>(
       providers,
       {
