@@ -24,7 +24,5 @@ export type {
   SentinelContractProviders,
   SentinelContractType,
   PrivateStateId,
-  SentinelRules,
 } from "./types.js";
-export { SentinelEqOp, SentinelOrdOp } from "./types.js";
 export { witnesses };

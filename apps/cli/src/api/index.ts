@@ -6,13 +6,13 @@ import {
   CompactCompiledContract,
   configureProviders,
   sentinelContractPrivateStateKey,
-  SentinelEqOp,
-  SentinelOrdOp,
+  Eq as SentinelEqOp,
+  Ord as SentinelOrdOp,
   type ContractAddress,
   type SentinelContractDeployed,
   type SentinelContractProviders,
   type SentinelContractType,
-  type SentinelRules,
+  type Rules as SentinelRules,
   type PrivateState,
   pureCircuits,
 } from "@midnight-sentinel/contract";
@@ -286,7 +286,7 @@ export class SentinelContract {
         compiledContract: CompactCompiledContract,
         privateStateId: sentinelContractPrivateStateKey,
         initialPrivateState: privateState,
-        args: [args, new Uint8Array(32).fill(0)],
+        args: [args, new Uint8Array(32).fill(0), { bytes: Buffer.from(providers.walletProvider.getCoinPublicKey(), 'hex') }],
       },
     );
 

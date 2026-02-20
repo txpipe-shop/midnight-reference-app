@@ -10,7 +10,7 @@ struct Input {
   nullifier: Bytes<32>;
 }
 
-enum Ord {
+export enum Ord {
   GT,
   LT,
   EQ,
@@ -19,56 +19,62 @@ enum Ord {
   LTE,
 }
 
-enum Eq {
+export enum Eq {
   EQ,
   NEQ,
 }
 
-struct NumberProp {
+export struct NumberProp {
   op: Ord;
   value: Uint<64>;
 }
 
-struct BooleanProp {
+export struct BooleanProp {
   op: Eq;
   value: Boolean;
 }
 
-struct ByteProp {
+export struct ByteProp {
   op: Eq;
   value: Bytes<32>;
 }
 
-struct FieldProp {
+export struct FieldProp {
   op: Eq;
   value: Field;
 }
 
-struct NullifierProp {
+export struct NullifierProp {
   op: Eq;
   nullifier: Bytes<32>;
 }
 
-type Proposition = Either<NumberProp, Either<BooleanProp, Either<ByteProp, Either<FieldProp, NullifierProp>>>>;
+export type Proposition = Either<NumberProp, Either<BooleanProp, Either<ByteProp, Either<FieldProp, NullifierProp>>>>;
 type Conjunction<#n> = Maybe<Vector<n, Maybe<Proposition>>>;
 type Disjunction<#n, #m> = Vector<m, Conjunction<n>>;
-type Rules = Disjunction<2,2>;
+export type Rules = Disjunction<2,2>;
 
 export ledger rules: Rules;
 export ledger owner: Either<ZswapCoinPublicKey, ContractAddress>;
 //export ledger baseNonce: Bytes<32>;
 // export ledger mintCount: Counter;
 
-constructor(contractRules: Rules, initialBaseNonce: Bytes<32>, newOwner: Either<ZswapCoinPublicKey, ContractAddress>) {
+constructor(contractRules: Rules, initialBaseNonce: Bytes<32>, pubKey: ZswapCoinPublicKey) {
+  const ownerProUltra = left<ZswapCoinPublicKey, ContractAddress>(pubKey);
   rules = disclose(contractRules);
-  owner = disclose(newOwner);
+  owner = disclose(ownerProUltra);
   // TODO: research if baseNonce can be safely public 
   // baseNonce = disclose(initialBaseNonce);
 }
 
 
+// Exported so you can actually test this
+export circuit assertOwner(): [] {
+  assert(ownPublicKey() == owner.left, "You are not the owner of this contract");
+}
+
 export circuit updateOwner(newOwner: Either<ZswapCoinPublicKey, ContractAddress>): [] {
-  assert(ownPublicKey() == owner.left, "Not allowed to change owner");
+  assertOwner();
   owner = disclose(newOwner);
 }
 
