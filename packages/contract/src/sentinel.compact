@@ -55,16 +55,23 @@ type Disjunction<#n, #m> = Vector<m, Conjunction<n>>;
 type Rules = Disjunction<2,2>;
 
 export ledger rules: Rules;
+export ledger owner: Either<ZswapCoinPublicKey, ContractAddress>;
 //export ledger baseNonce: Bytes<32>;
 // export ledger mintCount: Counter;
 
-constructor(contractRules: Rules, initialBaseNonce: Bytes<32>) {
+constructor(contractRules: Rules, initialBaseNonce: Bytes<32>, newOwner: Either<ZswapCoinPublicKey, ContractAddress>) {
   rules = disclose(contractRules);
+  owner = disclose(newOwner);
   // TODO: research if baseNonce can be safely public 
   // baseNonce = disclose(initialBaseNonce);
 }
 
-// TODO: use ownable from OpenZeppelin here
+
+export circuit updateOwner(newOwner: Either<ZswapCoinPublicKey, ContractAddress>): [] {
+  assert(ownPublicKey() == owner.left, "Not allowed to change owner");
+  owner = disclose(newOwner);
+}
+
 export circuit update(newRules: Rules): [] {
   rules = disclose(newRules);
 }
