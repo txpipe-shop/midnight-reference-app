@@ -1,21 +1,36 @@
-import { type ConnectedAPI } from "@midnight-ntwrk/dapp-connector-api";
-import { useState } from "react";
+import { useContext } from "react";
+import { WalletContext } from "../context/WalletContext";
 
 export const useWallet = () => {
-  const [wallet, setWallet] = useState<ConnectedAPI | null>(null);
+  const {
+    connectingWallet,
+    error,
+    initialAPI,
+    connectedAPI,
+    serviceUriConfig,
+    status,
+    shieldedAddresses,
+    proofServerOnline,
+    connectWallet,
+    disconnect,
+  } = useContext(WalletContext);
 
-  const connect = async () => {
-    try {
-      if (!window.midnight || !window.midnight.mnLace) throw new Error("Wallet not found");
-      const api = await window.midnight.mnLace.connect("undeployed");
-      setWallet(api);
-    } catch (error) {
-      console.error(error);
-    }
+  if (connectWallet === undefined || disconnect === undefined) {
+    throw new Error(
+      "Can't call useWallet outside of the WalletProvider context",
+    );
   }
 
   return {
-    wallet,
-    connect,
-  }
-}
+    connectingWallet,
+    error,
+    initialAPI,
+    connectedAPI,
+    serviceUriConfig,
+    status,
+    shieldedAddresses,
+    proofServerOnline,
+    connectWallet,
+    disconnect,
+  };
+};

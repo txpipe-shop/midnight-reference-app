@@ -1,14 +1,18 @@
+import { Contract } from '@midnight-reference-app/contract';
 import './App.css';
-import { useWallet } from './hooks/useWallet';
+import { ConnectWallet } from './components/ConnectWallet';
+import { MidnightWalletProvider } from './context/WalletContext';
 
 function App() {
-  const { connect } = useWallet();
 
+  console.log(Contract)
   return (
-    <div>
-      <h1>Hello World</h1>
-      <button onClick={connect}>Connect</button>
-    </div>
+    <MidnightWalletProvider>
+      <div>
+        <h1>Hello World</h1>
+        <ConnectWallet />
+      </div >
+    </MidnightWalletProvider>
   )
 }
 
