@@ -3,7 +3,12 @@ import { type Logger } from "pino";
 import type { Interface } from "readline/promises";
 import { SentinelContract } from "../api/index.js";
 import { type Config } from "../config.js";
-import { circuitMenu, contractMenu, enterNumber, nullifierSecret } from "./menus.js";
+import {
+  circuitMenu,
+  contractMenu,
+  enterNumber,
+  nullifierSecret,
+} from "./menus.js";
 
 async function handleCircuits(
   contract: SentinelContract,

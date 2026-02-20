@@ -34,34 +34,48 @@ export class SentinelContract {
   static prettyRules(rules: SentinelRules): string {
     const formatOrdOp = (op: number) => {
       switch (op) {
-        case 0: return '>';
-        case 1: return '<';
-        case 2: return '=';
-        case 3: return '!=';
-        case 4: return '>=';
-        case 5: return '<=';
-        default: return '?';
+        case 0:
+          return ">";
+        case 1:
+          return "<";
+        case 2:
+          return "=";
+        case 3:
+          return "!=";
+        case 4:
+          return ">=";
+        case 5:
+          return "<=";
+        default:
+          return "?";
       }
     };
 
     const formatEqOp = (op: number) => {
       switch (op) {
-        case 0: return '=';
-        case 1: return '!=';
-        default: return '?';
+        case 0:
+          return "=";
+        case 1:
+          return "!=";
+        default:
+          return "?";
       }
     };
 
-    const toHex = (arr: Uint8Array) => '0x' + Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+    const toHex = (arr: Uint8Array) =>
+      "0x" +
+      Array.from(arr)
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
 
     const formatValue = (val: any) => {
-      if (typeof val === 'bigint') {
+      if (typeof val === "bigint") {
         return val.toString();
-      } else if (typeof val === 'boolean') {
-        return val ? 'true' : 'false';
+      } else if (typeof val === "boolean") {
+        return val ? "true" : "false";
       } else if (val instanceof Uint8Array) {
         const hex = toHex(val);
-        return hex.length > 20 ? hex.slice(0, 6) + '...' + hex.slice(-4) : hex;
+        return hex.length > 20 ? hex.slice(0, 6) + "..." + hex.slice(-4) : hex;
       }
       return String(val);
     };
@@ -92,10 +106,10 @@ export class SentinelContract {
         const comparisons = r.value
           .filter((c: any) => c.is_some)
           .map((c: any) => formatComparison(c.value));
-        return `(${comparisons.join(' ∧ ')})`;
+        return `(${comparisons.join(" ∧ ")})`;
       });
 
-    return clauses.join(' ∨ ');
+    return clauses.join(" ∨ ");
   }
 
   static async deploy(
@@ -207,7 +221,9 @@ export class SentinelContract {
                   right: {
                     right: {
                       op: SentinelEqOp.EQ,
-                      nullifier: pureCircuits.nullifier(new Uint8Array(32).fill(0)),
+                      nullifier: pureCircuits.nullifier(
+                        new Uint8Array(32).fill(0),
+                      ),
                     },
                     is_left: false,
                     left: {
@@ -260,7 +276,7 @@ export class SentinelContract {
           },
         ],
       },
-    ]
+    ];
 
     console.log(this.prettyRules(args));
 
