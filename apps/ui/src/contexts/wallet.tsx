@@ -2,8 +2,10 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 import { type ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
 import { MIDNIGHT_NETWORK } from "@/config";
 
+export type WalletDetails = Awaited<ReturnType<typeof getFullWallet>>;
+
 export interface WalletContextType {
-  wallet: ConnectedAPI | undefined;
+  wallet: { api: ConnectedAPI, details: WalletDetails } | undefined;
   connect: () => Promise<void>;
   error: string | undefined;
   isLoading: boolean;
@@ -13,6 +15,19 @@ export const WalletContext = createContext<WalletContextType | undefined>(undefi
 
 
 export interface WalletContextProps { children: ReactNode };
+
+async function getFullWallet(wallet: ConnectedAPI) {
+  return {
+    configuration: await wallet.getConfiguration(),
+    connectionStatus: await wallet.getConnectionStatus(),
+    dustAddress: await wallet.getDustAddress(),
+    dustBalance: await wallet.getDustBalance(),
+    shieldedAddress: await wallet.getShieldedAddresses(),
+    shieldedBalances: await wallet.getShieldedBalances(),
+    unshieldedAddress: await wallet.getUnshieldedAddress(),
+    unshieldedBalances: await wallet.getUnshieldedBalances(),
+  }
+}
 
 export const WalletProvider: React.FC<WalletContextProps> = ({ children }) => {
   const [wallet, setWallet] = useState<WalletContextType['wallet']>();
@@ -29,8 +44,9 @@ export const WalletProvider: React.FC<WalletContextProps> = ({ children }) => {
       } else if (!window.midnight.mnLace) {
         setError("Lace wallet not in scope");
       } else {
-        const wallet = await window.midnight.mnLace.connect(MIDNIGHT_NETWORK);
-        setWallet(wallet);
+        const api = await window.midnight.mnLace.connect(MIDNIGHT_NETWORK);
+        const details = await getFullWallet(api);
+        setWallet({ api, details });
       }
     } catch (err: any) {
       setError(err?.message || "Failed to connect to wallet");
