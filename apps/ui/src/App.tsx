@@ -15,14 +15,16 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Rocket, Link as LinkIcon } from "lucide-react";
 import { rulesSchema } from "@/lib/schemas";
 import type { Rules } from "@midnight-sentinel/contract";
-import { SentinelContract } from '@midnight-sentinel/api'
+import { SentinelContract } from '@midnight-sentinel/api';
+import { initializeProviders } from '@midnight-sentinel/api/browser';
 
 
 type ViewState = "select" | "deploy" | "join";
 
 function App() {
-  const { error } = useWallet();
+  const { wallet, error } = useWallet();
   const [view, setView] = useState<ViewState>("select");
+  const [isDeploying, setIsDeploying] = useState(false);
 
   const [joinAddress, setJoinAddress] = useState("");
   const [deployRulesJson, setDeployRulesJson] = useState("");
@@ -38,11 +40,33 @@ function App() {
   }, [deployRulesJson]);
 
 
-  const handleDeploy = () => {
-    const rules: Rules = parsedRules as unknown as Rules;
-    new contractReferenceLocations
-    return
-  }
+  const handleDeploy = async () => {
+    if (!parsedRules?.success) return;
+    if (!wallet) {
+      toast.error("Wallet not connected");
+      return;
+    }
+
+    const rules: Rules = parsedRules.data as unknown as Rules;
+
+    setIsDeploying(true);
+    try {
+      const providers = await initializeProviders(wallet.api);
+      const contract = await SentinelContract.deploy(
+        providers,
+        { secretKey: new Uint8Array(32).fill(0) },
+        rules
+      );
+      toast.success(
+        `Deployed at ${contract.deployedContract?.deployTxData.public.contractAddress}`
+      );
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || "Failed to deploy contract");
+    } finally {
+      setIsDeploying(false);
+    }
+  };
 
   const isDeployEnabled = parsedRules?.success ?? false;
   const isJoinEnabled = joinAddress.trim().length > 0;
@@ -110,8 +134,8 @@ function App() {
                       <p className="text-sm text-destructive">Invalid JSON or schema mismatch.</p>
                     )}
                   </div>
-                  <Button disabled={!isDeployEnabled} onClick={handleDeploy} className="w-full">
-                    Deploy
+                  <Button disabled={!isDeployEnabled || isDeploying} onClick={handleDeploy} className="w-full">
+                    {isDeploying ? "Deploying..." : "Deploy"}
                   </Button>
                 </div>
               </div>
