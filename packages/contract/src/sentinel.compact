@@ -145,12 +145,12 @@ circuit satOr(clause: Conjunction<2>, input: Input): Boolean {
   return false;
 }
 
-circuit satisifes(input: Input): Boolean {
+circuit satisfies(input: Input): Boolean {
   return fold((acc, or) => acc || satOr(or, input), false, rules);
 }
 
 export circuit mintSpecialToken(input: Input, address: UserAddress): [] {
-  assert(satisifes(input), "Not allowed to mint tokens");
+  assert(satisfies(input), "Not allowed to mint tokens");
 
   const amount: Uint<64> = 1;
 
