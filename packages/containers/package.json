@@ -1,5 +1,5 @@
 {
-  "name": "@midnight-reference-app/containers",
+  "name": "@midnight-sentinel/containers",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,7 +18,7 @@
   "dependencies": {
     "@midnight-ntwrk/midnight-js-network-id": "3.0.0",
     "@midnight-ntwrk/wallet-sdk-abstractions": "1.0.0",
-    "@midnight-reference-app/logger": "workspace:*",
+    "@midnight-sentinel/logger": "workspace:*",
     "pino": "^10.3.1",
     "testcontainers": "11.10.0"
   },

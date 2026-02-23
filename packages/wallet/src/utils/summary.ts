@@ -5,7 +5,7 @@ import {
   ShieldedAddress,
   ShieldedCoinPublicKey,
   ShieldedEncryptionPublicKey,
-} from '@midnight-ntwrk/wallet-sdk-address-format';
+} from "@midnight-ntwrk/wallet-sdk-address-format";
 import { UnshieldedKeystore } from "@midnight-ntwrk/wallet-sdk-unshielded-wallet";
 import { formatBalance } from "./index.js";
 
@@ -13,16 +13,28 @@ import { formatBalance } from "./index.js";
  * Prints a formatted wallet summary to the console, showing all three
  * wallet types (Shielded, Unshielded, Dust) with their addresses and balances.
  */
-export const printWalletSummary = (seed: string, state: any, unshieldedKeystore: UnshieldedKeystore) => {
+export const printWalletSummary = (
+  seed: string,
+  state: any,
+  unshieldedKeystore: UnshieldedKeystore,
+) => {
   const networkId = getNetworkId();
-  const unshieldedBalance = state.unshielded.balances[unshieldedToken().raw] ?? 0n;
+  const unshieldedBalance =
+    state.unshielded.balances[unshieldedToken().raw] ?? 0n;
 
   // Build the bech32m shielded address from coin + encryption public keys
-  const coinPubKey = ShieldedCoinPublicKey.fromHexString(state.shielded.coinPublicKey.toHexString());
-  const encPubKey = ShieldedEncryptionPublicKey.fromHexString(state.shielded.encryptionPublicKey.toHexString());
-  const shieldedAddress = MidnightBech32m.encode(networkId, new ShieldedAddress(coinPubKey, encPubKey)).toString();
+  const coinPubKey = ShieldedCoinPublicKey.fromHexString(
+    state.shielded.coinPublicKey.toHexString(),
+  );
+  const encPubKey = ShieldedEncryptionPublicKey.fromHexString(
+    state.shielded.encryptionPublicKey.toHexString(),
+  );
+  const shieldedAddress = MidnightBech32m.encode(
+    networkId,
+    new ShieldedAddress(coinPubKey, encPubKey),
+  ).toString();
 
-  const DIV = '──────────────────────────────────────────────────────────────';
+  const DIV = "──────────────────────────────────────────────────────────────";
 
   console.log(`
 ${DIV}

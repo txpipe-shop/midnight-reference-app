@@ -3,28 +3,27 @@ import {
   type DeployedContract,
   type FoundContract,
 } from "@midnight-ntwrk/midnight-js-contracts";
-import { Contract, Witnesses } from "./managed/example/contract/index.js";
+import { Contract, Witnesses } from "./managed/sentinel/contract/index.js";
 import { PrivateState } from "./private-state.js";
 
-// Combination of public and private state
-export type ContractDerivedState = {
-  readonly counter: bigint;
-};
-
-export type ExampleContractType = Contract<
+export const SentinelContractConstructor = Contract<
   PrivateState,
   Witnesses<PrivateState>
 >;
-export type ExampleContractInstance =
-  | DeployedContract<ExampleContractType>
-  | FoundContract<ExampleContractType>;
+export type SentinelContractType = InstanceType<
+  typeof SentinelContractConstructor
+>;
 
-export const exampleContractPrivateStateKey = "exampleContractPrivateState";
-export type PrivateStateId = typeof exampleContractPrivateStateKey;
+export type SentinelContractDeployed =
+  | DeployedContract<SentinelContractType>
+  | FoundContract<SentinelContractType>;
 
-export type ExampleContractCircuitKeys = Exclude<
-  keyof ExampleContractType["impureCircuits"],
+export const sentinelContractPrivateStateKey = "sentinelContractPrivateState";
+export type PrivateStateId = typeof sentinelContractPrivateStateKey;
+
+export type SentinelContractCircuitKeys = Exclude<
+  keyof SentinelContractType["impureCircuits"],
   number | symbol
 >;
 
-export type ExampleContractProviders = ContractProviders<ExampleContractType>
+export type SentinelContractProviders = ContractProviders<SentinelContractType>;

@@ -1,23 +1,48 @@
-import type { WalletContext } from "@midnight-reference-app/wallet";
-import assert from "node:assert";
+import type { WalletContext } from "@midnight-sentinel/wallet";
 import { type Logger } from "pino";
 import type { Interface } from "readline/promises";
-import { StartedDockerComposeEnvironment } from "testcontainers";
-import { ExampleContract } from "../api/index.js";
+import { SentinelContract } from "../api/index.js";
 import { type Config } from "../config.js";
-import { circuitMenu, contractMenu } from "./menus.js";
+import {
+  circuitMenu,
+  contractMenu,
+  enterNumber,
+  nullifierSecret,
+} from "./menus.js";
 
-async function handleCircuits(contract: ExampleContract, logger: Logger, rli: Interface) {
+async function handleCircuits(
+  contract: SentinelContract,
+  walletCtx: WalletContext,
+  logger: Logger,
+  rli: Interface,
+) {
   while (true) {
     const choice = await rli.question(circuitMenu);
 
     switch (choice) {
       case "1":
-        const trueResponse = await contract.returnTrue();
-        logger.info(`True response: ${trueResponse}`);
-        break;
+        try {
+          const input = await rli.question(enterNumber);
+          const nullifierInput = await rli.question(nullifierSecret);
+          const address = await walletCtx.wallet.unshielded.getAddress();
+          const tx = await contract.mintToken(
+            BigInt(input),
+            Number.parseInt(nullifierInput),
+            Buffer.from(address.hexString, "hex"),
+          );
+          logger.info(`Minting tx hash: ${tx?.public.txHash}`);
+        } catch (err) {
+          console.log(err);
+        }
+        return;
       case "2":
-        logger.info("Exiting...");
+        try {
+          await contract.updateRules();
+        } catch (err) {
+          console.log(err);
+        }
+        break;
+      case "3":
         return;
     }
   }
@@ -25,23 +50,35 @@ async function handleCircuits(contract: ExampleContract, logger: Logger, rli: In
 
 export async function runCli(
   config: Config,
-  testContainers: StartedDockerComposeEnvironment,
   walletCtx: WalletContext,
   logger: Logger,
-  rli: Interface
+  rli: Interface,
 ): Promise<void> {
-  let contract: ExampleContract | null = null;
+  let contract: SentinelContract | null = null;
+
   while (true) {
     const choice = await rli.question(contractMenu);
 
     switch (choice) {
       case "1":
-        contract = await ExampleContract.deploy(walletCtx, config, { secretKey: new Uint8Array(32).fill(0) });
+        contract = await SentinelContract.deploy(walletCtx, config, {
+          secretKey: new Uint8Array(32).fill(0),
+        });
+        logger.info(
+          `[Contract Address]: ${contract.deployedContract?.deployTxData.public.contractAddress}`,
+        );
         break;
       case "2":
         try {
-          const contractAddress = await rli.question("Enter the contract address: ");
-          contract = await ExampleContract.join(walletCtx, config, contractAddress, { secretKey: new Uint8Array(32).fill(0) });
+          const contractAddress = await rli.question(
+            "Enter the contract address: ",
+          );
+          contract = await SentinelContract.join(
+            walletCtx,
+            config,
+            contractAddress,
+            { secretKey: new Uint8Array(32).fill(0) },
+          );
         } catch (error: unknown) {
           logger.error("Error joining contract:");
           if (error instanceof Error) {
@@ -53,11 +90,10 @@ export async function runCli(
       case "3":
         logger.info("Exiting...");
         return;
+      default:
+        continue;
     }
 
-    if (contract) break;
+    if (contract) await handleCircuits(contract, walletCtx, logger, rli);
   }
-
-  assert(contract, "Contract not deployed");
-  await handleCircuits(contract!, logger, rli);
 }

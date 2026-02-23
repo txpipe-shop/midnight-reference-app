@@ -5,27 +5,32 @@ import { NodeZkConfigProvider } from "@midnight-ntwrk/midnight-js-node-zk-config
 import {
   type WalletContext,
   createWalletAndMidnightProvider,
-} from "@midnight-reference-app/wallet";
+} from "@midnight-sentinel/wallet";
 import path from "node:path";
 import {
-  ExampleContractCircuitKeys,
-  exampleContractPrivateStateKey,
-  ExampleContractProviders,
-  PrivateStateId
+  SentinelContractCircuitKeys,
+  sentinelContractPrivateStateKey,
+  SentinelContractProviders,
+  PrivateStateId,
 } from "./types.js";
 
+// TODO: Maybe we can improve how these variables are defined
 const currentDir = path.resolve(new URL(import.meta.url).pathname, "..");
 export const contractConfig = {
-  privateStateStoreName: exampleContractPrivateStateKey,
-  zkConfigPath: path.resolve(currentDir, "managed", "example"),
+  privateStateStoreName: sentinelContractPrivateStateKey,
+  zkConfigPath: path.resolve(currentDir, "managed", "sentinel"),
 };
 
 export const configureProviders = async (
   walletCtx: WalletContext,
-  config: { indexer: string; indexerWS: string; proofServer: string }
-): Promise<ExampleContractProviders> => {
-  const walletAndMidnightProvider = await createWalletAndMidnightProvider(walletCtx);
-  const zkConfigProvider = new NodeZkConfigProvider<ExampleContractCircuitKeys>(contractConfig.zkConfigPath);
+  config: { indexer: string; indexerWS: string; proofServer: string },
+): Promise<SentinelContractProviders> => {
+  const walletAndMidnightProvider =
+    await createWalletAndMidnightProvider(walletCtx);
+  const zkConfigProvider =
+    new NodeZkConfigProvider<SentinelContractCircuitKeys>(
+      contractConfig.zkConfigPath,
+    );
 
   return {
     privateStateProvider: levelPrivateStateProvider<PrivateStateId>({
@@ -34,12 +39,12 @@ export const configureProviders = async (
     }),
     publicDataProvider: indexerPublicDataProvider(
       config.indexer,
-      config.indexerWS
+      config.indexerWS,
     ),
     zkConfigProvider,
     proofProvider: httpClientProofProvider(
       config.proofServer,
-      zkConfigProvider
+      zkConfigProvider,
     ),
     walletProvider: walletAndMidnightProvider,
     midnightProvider: walletAndMidnightProvider,

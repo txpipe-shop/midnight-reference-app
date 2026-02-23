@@ -11,10 +11,14 @@ class DelayedWaitStrategy {
     this.delayMs = delayMs;
     this.delegate = delegate;
   }
-  async waitUntilReady(...args: Parameters<WaitStrategy['waitUntilReady']>) {
-    console.log(`[DelayedWaitStrategy] (${this.name}) Starting ${this.delayMs}ms delay before health check...`);
+  async waitUntilReady(...args: Parameters<WaitStrategy["waitUntilReady"]>) {
+    console.log(
+      `[DelayedWaitStrategy] (${this.name}) Starting ${this.delayMs}ms delay before health check...`,
+    );
     await new Promise((resolve) => setTimeout(resolve, this.delayMs));
-    console.log(`[DelayedWaitStrategy] (${this.name}) Delay complete, now checking health...`);
+    console.log(
+      `[DelayedWaitStrategy] (${this.name}) Delay complete, now checking health...`,
+    );
     await this.delegate.waitUntilReady(...args);
     console.log(`[DelayedWaitStrategy] (${this.name}) Health check passed`);
   }
@@ -35,27 +39,38 @@ class DelayedWaitStrategy {
 const WaitStrategies = {
   forDelayedStrategy(name: string, delayMs: number, delegate: WaitStrategy) {
     return new DelayedWaitStrategy(name, delayMs, delegate);
-  }
+  },
 };
 
-export const standaloneConfig = (currentWorkingDir: string, fileName: string) => ({
+export const standaloneConfig = (
+  currentWorkingDir: string,
+  fileName: string,
+) => ({
   path: currentWorkingDir,
   fileName: fileName,
   container: {
     proofServer: {
-      name: 'proof-server',
+      name: "proof-server",
       port: 6300,
-      waitStrategy: Wait.forListeningPorts().withStartupTimeout(3 * 60_000)
+      waitStrategy: Wait.forListeningPorts().withStartupTimeout(100),
     },
     node: {
-      name: 'node',
+      name: "node",
       port: 9944,
-      waitStrategy: WaitStrategies.forDelayedStrategy("node", 20_000, Wait.forHealthCheck())
+      waitStrategy: WaitStrategies.forDelayedStrategy(
+        "node",
+        100,
+        Wait.forHealthCheck(),
+      ),
     },
     indexer: {
-      name: 'indexer',
+      name: "indexer",
       port: 8088,
-      waitStrategy: WaitStrategies.forDelayedStrategy("indexer", 20_000, Wait.forHealthCheck())
-    }
-  }
-})
+      waitStrategy: WaitStrategies.forDelayedStrategy(
+        "indexer",
+        10_000,
+        Wait.forHealthCheck(),
+      ),
+    },
+  },
+});

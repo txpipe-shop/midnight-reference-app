@@ -1,0 +1,174 @@
+pragma language_version 0.20;
+
+import CompactStandardLibrary;
+
+struct Input {
+  uint: Uint<64>;
+  boolean: Boolean;
+  bytes32: Bytes<32>;
+  field: Field;
+  nullifier: Bytes<32>;
+}
+
+export enum Ord {
+  GT,
+  LT,
+  EQ,
+  NEQ,
+  GTE,
+  LTE,
+}
+
+export enum Eq {
+  EQ,
+  NEQ,
+}
+
+export struct NumberProp {
+  op: Ord;
+  value: Uint<64>;
+}
+
+export struct BooleanProp {
+  op: Eq;
+  value: Boolean;
+}
+
+export struct ByteProp {
+  op: Eq;
+  value: Bytes<32>;
+}
+
+export struct FieldProp {
+  op: Eq;
+  value: Field;
+}
+
+export struct NullifierProp {
+  op: Eq;
+  nullifier: Bytes<32>;
+}
+
+export type Proposition = Either<NumberProp, Either<BooleanProp, Either<ByteProp, Either<FieldProp, NullifierProp>>>>;
+type Conjunction<#n> = Maybe<Vector<n, Maybe<Proposition>>>;
+type Disjunction<#n, #m> = Vector<m, Conjunction<n>>;
+export type Rules = Disjunction<2,2>;
+
+export ledger rules: Rules;
+export ledger owner: Either<ZswapCoinPublicKey, ContractAddress>;
+//export ledger baseNonce: Bytes<32>;
+// export ledger mintCount: Counter;
+
+constructor(contractRules: Rules, initialBaseNonce: Bytes<32>, pubKey: ZswapCoinPublicKey) {
+  const ownerProUltra = left<ZswapCoinPublicKey, ContractAddress>(pubKey);
+  rules = disclose(contractRules);
+  owner = disclose(ownerProUltra);
+  // TODO: research if baseNonce can be safely public 
+  // baseNonce = disclose(initialBaseNonce);
+}
+
+// Exported so you can actually test this
+export circuit assertOwner(): [] {
+  assert(ownPublicKey() == owner.left, "You are not the owner of this contract");
+}
+
+export circuit updateOwner(newOwner: Either<ZswapCoinPublicKey, ContractAddress>): [] {
+  assertOwner();
+  owner = disclose(newOwner);
+}
+
+export circuit update(newRules: Rules): [] {
+  assertOwner();
+  rules = disclose(newRules);
+}
+
+circuit checkNumberProp(rule: NumberProp, input: Input): Boolean {
+  if (rule.op == Ord.GTE) {
+    return rule.value >= input.uint;
+  } else if (rule.op == Ord.LTE) {
+    return rule.value <= input.uint;
+  } else if (rule.op == Ord.LT) {
+    return rule.value < input.uint;
+  } else if (rule.op == Ord.GT) {
+    return rule.value > input.uint;
+  } else if (rule.op == Ord.NEQ) {
+    return rule.value != input.uint;
+  } else {
+    return rule.value == input.uint;
+  }
+}
+
+circuit checkBooleanProp(rule: BooleanProp, input: Input): Boolean {
+  return rule.op == Eq.EQ ? input.boolean == rule.value : input.boolean != rule.value;
+}
+
+circuit checkByteProp(rule: ByteProp, input: Input): Boolean {
+  return rule.op == Eq.EQ ? input.bytes32 == rule.value : input.bytes32 != rule.value;
+}
+
+circuit checkFieldProp(rule: FieldProp, input: Input): Boolean {
+   return rule.op == Eq.EQ ? input.field == rule.value : input.field != rule.value;
+}
+
+circuit checkNullifierProp(rule: NullifierProp, input: Input): Boolean {
+  const computed = disclose(nullifier(secretKey()));
+  return rule.op == Eq.EQ ? input.nullifier == computed : input.nullifier != computed;
+}
+
+circuit checkProp(rule: Proposition, input: Input): Boolean {
+  if (rule.is_left) {
+      return checkNumberProp(rule.left, input);
+  } else if (rule.right.is_left) {
+    return checkBooleanProp(rule.right.left, input);
+  } else if (rule.right.right.is_left) {
+    return checkByteProp(rule.right.right.left, input);
+  } else if (rule.right.right.right.is_left){
+    return checkFieldProp(rule.right.right.right.left, input);
+  } else {
+    return checkNullifierProp(rule.right.right.right.right, input);
+  }
+}
+
+circuit satAnd(rule: Maybe<Proposition>, input: Input): Boolean {
+  if (rule.is_some) {
+    return checkProp(rule.value, input);
+  }
+  // && neutral
+  return true;
+}
+
+circuit satOr(clause: Conjunction<2>, input: Input): Boolean {
+  if (clause.is_some) {
+    return fold((acc, and) => acc && satAnd(and, input), true, clause.value);
+  }
+  // || neutral
+  return false;
+}
+
+circuit satisfies(input: Input): Boolean {
+  return fold((acc, or) => acc || satOr(or, input), false, rules);
+}
+
+export circuit mintSpecialToken(input: Input, address: UserAddress): [] {
+  assert(satisfies(input), "Not allowed to mint tokens");
+
+  const amount: Uint<64> = 1;
+
+  //TODO: shielded mints don't work on latest version
+  //const recipientPk = ownPublicKey();
+  // TODO: use coin base nonce here
+  //const nonce = evolveNonce(mintCount, baseNonce);
+  ///const recipient = left<ZswapCoinPublicKey, ContractAddress>(recipientPk);
+  //const _coin = mintShieldedToken(disclose(input.bytes32), amount, nonce, recipient);
+
+  const recipient = right<ContractAddress, UserAddress>(address);
+  const _coin = mintUnshieldedToken(disclose(input.bytes32), amount, disclose(recipient));
+}
+
+export circuit nullifier(sk: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<2, Bytes<32>>>(
+    [pad(32, "native-scripts"), sk]
+  );
+}
+
+witness secretKey(): Bytes<32>;

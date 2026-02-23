@@ -1,5 +1,5 @@
 {
-  "name": "@midnight-reference-app/contract",
+  "name": "@midnight-sentinel/contract",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -13,9 +13,11 @@
     }
   },
   "scripts": {
-    "compact": "compact compile src/example.compact ./src/managed/example",
+    "compact": "compact compile src/sentinel.compact ./src/managed/sentinel",
+    "compact:no-zk": "compact compile --skip-zk src/sentinel.compact ./src/managed/sentinel",
     "clean": "rm -rf dist",
-    "build": "pnpm clean && pnpm compact && mkdir -p dist && tsc --project ./tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/example.compact ./dist"
+    "check": "pnpm clean && pnpm compact:no-zk && mkdir -p dist && tsc --project ./tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/sentinel.compact ./dist",
+    "build": "pnpm clean && pnpm compact && mkdir -p dist && tsc --project ./tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/sentinel.compact ./dist"
   },
   "dependencies": {
     "@midnight-ntwrk/compact-js": "^2.4.0",
@@ -26,7 +28,7 @@
     "@midnight-ntwrk/midnight-js-level-private-state-provider": "^3.1.0",
     "@midnight-ntwrk/midnight-js-node-zk-config-provider": "^3.1.0",
     "@midnight-ntwrk/midnight-js-types": "^3.0.0",
-    "@midnight-reference-app/wallet": "workspace:*",
+    "@midnight-sentinel/wallet": "workspace:*",
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
