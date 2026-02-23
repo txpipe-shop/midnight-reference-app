@@ -25,6 +25,7 @@ function App() {
   const { wallet, error } = useWallet();
   const [view, setView] = useState<ViewState>("select");
   const [isDeploying, setIsDeploying] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
 
   const [joinAddress, setJoinAddress] = useState("");
   const [deployRulesJson, setDeployRulesJson] = useState("");
@@ -65,6 +66,35 @@ function App() {
       toast.error(err?.message || "Failed to deploy contract");
     } finally {
       setIsDeploying(false);
+    }
+  };
+
+  const handleJoin = async () => {
+    if (!joinAddress.trim()) return;
+    if (!wallet) {
+      toast.error("Wallet not connected");
+      return;
+    }
+
+    setIsJoining(true);
+    try {
+      const providers = await initializeProviders(wallet.api);
+      const contract = await SentinelContract.join(
+        providers,
+        joinAddress,
+        { secretKey: new Uint8Array(32).fill(0) }
+      );
+
+      const state = contract.deployedContract?.deployTxData;
+      console.log("Contract Balance", state?.public.initialContractState.balance);
+      console.log("Contract state", state?.public.initialContractState.data.state)
+
+      toast.success(`Successfully joined contract! Check the console for state.`);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || "Failed to join contract");
+    } finally {
+      setIsJoining(false);
     }
   };
 
@@ -162,8 +192,8 @@ function App() {
                       onChange={(e) => setJoinAddress(e.target.value)}
                     />
                   </div>
-                  <Button disabled={!isJoinEnabled} className="w-full">
-                    Join
+                  <Button disabled={!isJoinEnabled || isJoining} onClick={handleJoin} className="w-full">
+                    {isJoining ? "Joining..." : "Join"}
                   </Button>
                 </div>
               </div>
