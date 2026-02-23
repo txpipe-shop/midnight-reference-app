@@ -3,7 +3,8 @@ import { type Logger } from 'pino';
 import type { Interface } from 'readline/promises';
 import { SentinelContract } from '../api/index.js';
 import { type Config } from '../config.js';
-import { circuitMenu, contractMenu, enterNumber, nullifierSecret } from './menus.js';
+import { getBalances, printBalances } from './balances.js';
+import { circuitMenu, contractMenu, enterNumber } from './menus.js';
 
 async function handleCircuits(
   contract: SentinelContract,
@@ -18,18 +19,16 @@ async function handleCircuits(
       case '1':
         try {
           const input = await rli.question(enterNumber);
-          const nullifierInput = await rli.question(nullifierSecret);
           const address = await walletCtx.wallet.unshielded.getAddress();
           const tx = await contract.mintToken(
             BigInt(input),
-            Number.parseInt(nullifierInput),
             Buffer.from(address.hexString, 'hex')
           );
           logger.info(`Minting tx hash: ${tx?.public.txHash}`);
         } catch (err) {
           console.log(err);
         }
-        return;
+        break;
       case '2':
         try {
           await contract.updateRules();
@@ -38,7 +37,15 @@ async function handleCircuits(
         }
         break;
       case '3':
+        const balances = await getBalances(walletCtx.wallet);
+        printBalances(balances);
+        break;
+      case '4':
+        logger.info(`Exiting contract address: ${contract.deployedContract?.deployTxData.public.contractAddress}`);
         return;
+      default:
+        logger.error('Invalid choice');
+        continue;
     }
   }
 }
@@ -55,9 +62,11 @@ export async function runCli(
     const choice = await rli.question(contractMenu);
 
     switch (choice) {
-      case '1':
+      case "1":
+        const secretKey = crypto.getRandomValues(new Uint8Array(32));
+        console.log({ secretKey: Buffer.from(secretKey).toString('hex') });
         contract = await SentinelContract.deploy(walletCtx, config, {
-          secretKey: new Uint8Array(32).fill(0),
+          secretKey,
         });
         logger.info(
           `[Contract Address]: ${contract.deployedContract?.deployTxData.public.contractAddress}`
@@ -65,10 +74,19 @@ export async function runCli(
         break;
       case '2':
         try {
-          const contractAddress = await rli.question('Enter the contract address: ');
-          contract = await SentinelContract.join(walletCtx, config, contractAddress, {
-            secretKey: new Uint8Array(32).fill(0),
-          });
+          const contractAddress = await rli.question(
+            "Enter the contract address: ",
+          );
+          const secretKey = await rli.question(
+            "Enter the secret key: ",
+          );
+
+          contract = await SentinelContract.join(
+            walletCtx,
+            config,
+            contractAddress,
+            { secretKey: new Uint8Array(Buffer.from(secretKey, "hex")) },
+          );
         } catch (error: unknown) {
           logger.error('Error joining contract:');
           if (error instanceof Error) {
@@ -78,9 +96,14 @@ export async function runCli(
         }
         break;
       case '3':
+        const balances = await getBalances(walletCtx.wallet);
+        printBalances(balances);
+        break
+      case '4':
         logger.info('Exiting...');
         return;
       default:
+        logger.error('Invalid choice');
         continue;
     }
 

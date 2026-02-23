@@ -41,6 +41,9 @@ importers:
       '@midnight-ntwrk/midnight-js-contracts':
         specifier: ^3.0.0
         version: 3.1.0
+      '@midnight-ntwrk/wallet-sdk-facade':
+        specifier: 1.0.0
+        version: 1.0.0(ws@8.19.0)
       '@midnight-sentinel/contract':
         specifier: workspace:*
         version: link:../../packages/contract
@@ -56,6 +59,9 @@ importers:
       pino:
         specifier: ^10.3.1
         version: 10.3.1
+      rxjs:
+        specifier: ^7.8.2
+        version: 7.8.2
     devDependencies:
       '@types/node':
         specifier: ^22.0.0

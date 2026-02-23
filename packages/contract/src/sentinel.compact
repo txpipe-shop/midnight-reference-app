@@ -7,7 +7,6 @@ struct Input {
   boolean: Boolean;
   bytes32: Bytes<32>;
   field: Field;
-  nullifier: Bytes<32>;
 }
 
 export enum Ord {
@@ -60,9 +59,9 @@ export ledger owner: Either<ZswapCoinPublicKey, ContractAddress>;
 // export ledger mintCount: Counter;
 
 constructor(contractRules: Rules, initialBaseNonce: Bytes<32>, pubKey: ZswapCoinPublicKey) {
-  const ownerProUltra = left<ZswapCoinPublicKey, ContractAddress>(pubKey);
+  const deployOwner = left<ZswapCoinPublicKey, ContractAddress>(pubKey);
   rules = disclose(contractRules);
-  owner = disclose(ownerProUltra);
+  owner = disclose(deployOwner);
   // TODO: research if baseNonce can be safely public 
   // baseNonce = disclose(initialBaseNonce);
 }
@@ -107,12 +106,12 @@ circuit checkByteProp(rule: ByteProp, input: Input): Boolean {
 }
 
 circuit checkFieldProp(rule: FieldProp, input: Input): Boolean {
-   return rule.op == Eq.EQ ? input.field == rule.value : input.field != rule.value;
+  return rule.op == Eq.EQ ? input.field == rule.value : input.field != rule.value;
 }
 
-circuit checkNullifierProp(rule: NullifierProp, input: Input): Boolean {
+circuit checkNullifierProp(rule: NullifierProp): Boolean {
   const computed = disclose(nullifier(secretKey()));
-  return rule.op == Eq.EQ ? input.nullifier == computed : input.nullifier != computed;
+  return rule.op == Eq.EQ ? rule.nullifier == computed : rule.nullifier != computed;
 }
 
 circuit checkProp(rule: Proposition, input: Input): Boolean {
@@ -125,7 +124,7 @@ circuit checkProp(rule: Proposition, input: Input): Boolean {
   } else if (rule.right.right.right.is_left){
     return checkFieldProp(rule.right.right.right.left, input);
   } else {
-    return checkNullifierProp(rule.right.right.right.right, input);
+    return checkNullifierProp(rule.right.right.right.right);
   }
 }
 

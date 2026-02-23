@@ -16,6 +16,7 @@ import type { WalletContext } from '@midnight-sentinel/wallet';
 import type { StandaloneConfig } from '../config.js';
 import { newRules } from '../rules.js';
 import { rules as rulesBuilder } from '../scripts/humanRulesToCompact.js';
+import { DEFAULT_BOOLEAN_VALUE, DEFAULT_BYTES32_VALUE, DEFAULT_FIELD_VALUE } from '../utils/constants.js';
 
 export class SentinelContract {
   readonly providers: SentinelContractProviders;
@@ -121,9 +122,8 @@ export class SentinelContract {
 
     const args: SentinelRules = rulesBuilder()
       .when((r) => r.uint.eq(123).and((r) => r.uint.eq(123)))
-      .or((r) => r.nullifier.eq(pureCircuits.nullifier(new Uint8Array(32).fill(0))))
+      .or((r) => r.nullifier.eq(pureCircuits.nullifier(privateState.secretKey)))
       .build();
-
     console.log(this.prettyRules(args));
 
     const deployedContract = await deployContract<SentinelContractType>(providers, {
@@ -163,14 +163,12 @@ export class SentinelContract {
     return new SentinelContract(providers, deployedContract);
   }
 
-  async mintToken(uint: bigint, nullifierFill: number, address: Uint8Array) {
-    const nullifier = pureCircuits.nullifier(new Uint8Array(32).fill(0));
+  async mintToken(uint: bigint, address: Uint8Array) {
     const tx = await this.deployedContract?.callTx.mintSpecialToken(
       {
-        nullifier,
-        boolean: true,
-        bytes32: new Uint8Array(32).fill(0),
-        field: 12312312312n,
+        boolean: DEFAULT_BOOLEAN_VALUE,
+        bytes32: DEFAULT_BYTES32_VALUE,
+        field: DEFAULT_FIELD_VALUE,
         uint,
       },
       { bytes: address }
