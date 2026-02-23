@@ -1,21 +1,17 @@
-import * as ledger from "@midnight-ntwrk/ledger-v7";
-import { unshieldedToken } from "@midnight-ntwrk/ledger-v7";
-import { WalletFacade } from "@midnight-ntwrk/wallet-sdk-facade";
-import { HDWallet, Roles } from "@midnight-ntwrk/wallet-sdk-hd";
-import { UnshieldedKeystore } from "@midnight-ntwrk/wallet-sdk-unshielded-wallet";
-import * as Rx from "rxjs";
+import * as ledger from '@midnight-ntwrk/ledger-v7';
+import { unshieldedToken } from '@midnight-ntwrk/ledger-v7';
+import { WalletFacade } from '@midnight-ntwrk/wallet-sdk-facade';
+import { HDWallet, Roles } from '@midnight-ntwrk/wallet-sdk-hd';
+import { UnshieldedKeystore } from '@midnight-ntwrk/wallet-sdk-unshielded-wallet';
+import * as Rx from 'rxjs';
 
 /**
  * Formats a token balance for display (e.g. 1000000000 -> "1,000,000,000").
  */
-export const formatBalance = (balance: bigint): string =>
-  balance.toLocaleString();
+export const formatBalance = (balance: bigint): string => balance.toLocaleString();
 
-export const withStatus = async <T>(
-  message: string,
-  fn: () => Promise<T>,
-): Promise<T> => {
-  const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+export const withStatus = async <T>(message: string, fn: () => Promise<T>): Promise<T> => {
+  const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
   let i = 0;
   const interval = setInterval(() => {
     process.stdout.write(`\r  ${frames[i++ % frames.length]} ${message}`);
@@ -37,9 +33,9 @@ export const withStatus = async <T>(
  * from a hex-encoded seed using BIP-44 style derivation at account 0, index 0.
  */
 export const deriveKeysFromSeed = (seed: string) => {
-  const hdWallet = HDWallet.fromSeed(Buffer.from(seed, "hex"));
-  if (hdWallet.type !== "seedOk") {
-    throw new Error("Failed to initialize HDWallet from seed");
+  const hdWallet = HDWallet.fromSeed(Buffer.from(seed, 'hex'));
+  if (hdWallet.type !== 'seedOk') {
+    throw new Error('Failed to initialize HDWallet from seed');
   }
 
   const derivationResult = hdWallet.hdWallet
@@ -47,8 +43,8 @@ export const deriveKeysFromSeed = (seed: string) => {
     .selectRoles([Roles.Zswap, Roles.NightExternal, Roles.Dust])
     .deriveKeysAt(0);
 
-  if (derivationResult.type !== "keysDerived") {
-    throw new Error("Failed to derive keys");
+  if (derivationResult.type !== 'keysDerived') {
+    throw new Error('Failed to derive keys');
   }
 
   hdWallet.hdWallet.clear();
@@ -60,8 +56,8 @@ export const waitForSync = (wallet: WalletFacade) =>
   Rx.firstValueFrom(
     wallet.state().pipe(
       Rx.throttleTime(5_000),
-      Rx.filter((state) => state.isSynced),
-    ),
+      Rx.filter((state) => state.isSynced)
+    )
   );
 
 /** Wait until the wallet has a non-zero unshielded balance. Returns the balance. */
@@ -71,8 +67,8 @@ export const waitForFunds = (wallet: WalletFacade): Promise<bigint> =>
       Rx.throttleTime(10_000),
       Rx.filter((state) => state.isSynced),
       Rx.map((s) => s.unshielded.balances[unshieldedToken().raw] ?? 0n),
-      Rx.filter((balance) => balance > 0n),
-    ),
+      Rx.filter((balance) => balance > 0n)
+    )
   );
 
 /**
@@ -84,35 +80,31 @@ export const waitForFunds = (wallet: WalletFacade): Promise<bigint> =>
  */
 export const registerForDustGeneration = async (
   wallet: WalletFacade,
-  unshieldedKeystore: UnshieldedKeystore,
+  unshieldedKeystore: UnshieldedKeystore
 ): Promise<void> => {
-  const state = await Rx.firstValueFrom(
-    wallet.state().pipe(Rx.filter((s) => s.isSynced)),
-  );
+  const state = await Rx.firstValueFrom(wallet.state().pipe(Rx.filter((s) => s.isSynced)));
 
   // Check if dust is already available (e.g. from a previous designation)
   if (state.dust.availableCoins.length > 0) {
     const dustBal = state.dust.walletBalance(new Date());
-    console.log(
-      `  ✓ Dust tokens already available (${formatBalance(dustBal)} DUST)`,
-    );
+    console.log(`  ✓ Dust tokens already available (${formatBalance(dustBal)} DUST)`);
     return;
   }
 
   // Only register coins that haven't been designated yet
   const nightUtxos = state.unshielded.availableCoins.filter(
-    (coin: any) => coin.meta?.registeredForDustGeneration !== true,
+    (coin) => coin.meta?.registeredForDustGeneration !== true
   );
   if (nightUtxos.length === 0) {
     // All coins already registered — just wait for dust to generate
-    await withStatus("Waiting for dust tokens to generate", () =>
+    await withStatus('Waiting for dust tokens to generate', () =>
       Rx.firstValueFrom(
         wallet.state().pipe(
           Rx.throttleTime(5_000),
           Rx.filter((s) => s.isSynced),
-          Rx.filter((s) => s.dust.walletBalance(new Date()) > 0n),
-        ),
-      ),
+          Rx.filter((s) => s.dust.walletBalance(new Date()) > 0n)
+        )
+      )
     );
     return;
   }
@@ -123,29 +115,30 @@ export const registerForDustGeneration = async (
       const recipe = await wallet.registerNightUtxosForDustGeneration(
         nightUtxos,
         unshieldedKeystore.getPublicKey(),
-        (payload) => unshieldedKeystore.signData(payload),
+        (payload) => unshieldedKeystore.signData(payload)
       );
       const finalized = await wallet.finalizeRecipe(recipe);
       await wallet.submitTransaction(finalized);
-    },
+    }
   );
 
   // Wait for dust to actually generate (balance > 0), not just for coins to appear
-  await withStatus("Waiting for dust tokens to generate", () =>
+  await withStatus('Waiting for dust tokens to generate', () =>
     Rx.firstValueFrom(
       wallet.state().pipe(
         Rx.throttleTime(5_000),
         Rx.filter((s) => s.isSynced),
-        Rx.filter((s) => s.dust.walletBalance(new Date()) > 0n),
-      ),
-    ),
+        Rx.filter((s) => s.dust.walletBalance(new Date()) > 0n)
+      )
+    )
   );
 };
 
 export const signTransactionIntents = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tx: { intents?: Map<number, any> },
   signFn: (payload: Uint8Array) => ledger.Signature,
-  proofMarker: "proof" | "pre-proof",
+  proofMarker: 'proof' | 'pre-proof'
 ): void => {
   if (!tx.intents || tx.intents.size === 0) return;
 
@@ -160,7 +153,7 @@ export const signTransactionIntents = (
       ledger.SignatureEnabled,
       ledger.Proofish,
       ledger.PreBinding
-    >("signature", proofMarker, "pre-binding", intent.serialize());
+    >('signature', proofMarker, 'pre-binding', intent.serialize());
 
     const sigData = cloned.signatureData(segment);
     const signature = signFn(sigData);
@@ -168,19 +161,17 @@ export const signTransactionIntents = (
     if (cloned.fallibleUnshieldedOffer) {
       const sigs = cloned.fallibleUnshieldedOffer.inputs.map(
         (_: ledger.UtxoSpend, i: number) =>
-          cloned.fallibleUnshieldedOffer!.signatures.at(i) ?? signature,
+          cloned.fallibleUnshieldedOffer!.signatures.at(i) ?? signature
       );
-      cloned.fallibleUnshieldedOffer =
-        cloned.fallibleUnshieldedOffer.addSignatures(sigs);
+      cloned.fallibleUnshieldedOffer = cloned.fallibleUnshieldedOffer.addSignatures(sigs);
     }
 
     if (cloned.guaranteedUnshieldedOffer) {
       const sigs = cloned.guaranteedUnshieldedOffer.inputs.map(
         (_: ledger.UtxoSpend, i: number) =>
-          cloned.guaranteedUnshieldedOffer!.signatures.at(i) ?? signature,
+          cloned.guaranteedUnshieldedOffer!.signatures.at(i) ?? signature
       );
-      cloned.guaranteedUnshieldedOffer =
-        cloned.guaranteedUnshieldedOffer.addSignatures(sigs);
+      cloned.guaranteedUnshieldedOffer = cloned.guaranteedUnshieldedOffer.addSignatures(sigs);
     }
 
     tx.intents.set(segment, cloned);

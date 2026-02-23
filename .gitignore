@@ -12,3 +12,9 @@ tsconfig.tsbuildinfo
 logs/
 
 **/midnight-level-db/
+
+# ESLint
+.eslintcache
+
+# Prettier
+.prettiercache

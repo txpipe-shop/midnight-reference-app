@@ -1,7 +1,4 @@
-import {
-  deployContract,
-  findDeployedContract,
-} from "@midnight-ntwrk/midnight-js-contracts";
+import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import {
   CompactCompiledContract,
   configureProviders,
@@ -9,15 +6,16 @@ import {
   sentinelContractPrivateStateKey,
   type ContractAddress,
   type PrivateState,
+  type Proposition,
   type SentinelContractDeployed,
   type SentinelContractProviders,
   type SentinelContractType,
   type Rules as SentinelRules,
-} from "@midnight-sentinel/contract";
-import type { WalletContext } from "@midnight-sentinel/wallet";
-import type { StandaloneConfig } from "../config.js";
-import { newRules } from "../rules.js";
-import { rules as rulesBuilder } from "../scripts/humanRulesToCompact.js";
+} from '@midnight-sentinel/contract';
+import type { WalletContext } from '@midnight-sentinel/wallet';
+import type { StandaloneConfig } from '../config.js';
+import { newRules } from '../rules.js';
+import { rules as rulesBuilder } from '../scripts/humanRulesToCompact.js';
 
 export class SentinelContract {
   readonly providers: SentinelContractProviders;
@@ -35,52 +33,52 @@ export class SentinelContract {
     const formatOrdOp = (op: number) => {
       switch (op) {
         case 0:
-          return ">";
+          return '>';
         case 1:
-          return "<";
+          return '<';
         case 2:
-          return "=";
+          return '=';
         case 3:
-          return "!=";
+          return '!=';
         case 4:
-          return ">=";
+          return '>=';
         case 5:
-          return "<=";
+          return '<=';
         default:
-          return "?";
+          return '?';
       }
     };
 
     const formatEqOp = (op: number) => {
       switch (op) {
         case 0:
-          return "=";
+          return '=';
         case 1:
-          return "!=";
+          return '!=';
         default:
-          return "?";
+          return '?';
       }
     };
 
     const toHex = (arr: Uint8Array) =>
-      "0x" +
+      '0x' +
       Array.from(arr)
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
 
-    const formatValue = (val: any) => {
-      if (typeof val === "bigint") {
+    const formatValue = (val: unknown) => {
+      if (typeof val === 'bigint') {
         return val.toString();
-      } else if (typeof val === "boolean") {
-        return val ? "true" : "false";
+      } else if (typeof val === 'boolean') {
+        return val ? 'true' : 'false';
       } else if (val instanceof Uint8Array) {
         const hex = toHex(val);
-        return hex.length > 20 ? hex.slice(0, 6) + "..." + hex.slice(-4) : hex;
+        return hex.length > 20 ? hex.slice(0, 6) + '...' + hex.slice(-4) : hex;
       }
       return String(val);
     };
 
-    const formatComparison = (v: any): string => {
+    const formatComparison = (v: Proposition): string => {
       if (v.is_left) {
         return `${formatValue(v.left.value)} ${formatOrdOp(v.left.op)} input.u32`;
       }
@@ -101,15 +99,13 @@ export class SentinelContract {
     };
 
     const clauses = rules
-      .filter((r: any) => r.is_some)
-      .map((r: any) => {
-        const comparisons = r.value
-          .filter((c: any) => c.is_some)
-          .map((c: any) => formatComparison(c.value));
-        return `(${comparisons.join(" ∧ ")})`;
+      .filter((r) => r.is_some)
+      .map((r) => {
+        const comparisons = r.value.filter((c) => c.is_some).map((c) => formatComparison(c.value));
+        return `(${comparisons.join(' ∧ ')})`;
       });
 
-    return clauses.join(" ∨ ");
+    return clauses.join(' ∨ ');
   }
 
   static async deploy(
@@ -130,24 +126,18 @@ export class SentinelContract {
 
     console.log(this.prettyRules(args));
 
-    const deployedContract = await deployContract<SentinelContractType>(
-      providers,
-      {
-        compiledContract: CompactCompiledContract,
-        privateStateId: sentinelContractPrivateStateKey,
-        initialPrivateState: privateState,
-        args: [
-          args,
-          new Uint8Array(32).fill(0),
-          {
-            bytes: Buffer.from(
-              providers.walletProvider.getCoinPublicKey(),
-              "hex"
-            ),
-          },
-        ],
-      }
-    );
+    const deployedContract = await deployContract<SentinelContractType>(providers, {
+      compiledContract: CompactCompiledContract,
+      privateStateId: sentinelContractPrivateStateKey,
+      initialPrivateState: privateState,
+      args: [
+        args,
+        new Uint8Array(32).fill(0),
+        {
+          bytes: Buffer.from(providers.walletProvider.getCoinPublicKey(), 'hex'),
+        },
+      ],
+    });
 
     return new SentinelContract(providers, deployedContract);
   }
@@ -163,15 +153,12 @@ export class SentinelContract {
       indexerWS: config.indexerWS,
       proofServer: config.proofServer,
     });
-    const deployedContract = await findDeployedContract<SentinelContractType>(
-      providers,
-      {
-        contractAddress,
-        compiledContract: CompactCompiledContract,
-        privateStateId: sentinelContractPrivateStateKey,
-        initialPrivateState: privateState,
-      }
-    );
+    const deployedContract = await findDeployedContract<SentinelContractType>(providers, {
+      contractAddress,
+      compiledContract: CompactCompiledContract,
+      privateStateId: sentinelContractPrivateStateKey,
+      initialPrivateState: privateState,
+    });
 
     return new SentinelContract(providers, deployedContract);
   }
