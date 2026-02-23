@@ -192,6 +192,8 @@ async function handleCircuits(
           console.log(err);
         }
         return;
+      case "2":
+        return;
     }
   }
 }
