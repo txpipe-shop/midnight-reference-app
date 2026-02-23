@@ -1,9 +1,13 @@
-import type { WalletContext } from '@midnight-sentinel/wallet';
+import {
+  getBalancesAndAddresses,
+  printBalances,
+  type WalletContext,
+} from '@midnight-sentinel/wallet';
 import { type Logger } from 'pino';
 import type { Interface } from 'readline/promises';
 import { SentinelContract } from '../api/index.js';
 import { type Config } from '../config.js';
-import { getBalances, printBalances } from './balances.js';
+import { GENESIS_MINT_WALLET_SEED } from '../utils/constants.js';
 import { circuitMenu, contractMenu, enterNumber } from './menus.js';
 
 async function handleCircuits(
@@ -36,10 +40,14 @@ async function handleCircuits(
           console.log(err);
         }
         break;
-      case '3':
-        const balances = await getBalances(walletCtx.wallet);
-        printBalances(balances);
+      case '3': {
+        const { balances, addresses } = await getBalancesAndAddresses(
+          walletCtx.wallet,
+          GENESIS_MINT_WALLET_SEED
+        );
+        printBalances(balances, addresses);
         break;
+      }
       case '4':
         logger.info(`Exiting contract address: ${contract.deployedContract?.deployTxData.public.contractAddress}`);
         return;
@@ -95,10 +103,14 @@ export async function runCli(
           logger.error(error);
         }
         break;
-      case '3':
-        const balances = await getBalances(walletCtx.wallet);
-        printBalances(balances);
-        break
+      case '3': {
+        const { balances, addresses } = await getBalancesAndAddresses(
+          walletCtx.wallet,
+          GENESIS_MINT_WALLET_SEED
+        );
+        printBalances(balances, addresses);
+        break;
+      }
       case '4':
         logger.info('Exiting...');
         return;
