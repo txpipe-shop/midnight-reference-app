@@ -1,20 +1,15 @@
-import { getNetworkId } from "@midnight-ntwrk/midnight-js-network-id";
-import { InMemoryTransactionHistoryStorage } from "@midnight-ntwrk/wallet-sdk-unshielded-wallet";
-import { Config } from "./types.js";
+import { getNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
+import { InMemoryTransactionHistoryStorage } from '@midnight-ntwrk/wallet-sdk-unshielded-wallet';
+import { Config } from './types.js';
 
-export const buildShieldedConfig = ({
-  indexer,
-  indexerWS,
-  node,
-  proofServer,
-}: Config) => ({
+export const buildShieldedConfig = ({ indexer, indexerWS, node, proofServer }: Config) => ({
   networkId: getNetworkId(),
   indexerClientConnection: {
     indexerHttpUrl: indexer,
     indexerWsUrl: indexerWS,
   },
   provingServerUrl: new URL(proofServer),
-  relayURL: new URL(node.replace(/^http/, "ws")),
+  relayURL: new URL(node.replace(/^http/, 'ws')),
 });
 
 export const buildUnshieldedConfig = ({ indexer, indexerWS }: Config) => ({
@@ -26,12 +21,7 @@ export const buildUnshieldedConfig = ({ indexer, indexerWS }: Config) => ({
   txHistoryStorage: new InMemoryTransactionHistoryStorage(),
 });
 
-export const buildDustConfig = ({
-  indexer,
-  indexerWS,
-  node,
-  proofServer,
-}: Config) => ({
+export const buildDustConfig = ({ indexer, indexerWS, node, proofServer }: Config) => ({
   networkId: getNetworkId(),
   costParameters: {
     additionalFeeOverhead: 300_000_000_000_000n,
@@ -42,5 +32,5 @@ export const buildDustConfig = ({
     indexerWsUrl: indexerWS,
   },
   provingServerUrl: new URL(proofServer),
-  relayURL: new URL(node.replace(/^http/, "ws")),
+  relayURL: new URL(node.replace(/^http/, 'ws')),
 });

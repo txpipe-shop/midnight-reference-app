@@ -1,6 +1,6 @@
-import { WitnessContext } from "@midnight-ntwrk/compact-runtime";
-import { Ledger } from "./managed/sentinel/contract/index.js";
-import { PrivateState } from "./private-state.js";
+import { WitnessContext } from '@midnight-ntwrk/compact-runtime';
+import { Ledger } from './managed/sentinel/contract/index.js';
+import { PrivateState } from './private-state.js';
 
 export type WitnessBase = WitnessContext<Ledger, PrivateState>;
 

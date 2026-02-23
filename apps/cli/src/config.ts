@@ -1,5 +1,5 @@
-import { sentinelContractPrivateStateKey } from "@midnight-sentinel/contract";
-import path from "node:path";
+import { sentinelContractPrivateStateKey } from '@midnight-sentinel/contract';
+import path from 'node:path';
 
 export interface Config {
   readonly privateStateStoreName: string;
@@ -11,29 +11,23 @@ export interface Config {
   readonly proofServer: string;
 }
 
-export const currentDir = path.resolve(new URL(import.meta.url).pathname, "..");
+export const currentDir = path.resolve(new URL(import.meta.url).pathname, '..');
 // TODO: fix harcoded values
 export class StandaloneConfig implements Config {
   privateStateStoreName = sentinelContractPrivateStateKey;
-  logDir = path.resolve(
-    currentDir,
-    "..",
-    "logs",
-    "standalone",
-    `${new Date().toISOString()}.log`,
-  );
+  logDir = path.resolve(currentDir, '..', 'logs', 'standalone', `${new Date().toISOString()}.log`);
   zkConfigPath = path.resolve(
     currentDir,
-    "..",
-    "..",
-    "packages",
-    "contract",
-    "dist",
-    "managed",
-    "sentinel",
+    '..',
+    '..',
+    'packages',
+    'contract',
+    'dist',
+    'managed',
+    'sentinel'
   );
-  indexer = "http://127.0.0.1:8088/api/v3/graphql";
-  indexerWS = "ws://127.0.0.1:8088/api/v3/graphql/ws";
-  node = "http://127.0.0.1:9944";
-  proofServer = "http://127.0.0.1:6300";
+  indexer = 'http://127.0.0.1:8088/api/v3/graphql';
+  indexerWS = 'ws://127.0.0.1:8088/api/v3/graphql/ws';
+  node = 'http://127.0.0.1:9944';
+  proofServer = 'http://127.0.0.1:6300';
 }

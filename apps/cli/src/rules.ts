@@ -1,5 +1,5 @@
-import { pureCircuits } from "@midnight-sentinel/contract";
-import { rules as rulesBuilder } from "./scripts/humanRulesToCompact.js";
+import { pureCircuits } from '@midnight-sentinel/contract';
+import { rules as rulesBuilder } from './scripts/humanRulesToCompact.js';
 
 export const newRules = rulesBuilder()
   .when((r) => r.uint.eq(125))

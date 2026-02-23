@@ -20,8 +20,8 @@ import {
   type NullifierProp,
   type NumberProp,
   type Proposition,
-  type Rules
-} from "@midnight-sentinel/contract";
+  type Rules,
+} from '@midnight-sentinel/contract';
 
 // --- Dummy right-hand side for Proposition (unused branches when we only set one variant) ---
 const emptyBytes32 = (): Uint8Array => new Uint8Array(32);
@@ -150,7 +150,7 @@ function nullifierProposition(prop: NullifierProp): Proposition {
 // --- Selector: r.uint.eq(2) etc. ---
 
 function toBigInt(v: number | bigint): bigint {
-  return typeof v === "bigint" ? v : BigInt(v);
+  return typeof v === 'bigint' ? v : BigInt(v);
 }
 
 function toBytes32(v: Uint8Array | number[]): Uint8Array {
@@ -171,16 +171,14 @@ type ClauseLike = ClauseBuilder | PropositionBuilder;
  * Can also be used alone in .when() / .or() for (A && B) || C — the missing slot is is_some: false.
  */
 class PropositionBuilder {
-  constructor(private readonly prop: Proposition) { }
+  constructor(private readonly prop: Proposition) {}
 
   /**
    * Combine this proposition with another to form a clause (pair): (this && other).
    * Returns a ClauseBuilder that can be passed to .when() or .or().
    */
-  and(
-    other: PropositionBuilder | ((r: RuleSelector) => PropositionBuilder)
-  ): ClauseBuilder {
-    const otherProp = typeof other === "function" ? other(r).prop : other.prop;
+  and(other: PropositionBuilder | ((r: RuleSelector) => PropositionBuilder)): ClauseBuilder {
+    const otherProp = typeof other === 'function' ? other(r).prop : other.prop;
     return new ClauseBuilder(this.prop, otherProp);
   }
 
@@ -207,7 +205,7 @@ class ClauseBuilder {
   constructor(
     private readonly prop1: Proposition,
     private readonly prop2: Proposition
-  ) { }
+  ) {}
 
   /** Internal: convert to clause format */
   toClause(): Clause {
@@ -224,65 +222,39 @@ class ClauseBuilder {
 const r = {
   uint: {
     eq: (v: number | bigint) =>
-      new PropositionBuilder(
-        numberProposition({ op: Ord.EQ, value: toBigInt(v) })
-      ),
+      new PropositionBuilder(numberProposition({ op: Ord.EQ, value: toBigInt(v) })),
     neq: (v: number | bigint) =>
-      new PropositionBuilder(
-        numberProposition({ op: Ord.NEQ, value: toBigInt(v) })
-      ),
+      new PropositionBuilder(numberProposition({ op: Ord.NEQ, value: toBigInt(v) })),
     gt: (v: number | bigint) =>
-      new PropositionBuilder(
-        numberProposition({ op: Ord.GT, value: toBigInt(v) })
-      ),
+      new PropositionBuilder(numberProposition({ op: Ord.GT, value: toBigInt(v) })),
     lt: (v: number | bigint) =>
-      new PropositionBuilder(
-        numberProposition({ op: Ord.LT, value: toBigInt(v) })
-      ),
+      new PropositionBuilder(numberProposition({ op: Ord.LT, value: toBigInt(v) })),
     gte: (v: number | bigint) =>
-      new PropositionBuilder(
-        numberProposition({ op: Ord.GTE, value: toBigInt(v) })
-      ),
+      new PropositionBuilder(numberProposition({ op: Ord.GTE, value: toBigInt(v) })),
     lte: (v: number | bigint) =>
-      new PropositionBuilder(
-        numberProposition({ op: Ord.LTE, value: toBigInt(v) })
-      ),
+      new PropositionBuilder(numberProposition({ op: Ord.LTE, value: toBigInt(v) })),
   },
   boolean: {
-    eq: (v: boolean) =>
-      new PropositionBuilder(booleanProposition({ op: Eq.EQ, value: v })),
-    neq: (v: boolean) =>
-      new PropositionBuilder(booleanProposition({ op: Eq.NEQ, value: v })),
+    eq: (v: boolean) => new PropositionBuilder(booleanProposition({ op: Eq.EQ, value: v })),
+    neq: (v: boolean) => new PropositionBuilder(booleanProposition({ op: Eq.NEQ, value: v })),
   },
   bytes32: {
     eq: (v: Uint8Array | number[]) =>
-      new PropositionBuilder(
-        byteProposition({ op: Eq.EQ, value: toBytes32(v) })
-      ),
+      new PropositionBuilder(byteProposition({ op: Eq.EQ, value: toBytes32(v) })),
     neq: (v: Uint8Array | number[]) =>
-      new PropositionBuilder(
-        byteProposition({ op: Eq.NEQ, value: toBytes32(v) })
-      ),
+      new PropositionBuilder(byteProposition({ op: Eq.NEQ, value: toBytes32(v) })),
   },
   field: {
     eq: (v: number | bigint) =>
-      new PropositionBuilder(
-        fieldProposition({ op: Eq.EQ, value: toBigInt(v) })
-      ),
+      new PropositionBuilder(fieldProposition({ op: Eq.EQ, value: toBigInt(v) })),
     neq: (v: number | bigint) =>
-      new PropositionBuilder(
-        fieldProposition({ op: Eq.NEQ, value: toBigInt(v) })
-      ),
+      new PropositionBuilder(fieldProposition({ op: Eq.NEQ, value: toBigInt(v) })),
   },
   nullifier: {
     eq: (v: Uint8Array | number[]) =>
-      new PropositionBuilder(
-        nullifierProposition({ op: Eq.EQ, nullifier: toBytes32(v) })
-      ),
+      new PropositionBuilder(nullifierProposition({ op: Eq.EQ, nullifier: toBytes32(v) })),
     neq: (v: Uint8Array | number[]) =>
-      new PropositionBuilder(
-        nullifierProposition({ op: Eq.NEQ, nullifier: toBytes32(v) })
-      ),
+      new PropositionBuilder(nullifierProposition({ op: Eq.NEQ, nullifier: toBytes32(v) })),
   },
 } as const;
 
@@ -291,7 +263,7 @@ type RuleSelector = typeof r;
 
 // --- Fixed DNF(2,2) builder: (A && B) || (C && D) or (A && B) || C ---
 
-const AND_TERMS_PER_CLAUSE = 2;
+// DNF(2,2): AND_TERMS_PER_CLAUSE=2, OR_CLAUSES=2
 const OR_CLAUSES = 2;
 
 class RulesBuilder {
