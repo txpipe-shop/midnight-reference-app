@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "@midnight-ntwrk/dapp-connector-api": "^4.0.1",
+    "@midnight-sentinel/api": "workspace:*",
     "@midnight-sentinel/contract": "workspace:*",
+    "@radix-ui/react-label": "^2.1.8",
     "@tailwindcss/vite": "^4.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

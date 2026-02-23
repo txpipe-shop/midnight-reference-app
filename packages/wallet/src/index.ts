@@ -34,7 +34,6 @@ export const buildWallet = async (
   config: Config,
   seed: string,
 ): Promise<WalletContext> => {
-  console.log("");
 
   // Derive HD keys and initialize the three sub-wallets
   const { wallet, shieldedSecretKeys, dustSecretKey, unshieldedKeystore } =

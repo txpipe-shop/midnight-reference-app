@@ -1,6 +1,6 @@
 services:
   proof-server:
-    container_name: "proof-server_$TESTCONTAINERS_UID"
+    container_name: "proof-server"
     image: "midnightntwrk/proof-server:7.0.0"
     command: ["midnight-proof-server -v"]
     ports:
@@ -9,7 +9,7 @@ services:
       RUST_BACKTRACE: "full"
 
   indexer:
-    container_name: "indexer_$TESTCONTAINERS_UID"
+    container_name: "indexer"
     image: "midnightntwrk/indexer-standalone:3.0.0"
     env_file: standalone.env.example
     ports:
@@ -29,7 +29,7 @@ services:
 
   node:
     image: "midnightntwrk/midnight-node:0.20.0"
-    container_name: "node_$TESTCONTAINERS_UID"
+    container_name: "node"
     ports:
       - "9944:9944"
     healthcheck:

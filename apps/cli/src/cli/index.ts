@@ -1,14 +1,171 @@
 import type { WalletContext } from "@midnight-sentinel/wallet";
 import { type Logger } from "pino";
 import type { Interface } from "readline/promises";
-import { SentinelContract } from "../api/index.js";
+import { SentinelContract } from "@midnight-sentinel/api";
 import { type Config } from "../config.js";
+import { configureProviders } from "@midnight-sentinel/contract/providers";
 import {
   circuitMenu,
   contractMenu,
   enterNumber,
   nullifierSecret,
 } from "./menus.js";
+import { type Rules as SentinelRules, Ord as SentinelOrdOp, Eq as SentinelEqOp, pureCircuits } from "@midnight-sentinel/contract";
+
+const sampleRules: SentinelRules = [
+  {
+    is_some: true,
+    value: [
+      {
+        is_some: true,
+        value: {
+          is_left: true,
+          left: {
+            op: SentinelOrdOp.EQ,
+            value: 123n,
+          },
+          right: {
+            is_left: false,
+            right: {
+              is_left: false,
+              left: {
+                op: SentinelEqOp.EQ,
+                value: new Uint8Array(32).fill(0),
+              },
+              right: {
+                right: {
+                  op: SentinelEqOp.EQ,
+                  nullifier: new Uint8Array(32).fill(0),
+                },
+                is_left: false,
+                left: {
+                  op: SentinelEqOp.EQ,
+                  value: 1n,
+                },
+              },
+            },
+            left: {
+              value: true,
+              op: SentinelEqOp.EQ,
+            },
+          },
+        },
+      },
+      {
+        is_some: true,
+        value: {
+          is_left: true,
+          left: {
+            op: SentinelOrdOp.EQ,
+            value: 123n,
+          },
+          right: {
+            is_left: false,
+            right: {
+              is_left: false,
+              left: {
+                op: SentinelEqOp.EQ,
+                value: new Uint8Array(32).fill(0),
+              },
+              right: {
+                right: {
+                  op: SentinelEqOp.EQ,
+                  nullifier: new Uint8Array(32).fill(0),
+                },
+                is_left: false,
+                left: {
+                  op: SentinelEqOp.EQ,
+                  value: 1n,
+                },
+              },
+            },
+            left: {
+              value: true,
+              op: SentinelEqOp.EQ,
+            },
+          },
+        },
+      },
+    ],
+  },
+  {
+    is_some: true,
+    value: [
+      {
+        is_some: true,
+        value: {
+          is_left: false,
+          left: {
+            op: SentinelOrdOp.EQ,
+            value: 123n,
+          },
+          right: {
+            is_left: false,
+            right: {
+              is_left: false,
+              left: {
+                op: SentinelEqOp.EQ,
+                value: new Uint8Array(32).fill(0),
+              },
+              right: {
+                right: {
+                  op: SentinelEqOp.EQ,
+                  nullifier: pureCircuits.nullifier(
+                    new Uint8Array(32).fill(0),
+                  ),
+                },
+                is_left: false,
+                left: {
+                  op: SentinelEqOp.EQ,
+                  value: 1n,
+                },
+              },
+            },
+            left: {
+              value: true,
+              op: SentinelEqOp.EQ,
+            },
+          },
+        },
+      },
+      {
+        is_some: false,
+        value: {
+          is_left: true,
+          left: {
+            op: SentinelOrdOp.EQ,
+            value: 123n,
+          },
+          right: {
+            is_left: false,
+            right: {
+              is_left: false,
+              left: {
+                op: SentinelEqOp.EQ,
+                value: new Uint8Array(32).fill(0),
+              },
+              right: {
+                right: {
+                  op: SentinelEqOp.EQ,
+                  nullifier: new Uint8Array(32).fill(0),
+                },
+                is_left: false,
+                left: {
+                  op: SentinelEqOp.EQ,
+                  value: 1n,
+                },
+              },
+            },
+            left: {
+              value: true,
+              op: SentinelEqOp.EQ,
+            },
+          },
+        },
+      },
+    ],
+  },
+];
 
 async function handleCircuits(
   contract: SentinelContract,
@@ -51,22 +208,32 @@ export async function runCli(
     const choice = await rli.question(contractMenu);
 
     switch (choice) {
-      case "1":
-        contract = await SentinelContract.deploy(walletCtx, config, {
-          secretKey: new Uint8Array(32).fill(0),
+      case "1": {
+        const providers = await configureProviders(walletCtx, {
+          indexer: config.indexer,
+          indexerWS: config.indexerWS,
+          proofServer: config.proofServer,
         });
+        contract = await SentinelContract.deploy(providers, {
+          secretKey: new Uint8Array(32).fill(0),
+        }, sampleRules);
         logger.info(
           `[Contract Address]: ${contract.deployedContract?.deployTxData.public.contractAddress}`,
         );
         break;
+      }
       case "2":
         try {
           const contractAddress = await rli.question(
             "Enter the contract address: ",
           );
+          const providers = await configureProviders(walletCtx, {
+            indexer: config.indexer,
+            indexerWS: config.indexerWS,
+            proofServer: config.proofServer,
+          });
           contract = await SentinelContract.join(
-            walletCtx,
-            config,
+            providers,
             contractAddress,
             { secretKey: new Uint8Array(32).fill(0) },
           );
