@@ -14,12 +14,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Rocket, Link as LinkIcon } from "lucide-react";
 import { rulesSchema } from "@/lib/schemas";
-import type { Rules } from "@midnight-sentinel/contract";
-import { SentinelContract } from '@midnight-sentinel/api';
+import { type Rules as SentinelRules, /**pureCircuits, Eq as SentinelEqOp, Ord as SentinelOrdOp */ } from "@midnight-sentinel/contract";
+import { SentinelContract, type SentinelDerivedState } from '@midnight-sentinel/api';
 import { initializeProviders } from '@midnight-sentinel/api/browser';
 
-
-type ViewState = "select" | "deploy" | "join";
+type ViewState = "select" | "deploy" | "join" | "contract";
 
 function App() {
   const { wallet, error } = useWallet();
@@ -27,8 +26,19 @@ function App() {
   const [isDeploying, setIsDeploying] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
 
+  const [activeContract, setActiveContract] = useState<SentinelContract | null>(null);
+  const [contractState, setContractState] = useState<SentinelDerivedState | null>(null);
+
   const [joinAddress, setJoinAddress] = useState("");
   const [deployRulesJson, setDeployRulesJson] = useState("");
+
+  useEffect(() => {
+    if (!activeContract) return;
+    const sub = activeContract.state$.subscribe((state) => {
+      setContractState(state);
+    });
+    return () => sub.unsubscribe();
+  }, [activeContract]);
 
   const parsedRules = useMemo(() => {
     if (!deployRulesJson.trim()) return null;
@@ -48,8 +58,7 @@ function App() {
       return;
     }
 
-    const rules: Rules = parsedRules.data as unknown as Rules;
-
+    const rules: SentinelRules = parsedRules.data;
     setIsDeploying(true);
     try {
       const providers = await initializeProviders(wallet.api);
@@ -58,6 +67,8 @@ function App() {
         { secretKey: new Uint8Array(32).fill(0) },
         rules
       );
+      setActiveContract(contract);
+      setView("contract");
       toast.success(
         `Deployed at ${contract.deployedContract?.deployTxData.public.contractAddress}`
       );
@@ -85,14 +96,13 @@ function App() {
         { secretKey: new Uint8Array(32).fill(0) }
       );
 
-      const state = contract.deployedContract?.deployTxData;
-      console.log("Contract Balance", state?.public.initialContractState.balance);
-      console.log("Contract state", state?.public.initialContractState.data.state)
+      setActiveContract(contract);
+      setView("contract");
 
-      toast.success(`Successfully joined contract! Check the console for state.`);
+      toast.success(`Successfully joined contract`, { richColors: true });
     } catch (err: any) {
       console.error(err);
-      toast.error(err?.message || "Failed to join contract");
+      toast.error(err?.message || "Failed to join contract", { richColors: true });
     } finally {
       setIsJoining(false);
     }
@@ -112,7 +122,7 @@ function App() {
       <SidebarInset className="flex w-full flex-col">
         <Header />
         <main className="flex-1 p-6 flex flex-col items-center justify-center">
-          <div className="w-full max-w-xl mx-auto flex flex-col gap-8">
+          <div className="w-full max-w-4xl mx-auto flex flex-col gap-8">
             {view === "select" && (
               <div className="flex flex-col gap-6 text-center animate-in fade-in duration-500">
                 <div className="space-y-2">
@@ -195,6 +205,43 @@ function App() {
                   <Button disabled={!isJoinEnabled || isJoining} onClick={handleJoin} className="w-full">
                     {isJoining ? "Joining..." : "Join"}
                   </Button>
+                </div>
+              </div>
+            )}
+
+            {view === "contract" && activeContract && (
+              <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <Button variant="ghost" className="w-fit -ml-4" onClick={() => setView("select")}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <h2 className="text-2xl font-bold">Contract Dashboard</h2>
+                    <p className="text-muted-foreground text-sm font-mono bg-muted p-2 rounded-md break-all">
+                      {activeContract.deployedContract?.deployTxData.public.contractAddress}
+                    </p>
+                  </div>
+
+                  {contractState ? (
+                    <div className="space-y-6">
+                      <div className="space-y-2 p-4 border rounded-md">
+                        <h3 className="text-lg font-semibold">Owner</h3>
+                        <p className="font-mono text-sm break-all">{contractState.ownerString}</p>
+                      </div>
+
+                      <div className="space-y-2 p-4 border rounded-md">
+                        <h3 className="text-lg font-semibold">Rules</h3>
+                        <pre className="p-4 bg-muted rounded-md text-sm font-mono overflow-auto max-h-[300px]">
+                          {SentinelContract.prettyRules(contractState.rules) || JSON.stringify(contractState.rules, null, 2)}
+                        </pre>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-12 flex items-center justify-center border rounded-md">
+                      <p className="text-muted-foreground animate-pulse">Loading contract state...</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

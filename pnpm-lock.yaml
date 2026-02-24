@@ -73,7 +73,7 @@ importers:
   apps/ui:
     dependencies:
       '@midnight-ntwrk/dapp-connector-api':
-        specifier: ^4.0.1
+        specifier: 4.0.1
         version: 4.0.1
       '@midnight-ntwrk/onchain-runtime-v2':
         specifier: ^2.0.1
@@ -111,6 +111,9 @@ importers:
       react-dom:
         specifier: ^19.2.0
         version: 19.2.4(react@19.2.4)
+      rxjs:
+        specifier: ^7.8.2
+        version: 7.8.2
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -185,7 +188,7 @@ importers:
         specifier: ^0.14.0
         version: 0.14.0
       '@midnight-ntwrk/dapp-connector-api':
-        specifier: ^4.0.1
+        specifier: 4.0.1
         version: 4.0.1
       '@midnight-ntwrk/ledger-v7':
         specifier: 7.0.0
@@ -211,6 +214,9 @@ importers:
       '@midnight-sentinel/wallet':
         specifier: workspace:*
         version: link:../wallet
+      rxjs:
+        specifier: ^7.8.2
+        version: 7.8.2
     devDependencies:
       '@types/node':
         specifier: ^22.0.0

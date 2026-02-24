@@ -11,7 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@midnight-ntwrk/dapp-connector-api": "^4.0.1",
+    "@midnight-ntwrk/dapp-connector-api": "4.0.1",
     "@midnight-ntwrk/onchain-runtime-v2": "^2.0.1",
     "@midnight-sentinel/api": "workspace:*",
     "@midnight-sentinel/contract": "workspace:*",
@@ -24,6 +24,7 @@
     "radix-ui": "^1.4.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "rxjs": "^7.8.2",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.0",

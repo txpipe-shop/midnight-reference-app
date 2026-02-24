@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@midnight-ntwrk/compact-runtime": "^0.14.0",
-    "@midnight-ntwrk/dapp-connector-api": "^4.0.1",
+    "@midnight-ntwrk/dapp-connector-api": "4.0.1",
     "@midnight-ntwrk/ledger-v7": "7.0.0",
     "@midnight-ntwrk/midnight-js-contracts": "3.0.0",
     "@midnight-ntwrk/midnight-js-fetch-zk-config-provider": "3.0.0",
@@ -32,7 +32,8 @@
     "@midnight-ntwrk/midnight-js-indexer-public-data-provider": "3.0.0",
     "@midnight-ntwrk/midnight-js-types": "3.0.0",
     "@midnight-sentinel/contract": "workspace:*",
-    "@midnight-sentinel/wallet": "workspace:*"
+    "@midnight-sentinel/wallet": "workspace:*",
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

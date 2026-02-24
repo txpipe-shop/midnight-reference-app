@@ -13,7 +13,15 @@ import {
   type Rules as SentinelRules,
   type PrivateState,
   pureCircuits,
+  ledger,
 } from "@midnight-sentinel/contract";
+import { map, type Observable } from "rxjs";
+
+export const toHex = (arr: Uint8Array) =>
+  "0x" +
+  Array.from(arr)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 
 export interface Config {
   indexer: string,
@@ -21,16 +29,24 @@ export interface Config {
   proofServer: string,
 }
 
+export interface SentinelDerivedState {
+  rules: SentinelRules;
+  ownerString: string;
+}
+
 export class SentinelContract {
   readonly providers: SentinelContractProviders;
   readonly deployedContract: SentinelContractDeployed | null;
+  readonly state$: Observable<SentinelDerivedState>;
 
   private constructor(
     providers: SentinelContractProviders,
     deployedContract: SentinelContractDeployed | null,
+    state$: Observable<SentinelDerivedState>,
   ) {
     this.providers = providers;
     this.deployedContract = deployedContract;
+    this.state$ = state$;
   }
 
   static prettyRules(rules: SentinelRules): string {
@@ -141,7 +157,20 @@ export class SentinelContract {
       },
     );
 
-    return new SentinelContract(providers, deployedContract);
+    const contractAddress = deployedContract.deployTxData.public.contractAddress;
+    const state$ = providers.publicDataProvider.contractStateObservable(contractAddress, { type: "latest" }).pipe(
+      map((contractState) => {
+        const ledgerState = ledger(contractState.data);
+        const ownerBytes = ledgerState.owner.is_left ? ledgerState.owner.left.bytes : ledgerState.owner.right.bytes;
+        return {
+          rules: ledgerState.rules,
+          ownerString: toHex(ownerBytes),
+        };
+      })
+    );
+
+    console.debug("Deployment fees: ", deployedContract.deployTxData.public.fees);
+    return new SentinelContract(providers, deployedContract, state$);
   }
 
   static async join(
@@ -156,10 +185,21 @@ export class SentinelContract {
         compiledContract: CompactCompiledContract,
         privateStateId: sentinelContractPrivateStateKey,
         initialPrivateState: privateState,
-      },
+      });
+
+
+    const state$ = providers.publicDataProvider.contractStateObservable(contractAddress, { type: "latest" }).pipe(
+      map((contractState) => {
+        const ledgerState = ledger(contractState.data);
+        const ownerBytes = ledgerState.owner.is_left ? ledgerState.owner.left.bytes : ledgerState.owner.right.bytes;
+        return {
+          rules: ledgerState.rules,
+          ownerString: toHex(ownerBytes),
+        };
+      })
     );
 
-    return new SentinelContract(providers, deployedContract);
+    return new SentinelContract(providers, deployedContract, state$);
   }
 
   async mintToken(uint: bigint, nullifierFill: number, address: Uint8Array) {

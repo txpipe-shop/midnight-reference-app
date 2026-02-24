@@ -3,7 +3,7 @@ import { PrivateState, SentinelContractCircuitKeys, SentinelContractProviders } 
 import { inMemoryPrivateStateProvider } from "./in-memory-private-state-provider.js";
 import { httpClientProofProvider } from "@midnight-ntwrk/midnight-js-http-client-proof-provider";
 import { indexerPublicDataProvider } from "@midnight-ntwrk/midnight-js-indexer-public-data-provider";
-import { Binding, FinalizedTransaction, Proof, Transaction, TransactionId } from "@midnight-ntwrk/ledger-v7";
+import { Binding, FinalizedTransaction, Proof, Transaction, TransactionId, Intent, PreBinding, Proofish } from "@midnight-ntwrk/ledger-v7";
 import { fromHex, toHex } from "@midnight-ntwrk/compact-runtime";
 import { SignatureEnabled } from "@midnight-ntwrk/ledger-v7";
 import { UnboundTransaction } from "@midnight-ntwrk/midnight-js-types";
