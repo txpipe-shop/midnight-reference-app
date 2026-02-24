@@ -14,7 +14,7 @@ ${DIVIDER}
   [1] Mint a token
   [2] Update rules (from rules.ts file)
   [3] Get balances
-  [3] Exit
+  [4] Exit
 ${DIVIDER}
 `;
 
