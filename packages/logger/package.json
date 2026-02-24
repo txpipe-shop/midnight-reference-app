@@ -14,7 +14,11 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "pnpm clean && tsc --project ./tsconfig.build.json"
+    "build": "pnpm clean && tsc --project ./tsconfig.build.json",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "pino": "^10.3.1",

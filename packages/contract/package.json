@@ -22,7 +22,11 @@
     "compact:no-zk": "compact compile --skip-zk src/sentinel.compact ./src/managed/sentinel",
     "clean": "rm -rf dist",
     "check": "pnpm clean && pnpm compact:no-zk && mkdir -p dist && tsc --project ./tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/sentinel.compact ./dist",
-    "build": "pnpm clean && pnpm compact && mkdir -p dist && tsc --project ./tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/sentinel.compact ./dist"
+    "build": "pnpm clean && pnpm compact && mkdir -p dist && tsc --project ./tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/sentinel.compact ./dist",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@midnight-ntwrk/compact-js": "^2.4.0",

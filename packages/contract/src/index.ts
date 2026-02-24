@@ -25,5 +25,5 @@ export type {
   SentinelContractProviders,
   SentinelContractType,
   PrivateStateId,
-} from "./types.js";
+} from './types.js';
 export { witnesses };

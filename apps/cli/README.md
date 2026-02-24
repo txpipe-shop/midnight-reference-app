@@ -8,7 +8,6 @@ The `apps/cli` application allows you to spin up a local standalone Midnight net
 
 ## Features
 
-- **Local Network Support**: Automatically spins up necessary Docker containers for local Midnight testing via `@midnight-sentinel/containers` and testcontainers.
 - **Contract Deployment**: Deploys a new `SentinelContract` onto the network with a predefined set of rules.
 - **Contract Joining**: Allows joining an already deployed contract by entering its contract address.
 - **Token Minting**: Once a contract is deployed or joined, the CLI provides an option to execute the `mintSpecialToken` circuit. It gathers the required input from the user to satisfy the contract's rules and attempts to mint the token unshielded.
