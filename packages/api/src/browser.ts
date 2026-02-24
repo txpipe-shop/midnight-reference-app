@@ -13,9 +13,6 @@ import {
   Proof,
   Transaction,
   TransactionId,
-  Intent,
-  PreBinding,
-  Proofish,
 } from '@midnight-ntwrk/ledger-v7';
 import { fromHex, toHex } from '@midnight-ntwrk/compact-runtime';
 import { SignatureEnabled } from '@midnight-ntwrk/ledger-v7';

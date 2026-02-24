@@ -11,6 +11,8 @@ import {
   type PrivateState,
   pureCircuits,
   ledger,
+  Proposition,
+  BooleanProp,
 } from '@midnight-sentinel/contract';
 import { map, type Observable } from 'rxjs';
 
@@ -83,7 +85,7 @@ export class SentinelContract {
         .map((b) => b.toString(16).padStart(2, '0'))
         .join('');
 
-    const formatValue = (val: any) => {
+    const formatValue = (val: bigint | BooleanProp | boolean | Uint8Array) => {
       if (typeof val === 'bigint') {
         return val.toString();
       } else if (typeof val === 'boolean') {
@@ -94,8 +96,7 @@ export class SentinelContract {
       }
       return String(val);
     };
-
-    const formatComparison = (v: any): string => {
+    const formatComparison = (v: Proposition): string => {
       if (v.is_left) {
         return `${formatValue(v.left.value)} ${formatOrdOp(v.left.op)} input.u32`;
       }
@@ -116,11 +117,9 @@ export class SentinelContract {
     };
 
     const clauses = rules
-      .filter((r: any) => r.is_some)
-      .map((r: any) => {
-        const comparisons = r.value
-          .filter((c: any) => c.is_some)
-          .map((c: any) => formatComparison(c.value));
+      .filter((r) => r.is_some)
+      .map((r) => {
+        const comparisons = r.value.filter((c) => c.is_some).map((c) => formatComparison(c.value));
         return `(${comparisons.join(' ∧ ')})`;
       });
 
