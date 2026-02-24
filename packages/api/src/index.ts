@@ -1,8 +1,5 @@
-import {
-  deployContract,
-  findDeployedContract,
-} from "@midnight-ntwrk/midnight-js-contracts";
-import { fromHex } from "@midnight-ntwrk/compact-runtime";
+import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
+import { fromHex } from '@midnight-ntwrk/compact-runtime';
 import {
   CompactCompiledContract,
   sentinelContractPrivateStateKey,
@@ -14,19 +11,19 @@ import {
   type PrivateState,
   pureCircuits,
   ledger,
-} from "@midnight-sentinel/contract";
-import { map, type Observable } from "rxjs";
+} from '@midnight-sentinel/contract';
+import { map, type Observable } from 'rxjs';
 
 export const toHex = (arr: Uint8Array) =>
-  "0x" +
+  '0x' +
   Array.from(arr)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 
 export interface Config {
-  indexer: string,
-  indexerWS: string,
-  proofServer: string,
+  indexer: string;
+  indexerWS: string;
+  proofServer: string;
 }
 
 export interface SentinelDerivedState {
@@ -42,7 +39,7 @@ export class SentinelContract {
   private constructor(
     providers: SentinelContractProviders,
     deployedContract: SentinelContractDeployed | null,
-    state$: Observable<SentinelDerivedState>,
+    state$: Observable<SentinelDerivedState>
   ) {
     this.providers = providers;
     this.deployedContract = deployedContract;
@@ -53,47 +50,47 @@ export class SentinelContract {
     const formatOrdOp = (op: number) => {
       switch (op) {
         case 0:
-          return ">";
+          return '>';
         case 1:
-          return "<";
+          return '<';
         case 2:
-          return "=";
+          return '=';
         case 3:
-          return "!=";
+          return '!=';
         case 4:
-          return ">=";
+          return '>=';
         case 5:
-          return "<=";
+          return '<=';
         default:
-          return "?";
+          return '?';
       }
     };
 
     const formatEqOp = (op: number) => {
       switch (op) {
         case 0:
-          return "=";
+          return '=';
         case 1:
-          return "!=";
+          return '!=';
         default:
-          return "?";
+          return '?';
       }
     };
 
     const toHex = (arr: Uint8Array) =>
-      "0x" +
+      '0x' +
       Array.from(arr)
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
 
     const formatValue = (val: any) => {
-      if (typeof val === "bigint") {
+      if (typeof val === 'bigint') {
         return val.toString();
-      } else if (typeof val === "boolean") {
-        return val ? "true" : "false";
+      } else if (typeof val === 'boolean') {
+        return val ? 'true' : 'false';
       } else if (val instanceof Uint8Array) {
         const hex = toHex(val);
-        return hex.length > 20 ? hex.slice(0, 6) + "..." + hex.slice(-4) : hex;
+        return hex.length > 20 ? hex.slice(0, 6) + '...' + hex.slice(-4) : hex;
       }
       return String(val);
     };
@@ -124,80 +121,76 @@ export class SentinelContract {
         const comparisons = r.value
           .filter((c: any) => c.is_some)
           .map((c: any) => formatComparison(c.value));
-        return `(${comparisons.join(" ∧ ")})`;
+        return `(${comparisons.join(' ∧ ')})`;
       });
 
-    return clauses.join(" ∨ ");
+    return clauses.join(' ∨ ');
   }
 
   static async deploy(
     providers: SentinelContractProviders,
     privateState: PrivateState,
-    rules: SentinelRules,
+    rules: SentinelRules
   ): Promise<SentinelContract> {
-
-
-
-
-    const deployedContract = await deployContract<SentinelContractType>(
-      providers,
-      {
-        compiledContract: CompactCompiledContract,
-        privateStateId: sentinelContractPrivateStateKey,
-        initialPrivateState: privateState,
-        args: [
-          rules,
-          new Uint8Array(32).fill(0),
-          {
-            bytes: fromHex(
-              providers.walletProvider.getCoinPublicKey()
-            ),
-          },
-        ],
-      },
-    );
+    const deployedContract = await deployContract<SentinelContractType>(providers, {
+      compiledContract: CompactCompiledContract,
+      privateStateId: sentinelContractPrivateStateKey,
+      initialPrivateState: privateState,
+      args: [
+        rules,
+        new Uint8Array(32).fill(0),
+        {
+          bytes: fromHex(providers.walletProvider.getCoinPublicKey()),
+        },
+      ],
+    });
 
     const contractAddress = deployedContract.deployTxData.public.contractAddress;
-    const state$ = providers.publicDataProvider.contractStateObservable(contractAddress, { type: "latest" }).pipe(
-      map((contractState) => {
-        const ledgerState = ledger(contractState.data);
-        const ownerBytes = ledgerState.owner.is_left ? ledgerState.owner.left.bytes : ledgerState.owner.right.bytes;
-        return {
-          rules: ledgerState.rules,
-          ownerString: toHex(ownerBytes),
-        };
-      })
-    );
+    const state$ = providers.publicDataProvider
+      .contractStateObservable(contractAddress, { type: 'latest' })
+      .pipe(
+        map((contractState) => {
+          const ledgerState = ledger(contractState.data);
+          const ownerBytes = ledgerState.owner.is_left
+            ? ledgerState.owner.left.bytes
+            : ledgerState.owner.right.bytes;
+          return {
+            rules: ledgerState.rules,
+            ownerString: toHex(ownerBytes),
+          };
+        })
+      );
 
-    console.debug("Deployment fees: ", deployedContract.deployTxData.public.fees);
+    console.debug('Deployment fees: ', deployedContract.deployTxData.public.fees);
     return new SentinelContract(providers, deployedContract, state$);
   }
 
   static async join(
     providers: SentinelContractProviders,
     contractAddress: ContractAddress,
-    privateState: PrivateState,
+    privateState: PrivateState
   ): Promise<SentinelContract> {
-    const deployedContract = await findDeployedContract<SentinelContractType>(
-      providers,
-      {
-        contractAddress,
-        compiledContract: CompactCompiledContract,
-        privateStateId: sentinelContractPrivateStateKey,
-        initialPrivateState: privateState,
-      });
+    const deployedContract = await findDeployedContract<SentinelContractType>(providers, {
+      contractAddress,
+      compiledContract: CompactCompiledContract,
+      privateStateId: sentinelContractPrivateStateKey,
+      initialPrivateState: privateState,
+    });
 
-
-    const state$ = providers.publicDataProvider.contractStateObservable(contractAddress, { type: "latest" }).pipe(
-      map((contractState) => {
-        const ledgerState = ledger(contractState.data);
-        const ownerBytes = ledgerState.owner.is_left ? ledgerState.owner.left.bytes : ledgerState.owner.right.bytes;
-        return {
-          rules: ledgerState.rules,
-          ownerString: toHex(ownerBytes),
-        };
-      })
-    );
+    const state$ = providers.publicDataProvider
+      .contractStateObservable(contractAddress, { type: 'latest' })
+      .pipe(
+        map((contractState) => {
+          const ledgerState = ledger(contractState.data);
+          const ownerBytes = ledgerState.owner.is_left
+            ? ledgerState.owner.left.bytes
+            : ledgerState.owner.right.bytes;
+          return {
+            rules: ledgerState.rules,
+            ownerString: toHex(ownerBytes),
+          };
+        })
+      );
 
     return new SentinelContract(providers, deployedContract, state$);
   }
@@ -212,7 +205,7 @@ export class SentinelContract {
         field: 12312312312n,
         uint,
       },
-      { bytes: address },
+      { bytes: address }
     );
 
     return tx;

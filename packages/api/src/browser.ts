@@ -1,17 +1,35 @@
-import { FetchZkConfigProvider } from "@midnight-ntwrk/midnight-js-fetch-zk-config-provider";
-import { PrivateState, SentinelContractCircuitKeys, SentinelContractProviders } from "@midnight-sentinel/contract";
-import { inMemoryPrivateStateProvider } from "./in-memory-private-state-provider.js";
-import { httpClientProofProvider } from "@midnight-ntwrk/midnight-js-http-client-proof-provider";
-import { indexerPublicDataProvider } from "@midnight-ntwrk/midnight-js-indexer-public-data-provider";
-import { Binding, FinalizedTransaction, Proof, Transaction, TransactionId, Intent, PreBinding, Proofish } from "@midnight-ntwrk/ledger-v7";
-import { fromHex, toHex } from "@midnight-ntwrk/compact-runtime";
-import { SignatureEnabled } from "@midnight-ntwrk/ledger-v7";
-import { UnboundTransaction } from "@midnight-ntwrk/midnight-js-types";
+import { FetchZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
+import {
+  PrivateState,
+  SentinelContractCircuitKeys,
+  SentinelContractProviders,
+} from '@midnight-sentinel/contract';
+import { inMemoryPrivateStateProvider } from './in-memory-private-state-provider.js';
+import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
+import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
+import {
+  Binding,
+  FinalizedTransaction,
+  Proof,
+  Transaction,
+  TransactionId,
+  Intent,
+  PreBinding,
+  Proofish,
+} from '@midnight-ntwrk/ledger-v7';
+import { fromHex, toHex } from '@midnight-ntwrk/compact-runtime';
+import { SignatureEnabled } from '@midnight-ntwrk/ledger-v7';
+import { UnboundTransaction } from '@midnight-ntwrk/midnight-js-types';
 import { type ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
 
-export const initializeProviders = async (connectedAPI: ConnectedAPI): Promise<SentinelContractProviders> => {
+export const initializeProviders = async (
+  connectedAPI: ConnectedAPI
+): Promise<SentinelContractProviders> => {
   const zkConfigPath = `${window.location.origin}/managed/sentinel`;
-  const keyMaterialProvider = new FetchZkConfigProvider<SentinelContractCircuitKeys>(zkConfigPath, fetch.bind(window));
+  const keyMaterialProvider = new FetchZkConfigProvider<SentinelContractCircuitKeys>(
+    zkConfigPath,
+    fetch.bind(window)
+  );
   const config = await connectedAPI.getConfiguration();
   const inMemoryBBoardPrivateStateProvider = inMemoryPrivateStateProvider<string, PrivateState>();
   const shieldedAddresses = await connectedAPI.getShieldedAddresses();
@@ -36,7 +54,7 @@ export const initializeProviders = async (connectedAPI: ConnectedAPI): Promise<S
             'signature',
             'proof',
             'binding',
-            fromHex(received.tx),
+            fromHex(received.tx)
           );
         } catch (e) {
           console.error({ error: e }, 'Error balancing transaction via wallet');

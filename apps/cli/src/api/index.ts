@@ -1,5 +1,5 @@
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
-import { configureProviders } from '@midnight-sentinel/contract/providers'
+import { configureProviders } from '@midnight-sentinel/contract/providers';
 import {
   CompactCompiledContract,
   pureCircuits,
