@@ -15,7 +15,6 @@ import {
 } from '@midnight-sentinel/contract';
 import { map, type Observable } from 'rxjs';
 import { DEFAULT_BOOLEAN_VALUE, DEFAULT_BYTES32_VALUE, DEFAULT_FIELD_VALUE } from './constants.js';
-import { rules } from './ruleBuilder.js';
 
 export { rules as rulesBuilder } from './ruleBuilder.js';
 
@@ -211,11 +210,7 @@ export class SentinelContract {
     return tx;
   }
 
-  async updateRules(): Promise<void> {
-    const newRules = rules()
-      .when((r) => r.uint.eq(123))
-      .or((r) => r.uint.eq(124))
-      .build();
+  async updateRules(newRules: SentinelRules): Promise<void> {
     await this.deployedContract?.callTx.update(newRules);
   }
 }

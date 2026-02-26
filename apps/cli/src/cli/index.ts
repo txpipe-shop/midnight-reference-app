@@ -33,7 +33,12 @@ async function handleCircuits(
         break;
       case '2':
         try {
-          await contract.updateRules();
+          // TODO: We need a way to get the rules from the user
+          const newRules = rulesBuilder()
+            .when((r) => r.uint.eq(123))
+            .or((r) => r.uint.eq(124))
+            .build();
+          await contract.updateRules(newRules);
         } catch (err) {
           console.log(err);
         }
@@ -75,6 +80,7 @@ export async function runCli(
         console.log({ secretKey: Buffer.from(secretKey).toString('hex') });
 
         const providers = await configureProviders(walletCtx, config);
+        // TODO: We need a way to get the rules from the user
         const rules = rulesBuilder()
           .when((r) => r.uint.eq(123))
           .or((r) => r.uint.eq(124))
