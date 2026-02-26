@@ -1,20 +1,23 @@
-import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { fromHex } from '@midnight-ntwrk/compact-runtime';
+import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import {
+  BooleanProp,
   CompactCompiledContract,
+  Input,
+  Ledger,
+  ledger,
+  Proposition,
   sentinelContractPrivateStateKey,
   type ContractAddress,
+  type PrivateState,
   type SentinelContractDeployed,
   type SentinelContractProviders,
   type SentinelContractType,
-  type Rules as SentinelRules,
-  type PrivateState,
-  pureCircuits,
-  ledger,
-  Proposition,
-  BooleanProp,
+  type Rules as SentinelRules
 } from '@midnight-sentinel/contract';
 import { map, type Observable } from 'rxjs';
+
+export { rules as rulesBuilder } from './ruleBuilder.js';
 
 export const toHex = (arr: Uint8Array) =>
   '0x' +
@@ -29,8 +32,8 @@ export interface Config {
 }
 
 export interface SentinelDerivedState {
-  rules: SentinelRules;
-  ownerString: string;
+  rules: Ledger["rules"];
+  adminString: string;
 }
 
 export class SentinelContract {
@@ -129,15 +132,12 @@ export class SentinelContract {
   static async deploy(
     providers: SentinelContractProviders,
     privateState: PrivateState,
-    rules: SentinelRules
   ): Promise<SentinelContract> {
     const deployedContract = await deployContract<SentinelContractType>(providers, {
       compiledContract: CompactCompiledContract,
       privateStateId: sentinelContractPrivateStateKey,
       initialPrivateState: privateState,
       args: [
-        rules,
-        new Uint8Array(32).fill(0),
         {
           bytes: fromHex(providers.walletProvider.getCoinPublicKey()),
         },
@@ -150,12 +150,12 @@ export class SentinelContract {
       .pipe(
         map((contractState) => {
           const ledgerState = ledger(contractState.data);
-          const ownerBytes = ledgerState.owner.is_left
-            ? ledgerState.owner.left.bytes
-            : ledgerState.owner.right.bytes;
+          const adminBytes = ledgerState.admin.is_left
+            ? ledgerState.admin.left.bytes
+            : ledgerState.admin.right.bytes;
           return {
             rules: ledgerState.rules,
-            ownerString: toHex(ownerBytes),
+            adminString: toHex(adminBytes),
           };
         })
       );
@@ -181,12 +181,12 @@ export class SentinelContract {
       .pipe(
         map((contractState) => {
           const ledgerState = ledger(contractState.data);
-          const ownerBytes = ledgerState.owner.is_left
-            ? ledgerState.owner.left.bytes
-            : ledgerState.owner.right.bytes;
+          const adminBytes = ledgerState.admin.is_left
+            ? ledgerState.admin.left.bytes
+            : ledgerState.admin.right.bytes;
           return {
             rules: ledgerState.rules,
-            ownerString: toHex(ownerBytes),
+            adminString: toHex(adminBytes),
           };
         })
       );
@@ -194,19 +194,27 @@ export class SentinelContract {
     return new SentinelContract(providers, deployedContract, state$);
   }
 
-  async mintToken(uint: bigint, nullifierFill: number, address: Uint8Array) {
-    const nullifier = pureCircuits.nullifier(new Uint8Array(32).fill(nullifierFill));
-    const tx = await this.deployedContract?.callTx.mintSpecialToken(
-      {
-        nullifier,
-        boolean: true,
-        bytes32: new Uint8Array(32).fill(0),
-        field: 12312312312n,
-        uint,
-      },
-      { bytes: address }
-    );
+  async addRule(rule: SentinelRules) {
+    const pubKey = this.providers.walletProvider.getCoinPublicKey();
+    await this.deployedContract?.callTx.addRule({ bytes: fromHex(pubKey) }, rule);
+  }
 
-    return tx;
+  async removeRule() {
+    const pubKey = this.providers.walletProvider.getCoinPublicKey();
+    await this.deployedContract?.callTx.removeRule({ bytes: fromHex(pubKey) });
+  }
+
+  async transferAdmin(newAdmin: Uint8Array) {
+    await this.deployedContract?.callTx.transferAdmin({ bytes: newAdmin });
+  }
+
+  async mintToken(userInputs: Input[]) {
+    const recipient = { bytes: fromHex(this.providers.walletProvider.getCoinPublicKey()) };
+    const domainSep = new Uint8Array(32).fill(0);
+
+    // TODO: how to get the rule keys?
+    const ruleKeys = userInputs.map((input) => { return { bytes: new Uint8Array(32).fill(0) } });
+
+    await this.deployedContract?.callTx.mintSpecialToken(userInputs, recipient, ruleKeys, domainSep);
   }
 }

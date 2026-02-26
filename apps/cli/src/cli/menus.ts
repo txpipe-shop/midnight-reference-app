@@ -12,9 +12,12 @@ ${DIVIDER}
 export const circuitMenu: string = `
 ${DIVIDER}
   [1] Mint a token
-  [2] Update rules (from rules.ts file)
-  [3] Get balances
-  [4] Exit
+  [2] Add a new rule
+  [3] Remove a rule
+  [4] Transfer admin
+  [5] Get balances
+  [6] See current rules
+  [7] Exit
 ${DIVIDER}
 `;
 
