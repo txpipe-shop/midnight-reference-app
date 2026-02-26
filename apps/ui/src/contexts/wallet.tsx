@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { MIDNIGHT_NETWORK } from '@/config';
 import { type ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
-import { MIDNIGHT_NETWORK } from "@/config";
+import { createContext, useContext, useState, type ReactNode } from "react";
 
 export type WalletDetails = Awaited<ReturnType<typeof getFullWallet>>;
 
@@ -34,17 +34,16 @@ export const WalletProvider: React.FC<WalletContextProps> = ({ children }) => {
   const [error, setError] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-
   const connect = async () => {
     setIsLoading(true);
     setError(undefined);
     try {
       if (!window.midnight) {
         setError("Midnight wallet not available in your browser");
-      } else if (!window.midnight.mnLace) {
+      } else if (!Object.keys(window.midnight).length) {
         setError("Lace wallet not in scope");
       } else {
-        const api = await window.midnight.mnLace.connect(MIDNIGHT_NETWORK);
+        const api = await window.midnight[Object.keys(window.midnight)[0]].connect(MIDNIGHT_NETWORK);
         const details = await getFullWallet(api);
         setWallet({ api, details });
       }
