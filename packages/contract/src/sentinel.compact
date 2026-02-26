@@ -2,7 +2,8 @@ pragma language_version 0.20;
 
 import CompactStandardLibrary;
 
-struct Input {
+///////// TYPES /////////
+export struct Input {
   uint: Uint<64>;
   boolean: Boolean;
   bytes32: Bytes<32>;
@@ -53,32 +54,74 @@ type Conjunction<#n> = Maybe<Vector<n, Maybe<Proposition>>>;
 type Disjunction<#n, #m> = Vector<m, Conjunction<n>>;
 export type Rules = Disjunction<2,2>;
 
-export ledger rules: Rules;
-export ledger owner: Either<ZswapCoinPublicKey, ContractAddress>;
+///////// LEDGER /////////
+export ledger rules: Map<ZswapCoinPublicKey, Rules>;
+export ledger admin: Either<ZswapCoinPublicKey, ContractAddress>;
 //export ledger baseNonce: Bytes<32>;
 // export ledger mintCount: Counter;
 
-constructor(contractRules: Rules, initialBaseNonce: Bytes<32>, pubKey: ZswapCoinPublicKey) {
-  const deployOwner = left<ZswapCoinPublicKey, ContractAddress>(pubKey);
-  rules = disclose(contractRules);
-  owner = disclose(deployOwner);
+///////// CONSTRUCTOR /////////
+constructor(pubKey: ZswapCoinPublicKey) {
+  const deployAdmin = left<ZswapCoinPublicKey, ContractAddress>(pubKey);
+  admin = disclose(deployAdmin);
   // TODO: research if baseNonce can be safely public 
   // baseNonce = disclose(initialBaseNonce);
 }
 
-// Exported so you can actually test this
-export circuit assertOwner(): [] {
-  assert(ownPublicKey() == owner.left, "You are not the owner of this contract");
+///////// EXPORTED CIRCUITS /////////
+export circuit addRule(owner: ZswapCoinPublicKey, rule: Rules): [] {
+  // TODO: add whitelist
+  // TODO: check if rule already exists, what to do if it does?
+  rules.insert(disclose(owner), disclose(rule));
 }
 
-export circuit updateOwner(newOwner: Either<ZswapCoinPublicKey, ContractAddress>): [] {
-  assertOwner();
-  owner = disclose(newOwner);
+export circuit removeRule(owner: ZswapCoinPublicKey): [] {
+  assert(isRuleOwner(owner) || isAdmin(), "You are not the owner of this rule or admin of this contract");
+  assert(rules.member(disclose(owner)), "Rule does not exist");
+  rules.remove(disclose(owner));
 }
 
-export circuit update(newRules: Rules): [] {
-  assertOwner();
-  rules = disclose(newRules);
+export circuit transferAdmin(newAdmin: ZswapCoinPublicKey): [] {
+  assert(isAdmin(), "You are not the admin of this contract");
+  admin = disclose(left<ZswapCoinPublicKey, ContractAddress>(newAdmin));
+}
+
+export circuit mintSpecialToken(
+  inputs: Vector<2, Input>,
+  address: UserAddress,
+  ruleKeys: Vector<2, ZswapCoinPublicKey>,
+  domainSep: Bytes<32>
+): [] {
+  for (const i of 0..2) {
+    if (rules.member(disclose(ruleKeys[i]))) {
+      assert(satisfies(disclose(ruleKeys[i]), inputs[i]), "Rule not satisfied");
+    }
+  }
+
+  const amount: Uint<64> = 1;
+
+  //TODO: shielded mints don't work on latest version
+  //const recipientPk = ownPublicKey();
+  // TODO: use coin base nonce here
+  //const nonce = evolveNonce(mintCount, baseNonce);
+  ///const recipient = left<ZswapCoinPublicKey, ContractAddress>(recipientPk);
+  //const _coin = mintShieldedToken(disclose(input.bytes32), amount, nonce, recipient);
+
+  const recipient = right<ContractAddress, UserAddress>(address);
+  const _coin = mintUnshieldedToken(disclose(domainSep), amount, disclose(recipient));
+}
+
+///////// HELPER CIRCUITS /////////
+circuit isAdmin(): Boolean {
+  return ownPublicKey() == disclose(admin.left);
+}
+
+circuit isRuleOwner(owner: ZswapCoinPublicKey): Boolean {
+  return ownPublicKey() == disclose(owner);
+}
+
+circuit satisfies(ruleOwner: ZswapCoinPublicKey, input: Input): Boolean {
+  return fold((acc, or) => acc || satOr(or, input), false, rules.lookup(ruleOwner));
 }
 
 circuit checkNumberProp(rule: NumberProp, input: Input): Boolean {
@@ -144,30 +187,11 @@ circuit satOr(clause: Conjunction<2>, input: Input): Boolean {
   return false;
 }
 
-circuit satisfies(input: Input): Boolean {
-  return fold((acc, or) => acc || satOr(or, input), false, rules);
-}
-
-export circuit mintSpecialToken(input: Input, address: UserAddress): [] {
-  assert(satisfies(input), "Not allowed to mint tokens");
-
-  const amount: Uint<64> = 1;
-
-  //TODO: shielded mints don't work on latest version
-  //const recipientPk = ownPublicKey();
-  // TODO: use coin base nonce here
-  //const nonce = evolveNonce(mintCount, baseNonce);
-  ///const recipient = left<ZswapCoinPublicKey, ContractAddress>(recipientPk);
-  //const _coin = mintShieldedToken(disclose(input.bytes32), amount, nonce, recipient);
-
-  const recipient = right<ContractAddress, UserAddress>(address);
-  const _coin = mintUnshieldedToken(disclose(input.bytes32), amount, disclose(recipient));
-}
-
 export circuit nullifier(sk: Bytes<32>): Bytes<32> {
   return persistentHash<Vector<2, Bytes<32>>>(
-    [pad(32, "native-scripts"), sk]
+    [pad(32, "nullifier"), sk]
   );
 }
 
+///////// WITNESSES /////////
 witness secretKey(): Bytes<32>;
