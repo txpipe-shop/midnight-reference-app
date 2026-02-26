@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const MidnightNetworkSchema = z.enum(['undeployed', 'preview']);
+export const MidnightNetworkSchema = z.enum(['undeployed', 'preview'], 'preprod');
 
 export type MidnightNetwork = z.infer<typeof MidnightNetworkSchema>;
 
