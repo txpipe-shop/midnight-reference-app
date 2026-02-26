@@ -14,6 +14,7 @@
   "dependencies": {
     "@midnight-ntwrk/compact-runtime": "^0.14.0",
     "@midnight-ntwrk/midnight-js-contracts": "^3.0.0",
+    "@midnight-sentinel/api": "workspace:*",
     "@midnight-sentinel/contract": "workspace:*",
     "@midnight-sentinel/logger": "workspace:*",
     "@midnight-sentinel/wallet": "workspace:*",

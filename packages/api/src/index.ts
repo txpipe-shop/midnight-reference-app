@@ -1,32 +1,51 @@
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
-import { configureProviders } from '@midnight-sentinel/contract/providers';
+import { fromHex } from '@midnight-ntwrk/compact-runtime';
 import {
   CompactCompiledContract,
-  pureCircuits,
   sentinelContractPrivateStateKey,
   type ContractAddress,
-  type PrivateState,
-  type Proposition,
   type SentinelContractDeployed,
   type SentinelContractProviders,
   type SentinelContractType,
   type Rules as SentinelRules,
+  type PrivateState,
+  pureCircuits,
+  ledger,
+  Proposition,
+  BooleanProp,
 } from '@midnight-sentinel/contract';
-import type { WalletContext } from '@midnight-sentinel/wallet';
-import type { StandaloneConfig } from '../config.js';
-import { newRules } from '../rules.js';
-import { rules as rulesBuilder } from '../scripts/humanRulesToCompact.js';
+import { map, type Observable } from 'rxjs';
+
+export const toHex = (arr: Uint8Array) =>
+  '0x' +
+  Array.from(arr)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+
+export interface Config {
+  indexer: string;
+  indexerWS: string;
+  proofServer: string;
+}
+
+export interface SentinelDerivedState {
+  rules: SentinelRules;
+  ownerString: string;
+}
 
 export class SentinelContract {
   readonly providers: SentinelContractProviders;
   readonly deployedContract: SentinelContractDeployed | null;
+  readonly state$: Observable<SentinelDerivedState>;
 
   private constructor(
     providers: SentinelContractProviders,
-    deployedContract: SentinelContractDeployed | null
+    deployedContract: SentinelContractDeployed | null,
+    state$: Observable<SentinelDerivedState>
   ) {
     this.providers = providers;
     this.deployedContract = deployedContract;
+    this.state$ = state$;
   }
 
   static prettyRules(rules: SentinelRules): string {
@@ -66,7 +85,7 @@ export class SentinelContract {
         .map((b) => b.toString(16).padStart(2, '0'))
         .join('');
 
-    const formatValue = (val: unknown) => {
+    const formatValue = (val: bigint | BooleanProp | boolean | Uint8Array) => {
       if (typeof val === 'bigint') {
         return val.toString();
       } else if (typeof val === 'boolean') {
@@ -77,7 +96,6 @@ export class SentinelContract {
       }
       return String(val);
     };
-
     const formatComparison = (v: Proposition): string => {
       if (v.is_left) {
         return `${formatValue(v.left.value)} ${formatOrdOp(v.left.op)} input.u32`;
@@ -109,50 +127,48 @@ export class SentinelContract {
   }
 
   static async deploy(
-    walletCtx: WalletContext,
-    config: StandaloneConfig,
-    privateState: PrivateState
+    providers: SentinelContractProviders,
+    privateState: PrivateState,
+    rules: SentinelRules
   ): Promise<SentinelContract> {
-    const providers = await configureProviders(walletCtx, {
-      indexer: config.indexer,
-      indexerWS: config.indexerWS,
-      proofServer: config.proofServer,
-    });
-
-    const args: SentinelRules = rulesBuilder()
-      .when((r) => r.uint.eq(123).and((r) => r.uint.eq(123)))
-      .or((r) => r.nullifier.eq(pureCircuits.nullifier(new Uint8Array(32).fill(0))))
-      .build();
-
-    console.log(this.prettyRules(args));
-
     const deployedContract = await deployContract<SentinelContractType>(providers, {
       compiledContract: CompactCompiledContract,
       privateStateId: sentinelContractPrivateStateKey,
       initialPrivateState: privateState,
       args: [
-        args,
+        rules,
         new Uint8Array(32).fill(0),
         {
-          bytes: Buffer.from(providers.walletProvider.getCoinPublicKey(), 'hex'),
+          bytes: fromHex(providers.walletProvider.getCoinPublicKey()),
         },
       ],
     });
 
-    return new SentinelContract(providers, deployedContract);
+    const contractAddress = deployedContract.deployTxData.public.contractAddress;
+    const state$ = providers.publicDataProvider
+      .contractStateObservable(contractAddress, { type: 'latest' })
+      .pipe(
+        map((contractState) => {
+          const ledgerState = ledger(contractState.data);
+          const ownerBytes = ledgerState.owner.is_left
+            ? ledgerState.owner.left.bytes
+            : ledgerState.owner.right.bytes;
+          return {
+            rules: ledgerState.rules,
+            ownerString: toHex(ownerBytes),
+          };
+        })
+      );
+
+    console.debug('Deployment fees: ', deployedContract.deployTxData.public.fees);
+    return new SentinelContract(providers, deployedContract, state$);
   }
 
   static async join(
-    walletCtx: WalletContext,
-    config: StandaloneConfig,
+    providers: SentinelContractProviders,
     contractAddress: ContractAddress,
     privateState: PrivateState
   ): Promise<SentinelContract> {
-    const providers = await configureProviders(walletCtx, {
-      indexer: config.indexer,
-      indexerWS: config.indexerWS,
-      proofServer: config.proofServer,
-    });
     const deployedContract = await findDeployedContract<SentinelContractType>(providers, {
       contractAddress,
       compiledContract: CompactCompiledContract,
@@ -160,11 +176,26 @@ export class SentinelContract {
       initialPrivateState: privateState,
     });
 
-    return new SentinelContract(providers, deployedContract);
+    const state$ = providers.publicDataProvider
+      .contractStateObservable(contractAddress, { type: 'latest' })
+      .pipe(
+        map((contractState) => {
+          const ledgerState = ledger(contractState.data);
+          const ownerBytes = ledgerState.owner.is_left
+            ? ledgerState.owner.left.bytes
+            : ledgerState.owner.right.bytes;
+          return {
+            rules: ledgerState.rules,
+            ownerString: toHex(ownerBytes),
+          };
+        })
+      );
+
+    return new SentinelContract(providers, deployedContract, state$);
   }
 
   async mintToken(uint: bigint, nullifierFill: number, address: Uint8Array) {
-    const nullifier = pureCircuits.nullifier(new Uint8Array(32).fill(0));
+    const nullifier = pureCircuits.nullifier(new Uint8Array(32).fill(nullifierFill));
     const tx = await this.deployedContract?.callTx.mintSpecialToken(
       {
         nullifier,
@@ -177,10 +208,5 @@ export class SentinelContract {
     );
 
     return tx;
-  }
-
-  async updateRules(): Promise<void> {
-    console.log(SentinelContract.prettyRules(newRules));
-    await this.deployedContract?.callTx.update(newRules);
   }
 }
