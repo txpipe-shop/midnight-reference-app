@@ -1,11 +1,14 @@
 // @ts-check
 import eslint from '@eslint/js';
 import eslintConfigPrettier from 'eslint-config-prettier';
-import { defineConfig } from 'eslint/config';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+import { fileURLToPath } from 'url';
+import path from 'path';
 
-export default defineConfig(
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export default tseslint.config(
   // Global ignores must be in their own config object (no other keys)
   {
     ignores: [
@@ -15,16 +18,21 @@ export default defineConfig(
       '**/*.compact',
       '.turbo/',
       'pnpm-lock.yaml',
+      // apps/ui has its own eslint config with type-aware rules
+      'apps/ui/**',
     ],
   },
   eslint.configs.recommended,
-  ...tseslint.configs.recommended,
+  tseslint.configs.recommended,
   eslintConfigPrettier,
   {
     languageOptions: {
       parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module',
+        projectService: {
+          allowDefaultProject: ['*.mjs', '*.cjs', '*.js'],
+          defaultProject: path.join(__dirname, 'tsconfig.base.json'),
+        },
+        tsconfigRootDir: __dirname,
       },
       globals: {
         ...globals.node,
