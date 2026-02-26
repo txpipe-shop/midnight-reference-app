@@ -113,8 +113,8 @@ export const createWalletAndMidnightProvider = async (
 export {
   getBalances,
   getBalancesAndAddresses,
-  printBalances, type Addresses,
-  type Balances
+  printBalances,
+  type Addresses,
+  type Balances,
 } from './utils/balances.js';
 export { WalletContext } from './utils/types.js';
-

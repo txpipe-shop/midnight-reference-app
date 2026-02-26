@@ -24,8 +24,7 @@ export interface Addresses {
 }
 
 const DIVIDER = '──────────────────────────────────────────────────────────────';
-const TNIGHT_TOKEN_ID =
-  '0000000000000000000000000000000000000000000000000000000000000000';
+const TNIGHT_TOKEN_ID = '0000000000000000000000000000000000000000000000000000000000000000';
 
 function getShieldedAddress(state: FacadeState): string {
   const coinPubKey = ShieldedCoinPublicKey.fromHexString(
@@ -40,10 +39,7 @@ function getShieldedAddress(state: FacadeState): string {
 
 function getUnshieldedAddress(seed: string): MidnightBech32m {
   const keys = deriveKeysFromSeed(seed);
-  const unshieldedKeystore = createKeystore(
-    keys[Roles.NightExternal],
-    getNetworkId()
-  );
+  const unshieldedKeystore = createKeystore(keys[Roles.NightExternal], getNetworkId());
   return unshieldedKeystore.getBech32Address();
 }
 
@@ -67,9 +63,7 @@ export async function getBalancesAndAddresses(
   wallet: WalletFacade,
   seed: string
 ): Promise<{ balances: Balances; addresses: Addresses }> {
-  const state = await Rx.firstValueFrom(
-    wallet.state().pipe(Rx.filter((s) => s.isSynced))
-  );
+  const state = await Rx.firstValueFrom(wallet.state().pipe(Rx.filter((s) => s.isSynced)));
   return {
     balances: getBalances(state),
     addresses: getAddresses(seed, state),
@@ -98,15 +92,12 @@ function formatSection(
   return lines;
 }
 
-export function printBalances(
-  balances: Balances,
-  addresses?: Addresses
-): void {
-  const shieldedLines = Object.entries(balances.shielded).map(
-    ([token, balance]) => formatTokenBalance(token, balance)
+export function printBalances(balances: Balances, addresses?: Addresses): void {
+  const shieldedLines = Object.entries(balances.shielded).map(([token, balance]) =>
+    formatTokenBalance(token, balance)
   );
-  const unshieldedLines = Object.entries(balances.unshielded).map(
-    ([token, balance]) => formatTokenBalance(token, balance)
+  const unshieldedLines = Object.entries(balances.unshielded).map(([token, balance]) =>
+    formatTokenBalance(token, balance)
   );
 
   const dustSection = [
@@ -117,24 +108,11 @@ export function printBalances(
     '  Balance: ' + balances.dust.toLocaleString(),
   ];
 
-  const shieldedSection = formatSection(
-    'SHIELDED',
-    addresses?.shielded,
-    shieldedLines
-  );
+  const shieldedSection = formatSection('SHIELDED', addresses?.shielded, shieldedLines);
 
-  const unshieldedSection = formatSection(
-    'UNSHIELDED',
-    addresses?.unshielded,
-    unshieldedLines
-  );
+  const unshieldedSection = formatSection('UNSHIELDED', addresses?.unshielded, unshieldedLines);
 
-  const output = [
-    ...dustSection,
-    ...shieldedSection,
-    ...unshieldedSection,
-    '',
-  ].join('\n');
+  const output = [...dustSection, ...shieldedSection, ...unshieldedSection, ''].join('\n');
 
   console.log(output);
 }
