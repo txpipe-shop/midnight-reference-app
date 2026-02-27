@@ -194,14 +194,35 @@ export class SentinelContract {
     return new SentinelContract(providers, deployedContract, state$);
   }
 
+  async getCurrentState() {
+    let subscription: { unsubscribe: () => void } | null = null;
+
+    subscription = this.state$.subscribe(({ rules, adminString }) => {
+      // Ensure we only handle the first emission
+      subscription?.unsubscribe();
+
+      console.log('Admin: ', adminString);
+
+      if (rules.isEmpty()) {
+        console.log('No rules found');
+        return;
+      }
+
+      for (const item of rules) {
+        console.log('Owner: ', toHex(item[0].bytes));
+        console.log('Rules: ', SentinelContract.prettyRules(item[1]));
+      }
+    });
+  }
+
   async addRule(rule: SentinelRules) {
     const pubKey = this.providers.walletProvider.getCoinPublicKey();
-    await this.deployedContract?.callTx.addRule({ bytes: fromHex(pubKey) }, rule);
+    return await this.deployedContract?.callTx.addRule({ bytes: fromHex(pubKey) }, rule);
   }
 
   async removeRule() {
-    const pubKey = this.providers.walletProvider.getCoinPublicKey();
-    await this.deployedContract?.callTx.removeRule({ bytes: fromHex(pubKey) });
+    const pubKey = fromHex(this.providers.walletProvider.getCoinPublicKey());
+    await this.deployedContract?.callTx.removeRule({ bytes: pubKey });
   }
 
   async transferAdmin(newAdmin: Uint8Array) {
@@ -215,6 +236,6 @@ export class SentinelContract {
     // TODO: how to get the rule keys?
     const ruleKeys = userInputs.map((input) => { return { bytes: new Uint8Array(32).fill(0) } });
 
-    await this.deployedContract?.callTx.mintSpecialToken(userInputs, recipient, ruleKeys, domainSep);
+    return await this.deployedContract?.callTx.mintSpecialToken(userInputs, recipient, ruleKeys, domainSep);
   }
 }

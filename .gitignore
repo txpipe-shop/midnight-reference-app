@@ -12,6 +12,7 @@ tsconfig.tsbuildinfo
 logs/
 
 **/midnight-level-db/
+**/*-midnight/
 
 # ESLint
 .eslintcache

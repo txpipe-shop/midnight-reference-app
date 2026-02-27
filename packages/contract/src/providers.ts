@@ -7,8 +7,7 @@ import path from 'node:path';
 import {
   SentinelContractCircuitKeys,
   sentinelContractPrivateStateKey,
-  SentinelContractProviders,
-  PrivateStateId,
+  SentinelContractProviders
 } from './types.js';
 
 // TODO: Maybe we can improve how these variables are defined
@@ -20,7 +19,8 @@ export const contractConfig = {
 
 export const configureProviders = async (
   walletCtx: WalletContext,
-  config: { indexer: string; indexerWS: string; proofServer: string }
+  config: { indexer: string; indexerWS: string; proofServer: string },
+  privateStateStoreName: string,
 ): Promise<SentinelContractProviders> => {
   const walletAndMidnightProvider = await createWalletAndMidnightProvider(walletCtx);
   const zkConfigProvider = new NodeZkConfigProvider<SentinelContractCircuitKeys>(
@@ -28,8 +28,9 @@ export const configureProviders = async (
   );
 
   return {
-    privateStateProvider: levelPrivateStateProvider<PrivateStateId>({
-      privateStateStoreName: contractConfig.privateStateStoreName,
+    privateStateProvider: levelPrivateStateProvider<string>({
+      privateStateStoreName,
+      midnightDbName: privateStateStoreName + "-midnight",
       walletProvider: walletAndMidnightProvider,
     }),
     publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),

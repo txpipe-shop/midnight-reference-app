@@ -4,7 +4,9 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "pnpm clean && tsc --project tsconfig.build.json",
-    "dev": "tsx src/index.ts",
+    "dev": "tsx src/index.ts -w DEPLOY",
+    "dev-join": "tsx src/index.ts -w JOIN",
+    "dev-third": "tsx src/index.ts -w THIRD",
     "start": "node dist/index.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
