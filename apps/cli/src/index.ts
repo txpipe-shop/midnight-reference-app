@@ -1,4 +1,3 @@
-import { createLogger } from '@midnight-sentinel/logger';
 import { buildWallet, type WalletContext } from '@midnight-sentinel/wallet';
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'readline/promises';
@@ -34,7 +33,6 @@ const getWalletDetails = (wallet: WalletSelection): { seed: string, privateState
 };
 
 const config = new StandaloneConfig();
-const logger = createLogger(config.logDir);
 const main = async () => {
   const wallet = getWalletFromArgs();
   console.log(`Starting CLI with "${wallet}" wallet`);
@@ -46,7 +44,7 @@ const main = async () => {
   console.log('Wallet synced');
 
   const rli = createInterface({ input, output, terminal: true });
-  await runCli(config, walletDetails, walletCtx, logger, rli).finally(
+  await runCli(config, walletDetails, walletCtx, rli).finally(
     walletCtx.wallet.stop.bind(walletCtx.wallet)
   );
 

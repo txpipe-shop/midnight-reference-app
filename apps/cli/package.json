@@ -18,7 +18,6 @@
     "@midnight-ntwrk/midnight-js-contracts": "^3.0.0",
     "@midnight-sentinel/api": "workspace:*",
     "@midnight-sentinel/contract": "workspace:*",
-    "@midnight-sentinel/logger": "workspace:*",
     "@midnight-sentinel/wallet": "workspace:*",
     "axios": "^1.13.5",
     "pino": "^10.3.1"

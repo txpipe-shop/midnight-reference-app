@@ -5,7 +5,6 @@ import {
   printBalances,
   type WalletContext,
 } from '@midnight-sentinel/wallet';
-import { type Logger } from 'pino';
 import type { Interface } from 'readline/promises';
 import { type Config } from '../config.js';
 import { circuitMenu, contractMenu } from './menus.js';
@@ -14,7 +13,6 @@ async function handleCircuits(
   contract: SentinelContract,
   walletDetails: { seed: string, privateStateStoreName: string },
   walletCtx: WalletContext,
-  logger: Logger,
   rli: Interface
 ) {
   while (true) {
@@ -74,10 +72,10 @@ async function handleCircuits(
         break;
       }
       case '7':
-        logger.info('Exiting...');
+        console.log('Exiting...');
         return;
       default:
-        logger.error('Invalid choice');
+        console.error('Invalid choice');
         continue;
     }
   }
@@ -87,7 +85,6 @@ export async function runCli(
   config: Config,
   walletDetails: { seed: string, privateStateStoreName: string },
   walletCtx: WalletContext,
-  logger: Logger,
   rli: Interface
 ): Promise<void> {
   let contract: SentinelContract | null = null;
@@ -101,7 +98,7 @@ export async function runCli(
         const providers = await configureProviders(walletCtx, config, walletDetails.privateStateStoreName);
         contract = await SentinelContract.deploy(providers, { secretKey });
 
-        logger.info(
+        console.log(
           `[Contract Address]: ${contract.deployedContract?.deployTxData.public.contractAddress}`
         );
         break;
@@ -116,11 +113,11 @@ export async function runCli(
             secretKey,
           });
         } catch (error: unknown) {
-          logger.error('Error joining contract:');
+          console.error('Error joining contract:');
           if (error instanceof Error) {
-            logger.error(error.message);
+            console.error(error.message);
           }
-          logger.error(error);
+          console.error(error);
         }
         break;
       case '3': {
@@ -132,13 +129,13 @@ export async function runCli(
         break;
       }
       case '4':
-        logger.info('Exiting...');
+        console.log('Exiting...');
         return;
       default:
-        logger.error('Invalid choice');
+        console.error('Invalid choice');
         continue;
     }
 
-    if (contract) await handleCircuits(contract, walletDetails, walletCtx, logger, rli);
+    if (contract) await handleCircuits(contract, walletDetails, walletCtx, rli);
   }
 }
