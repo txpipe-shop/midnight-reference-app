@@ -1,4 +1,5 @@
 import { normalizeRule, SentinelContract, validateRules } from '@midnight-sentinel/api';
+import type { Input } from '@midnight-sentinel/contract';
 import { configureProviders } from '@midnight-sentinel/contract/providers';
 import {
   getBalancesAndAddresses,
@@ -9,6 +10,30 @@ import type { Interface } from 'readline/promises';
 import { type Config } from '../config.js';
 import { circuitMenu, contractMenu } from './menus.js';
 
+// TODO: handle other types of inputs
+const askForInputs = async (rli: Interface): Promise<Input[]> => {
+  const inputs = []
+  let totalInputs = 0;
+  while (true) {
+    const input = await rli.question(`Enter the input ${totalInputs + 1} (type "done" to finish): `);
+    if (input === 'done') break;
+    inputs.push(Number(input));
+  }
+
+
+  return inputs.map((input) => ({ uint: BigInt(input), boolean: false, bytes32: new Uint8Array(32), field: BigInt(0) }));
+}
+const askForRules = async (rli: Interface): Promise<string[]> => {
+  const rules = []
+  let totalRules = 0;
+  while (true) {
+    const rule = await rli.question(`Enter the rule ${totalRules + 1} (type "done" to finish): `);
+    if (rule === 'done') break;
+    rules.push(rule);
+  }
+  return rules;
+}
+
 async function handleCircuits(
   contract: SentinelContract,
   walletDetails: { seed: string, privateStateStoreName: string },
@@ -17,12 +42,12 @@ async function handleCircuits(
 ) {
   while (true) {
     const choice = await rli.question(circuitMenu);
-
     switch (choice) {
       case '1':
         try {
-          // TODO: handle user inputs
-          const tx = await contract.mintToken([]);
+          const inputs = await askForInputs(rli);
+          const rules = await askForRules(rli);
+          const tx = await contract.mintToken(inputs, rules);
           console.log("Minted unshielded token on tx: ", tx?.public.txHash);
         } catch (err) {
           console.log(err);

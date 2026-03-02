@@ -224,14 +224,10 @@ export class SentinelContract {
     await this.deployedContract?.callTx.transferAdmin({ bytes: newAdmin });
   }
 
-  async mintToken(userInputs: Input[]) {
+  async mintToken(userInputs: Input[], keys: string[]) {
     const recipient = { bytes: fromHex(this.providers.walletProvider.getCoinPublicKey()) };
     const domainSep = new Uint8Array(32).fill(0);
-
-    // TODO: how to get the rule keys?
-    const ruleKeys = userInputs.map((input) => {
-      return { bytes: new Uint8Array(32).fill(0) };
-    });
+    const ruleKeys = keys.map((key) => ({ bytes: new Uint8Array(Buffer.from(key, "hex")) }));
 
     return await this.deployedContract?.callTx.mintSpecialToken(
       userInputs,
