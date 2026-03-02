@@ -13,11 +13,11 @@ import {
   type SentinelContractDeployed,
   type SentinelContractProviders,
   type SentinelContractType,
-  type Rules as SentinelRules
+  type Rules as SentinelRules,
 } from '@midnight-sentinel/contract';
 import { map, type Observable } from 'rxjs';
 
-export { rules as rulesBuilder } from './ruleBuilder.js';
+export { parsedHelper as normalizeRule, rules as rulesBuilder, validateRules } from './ruleBuilder.js';
 
 export const toHex = (arr: Uint8Array) =>
   '0x' +
@@ -32,7 +32,7 @@ export interface Config {
 }
 
 export interface SentinelDerivedState {
-  rules: Ledger["rules"];
+  rules: Ledger['rules'];
   adminString: string;
 }
 
@@ -131,17 +131,13 @@ export class SentinelContract {
 
   static async deploy(
     providers: SentinelContractProviders,
-    privateState: PrivateState,
+    privateState: PrivateState
   ): Promise<SentinelContract> {
     const deployedContract = await deployContract<SentinelContractType>(providers, {
       compiledContract: CompactCompiledContract,
       privateStateId: sentinelContractPrivateStateKey,
       initialPrivateState: privateState,
-      args: [
-        {
-          bytes: fromHex(providers.walletProvider.getCoinPublicKey()),
-        },
-      ],
+      args: [{ bytes: fromHex(providers.walletProvider.getCoinPublicKey()) }],
     });
 
     const contractAddress = deployedContract.deployTxData.public.contractAddress;
@@ -220,9 +216,8 @@ export class SentinelContract {
     return await this.deployedContract?.callTx.addRule({ bytes: fromHex(pubKey) }, rule);
   }
 
-  async removeRule() {
-    const pubKey = fromHex(this.providers.walletProvider.getCoinPublicKey());
-    await this.deployedContract?.callTx.removeRule({ bytes: pubKey });
+  async removeRule(address: string) {
+    return await this.deployedContract?.callTx.removeRule({ bytes: fromHex(address) });
   }
 
   async transferAdmin(newAdmin: Uint8Array) {
@@ -234,8 +229,15 @@ export class SentinelContract {
     const domainSep = new Uint8Array(32).fill(0);
 
     // TODO: how to get the rule keys?
-    const ruleKeys = userInputs.map((input) => { return { bytes: new Uint8Array(32).fill(0) } });
+    const ruleKeys = userInputs.map((input) => {
+      return { bytes: new Uint8Array(32).fill(0) };
+    });
 
-    return await this.deployedContract?.callTx.mintSpecialToken(userInputs, recipient, ruleKeys, domainSep);
+    return await this.deployedContract?.callTx.mintSpecialToken(
+      userInputs,
+      recipient,
+      ruleKeys,
+      domainSep
+    );
   }
 }

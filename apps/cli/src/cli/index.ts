@@ -1,4 +1,4 @@
-import { rulesBuilder, SentinelContract } from '@midnight-sentinel/api';
+import { normalizeRule, SentinelContract, validateRules } from '@midnight-sentinel/api';
 import { configureProviders } from '@midnight-sentinel/contract/providers';
 import {
   getBalancesAndAddresses,
@@ -21,33 +21,29 @@ async function handleCircuits(
     switch (choice) {
       case '1':
         try {
-          throw new Error("Not implemented");
+          // TODO: handle user inputs
+          const tx = await contract.mintToken([]);
+          console.log("Minted unshielded token on tx: ", tx?.public.txHash);
         } catch (err) {
           console.log(err);
         }
         break;
       case '2':
         try {
-          const rule = rulesBuilder()
-            .when((r) => r.uint.eq(100))
-            .or((r) => r.uint.lt(15))
-            .build();
-          const tx = await contract.addRule(rule);
-          console.log("Rule ", SentinelContract.prettyRules(rule), " added on tx: ", tx?.public.txHash);
+          const rule = await rli.question('Enter the rule to add (JSON): ');
+          const parsedRule = JSON.parse(rule, normalizeRule);
+          const validatedRule = validateRules(parsedRule);
+          const tx = await contract.addRule(validatedRule);
+          console.log("Rule ", SentinelContract.prettyRules(validatedRule), " added on tx: ", tx?.public.txHash);
         } catch (err) {
           console.log(err);
         }
         break;
       case '3':
         try {
-          throw new Error("Not implemented");
-        } catch (err) {
-          console.log(err);
-        }
-        break;
-      case '4':
-        try {
-          throw new Error("Not implemented");
+          const address = await rli.question('Enter the public key of the rule owner to remove: ');
+          const tx = await contract.removeRule(address);
+          console.log("Rule removed on tx: ", tx?.public.txHash);
         } catch (err) {
           console.log(err);
         }

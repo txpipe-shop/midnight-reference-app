@@ -11,7 +11,7 @@ ${DIVIDER}
 
 export const circuitMenu: string = `
 ${DIVIDER}
-  [1] Mint a token
+  [1] Mint unshielded token
   [2] Add a new rule
   [3] Remove a rule
   [4] Transfer admin
