@@ -101,22 +101,22 @@ export class SentinelContract {
     };
     const formatComparison = (v: Proposition): string => {
       if (v.is_left) {
-        return `${formatValue(v.left.value)} ${formatOrdOp(v.left.op)} input.u32`;
+        return `input.u32 ${formatOrdOp(v.left.op)} ${formatValue(v.left.value)}`;
       }
       const v1 = v.right;
       if (v1.is_left) {
-        return `${formatValue(v1.left.value)} ${formatEqOp(v1.left.op)} input.boolean`;
+        return `input.boolean ${formatEqOp(v1.left.op)} ${formatValue(v1.left.value)}`;
       }
       const v2 = v1.right;
       if (v2.is_left) {
-        return `${formatValue(v2.left.value)} ${formatEqOp(v2.left.op)} input.bytes32`;
+        return `input.bytes32 ${formatEqOp(v2.left.op)} ${formatValue(v2.left.value)}`;
       }
       const v3 = v2.right;
       if (v3.is_left) {
-        return `${formatValue(v3.left.value)} ${formatEqOp(v3.left.op)} input.field`;
+        return `input.field ${formatEqOp(v3.left.op)} ${formatValue(v3.left.value)}`;
       }
       const v4 = v3.right;
-      return `${formatValue(v4.nullifier)} ${formatEqOp(v4.op)} input.nullifier`;
+      return `input.nullifier ${formatEqOp(v4.op)} ${formatValue(v4.nullifier)}`;
     };
 
     const clauses = rules
