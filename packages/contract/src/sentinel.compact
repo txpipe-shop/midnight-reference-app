@@ -71,7 +71,6 @@ constructor(pubKey: ZswapCoinPublicKey) {
 ///////// EXPORTED CIRCUITS /////////
 export circuit addRule(owner: ZswapCoinPublicKey, rule: Rules): [] {
   // TODO: add whitelist
-  // TODO: check if rule already exists, what to do if it does?
   rules.insert(disclose(owner), disclose(rule));
 }
 
