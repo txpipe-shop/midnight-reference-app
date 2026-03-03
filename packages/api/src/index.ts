@@ -227,7 +227,7 @@ export class SentinelContract {
   async mintToken(userInputs: Input[], keys: string[]) {
     const recipient = { bytes: fromHex(this.providers.walletProvider.getCoinPublicKey()) };
     const domainSep = new Uint8Array(32).fill(0);
-    const ruleKeys = keys.map((key) => ({ bytes: new Uint8Array(Buffer.from(key, "hex")) }));
+    const ruleKeys = keys.map((key) => ({ bytes: fromHex(key) }));
 
     return await this.deployedContract?.callTx.mintSpecialToken(
       userInputs,
