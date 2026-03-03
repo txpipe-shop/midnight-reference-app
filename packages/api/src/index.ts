@@ -1,5 +1,6 @@
 import { fromHex } from '@midnight-ntwrk/compact-runtime';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
+import { UnshieldedAddress } from '@midnight-ntwrk/wallet-sdk-address-format';
 import {
   BooleanProp,
   CompactCompiledContract,
@@ -224,14 +225,14 @@ export class SentinelContract {
     await this.deployedContract?.callTx.transferAdmin({ bytes: newAdmin });
   }
 
-  async mintToken(userInputs: Input[], keys: string[]) {
-    const recipient = { bytes: fromHex(this.providers.walletProvider.getCoinPublicKey()) };
+  async mintToken(userInputs: Input[], keys: string[], recipient: UnshieldedAddress) {
     const domainSep = new Uint8Array(32).fill(0);
     const ruleKeys = keys.map((key) => ({ bytes: fromHex(key) }));
+    const recipientBytes = { bytes: fromHex(recipient.hexString) };
 
     return await this.deployedContract?.callTx.mintSpecialToken(
       userInputs,
-      recipient,
+      recipientBytes,
       ruleKeys,
       domainSep
     );

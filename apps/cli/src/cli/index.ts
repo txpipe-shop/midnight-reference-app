@@ -45,7 +45,8 @@ async function handleCircuits(
         try {
           const inputs = await askForInputs(rli);
           const rules = await askForRules(rli);
-          const tx = await contract.mintToken(inputs, rules);
+          const recipient = await walletCtx.wallet.unshielded.getAddress();
+          const tx = await contract.mintToken(inputs, rules, recipient);
           console.log("Minted unshielded token on tx: ", tx?.public.txHash);
         } catch (err) {
           console.log(err);
