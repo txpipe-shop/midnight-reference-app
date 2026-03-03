@@ -13,21 +13,19 @@ import { circuitMenu, contractMenu } from './menus.js';
 // TODO: handle other types of inputs
 const askForInputs = async (rli: Interface): Promise<Input[]> => {
   const inputs = []
-  let totalInputs = 0;
   while (true) {
-    const input = await rli.question(`Enter the input ${totalInputs + 1} (type "done" to finish): `);
+    const input: string = await rli.question(`Enter the input ${inputs.length + 1} (type "done" to finish): `);
     if (input === 'done') break;
-    inputs.push(Number(input));
+    inputs.push({ uint: BigInt(input), boolean: false, bytes32: new Uint8Array(32), field: BigInt(0) });
   }
 
 
-  return inputs.map((input) => ({ uint: BigInt(input), boolean: false, bytes32: new Uint8Array(32), field: BigInt(0) }));
+  return inputs;
 }
 const askForRules = async (rli: Interface): Promise<string[]> => {
   const rules = []
-  let totalRules = 0;
   while (true) {
-    const rule = await rli.question(`Enter the rule ${totalRules + 1} (type "done" to finish): `);
+    const rule: string = await rli.question(`Enter the rule ${rules.length + 1} (type "done" to finish): `);
     if (rule === 'done') break;
     rules.push(rule);
   }
