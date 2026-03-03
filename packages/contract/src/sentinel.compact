@@ -125,17 +125,17 @@ circuit satisfies(ruleOwner: ZswapCoinPublicKey, input: Input): Boolean {
 
 circuit checkNumberProp(rule: NumberProp, input: Input): Boolean {
   if (rule.op == Ord.GTE) {
-    return rule.value >= input.uint;
+    return input.uint >= rule.value;
   } else if (rule.op == Ord.LTE) {
-    return rule.value <= input.uint;
+    return input.uint <= rule.value;
   } else if (rule.op == Ord.LT) {
-    return rule.value < input.uint;
+    return input.uint < rule.value;
   } else if (rule.op == Ord.GT) {
-    return rule.value > input.uint;
+    return input.uint > rule.value;
   } else if (rule.op == Ord.NEQ) {
-    return rule.value != input.uint;
+    return input.uint != rule.value;
   } else {
-    return rule.value == input.uint;
+    return input.uint == rule.value;
   }
 }
 
