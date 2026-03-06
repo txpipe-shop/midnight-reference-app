@@ -20,7 +20,6 @@ import {
   waitForSync,
   withStatus,
 } from './utils/index.js';
-import { printWalletSummary } from './utils/summary.js';
 import { Config, WalletContext } from './utils/types.js';
 
 export const buildWallet = async (config: Config, seed: string): Promise<WalletContext> => {
@@ -54,9 +53,6 @@ export const buildWallet = async (config: Config, seed: string): Promise<WalletC
 
   // Wait for the wallet to sync with the network
   const syncedState = await withStatus('Syncing with network', () => waitForSync(wallet));
-
-  // Display the full wallet summary with all addresses and balances
-  printWalletSummary(seed, syncedState, unshieldedKeystore);
 
   // Check if wallet has funds; if not, wait for incoming tokens
   const balance = syncedState.unshielded.balances[ledger.unshieldedToken().raw] ?? 0n;
@@ -114,4 +110,11 @@ export const createWalletAndMidnightProvider = async (
   };
 };
 
+export {
+  getBalances,
+  getBalancesAndAddresses,
+  printBalances,
+  type Addresses,
+  type Balances,
+} from './utils/balances.js';
 export { WalletContext } from './utils/types.js';

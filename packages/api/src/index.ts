@@ -1,20 +1,22 @@
-import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { fromHex } from '@midnight-ntwrk/compact-runtime';
+import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import {
+  BooleanProp,
   CompactCompiledContract,
+  ledger,
+  Proposition,
   sentinelContractPrivateStateKey,
   type ContractAddress,
+  type PrivateState,
   type SentinelContractDeployed,
   type SentinelContractProviders,
   type SentinelContractType,
   type Rules as SentinelRules,
-  type PrivateState,
-  pureCircuits,
-  ledger,
-  Proposition,
-  BooleanProp,
 } from '@midnight-sentinel/contract';
 import { map, type Observable } from 'rxjs';
+import { DEFAULT_BOOLEAN_VALUE, DEFAULT_BYTES32_VALUE, DEFAULT_FIELD_VALUE } from './constants.js';
+
+export { rules as rulesBuilder } from './ruleBuilder.js';
 
 export const toHex = (arr: Uint8Array) =>
   '0x' +
@@ -194,19 +196,21 @@ export class SentinelContract {
     return new SentinelContract(providers, deployedContract, state$);
   }
 
-  async mintToken(uint: bigint, nullifierFill: number, address: Uint8Array) {
-    const nullifier = pureCircuits.nullifier(new Uint8Array(32).fill(nullifierFill));
+  async mintToken(uint: bigint, address: Uint8Array) {
     const tx = await this.deployedContract?.callTx.mintSpecialToken(
       {
-        nullifier,
-        boolean: true,
-        bytes32: new Uint8Array(32).fill(0),
-        field: 12312312312n,
+        boolean: DEFAULT_BOOLEAN_VALUE,
+        bytes32: DEFAULT_BYTES32_VALUE,
+        field: DEFAULT_FIELD_VALUE,
         uint,
       },
       { bytes: address }
     );
 
     return tx;
+  }
+
+  async updateRules(newRules: SentinelRules): Promise<void> {
+    await this.deployedContract?.callTx.update(newRules);
   }
 }
