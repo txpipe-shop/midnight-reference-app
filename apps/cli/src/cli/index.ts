@@ -72,6 +72,9 @@ async function handleCircuits(
           console.log(err);
         }
         break;
+      case '4':
+        console.log(`Not implemented yet`);
+        break;
       case '5':
         try {
           const { balances, addresses } = await getBalancesAndAddresses(
