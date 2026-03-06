@@ -86,16 +86,11 @@ export circuit transferAdmin(newAdmin: ZswapCoinPublicKey): [] {
 }
 
 export circuit mintSpecialToken(
-  inputs: Vector<2, Input>,
+  rulesAndInputs: Vector<2, [ZswapCoinPublicKey, Input]>,
   address: UserAddress,
-  ruleKeys: Vector<2, ZswapCoinPublicKey>,
   domainSep: Bytes<32>
 ): [] {
-  for (const i of 0..2) {
-    if (rules.member(disclose(ruleKeys[i]))) {
-      assert(satisfies(disclose(ruleKeys[i]), inputs[i]), "Rule not satisfied");
-    }
-  }
+  assert(fold((acc, [rule, input]) => acc && satisfies(rule, input), true, disclose(rulesAndInputs)), "Rules not satisfied");
 
   const amount: Uint<64> = 1;
 

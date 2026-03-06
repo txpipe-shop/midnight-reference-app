@@ -26,6 +26,11 @@ export const toHex = (arr: Uint8Array) =>
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
 
+const zipRulesAndInputs = (keys: string[], userInputs: Input[]): [{ bytes: Uint8Array }, Input][] => {
+  if (keys.length !== userInputs.length) throw new Error('Keys and user inputs must have the same length');
+  return keys.map((key, index) => [{ bytes: fromHex(key) }, userInputs[index]]);
+}
+
 export interface Config {
   indexer: string;
   indexerWS: string;
@@ -227,13 +232,12 @@ export class SentinelContract {
 
   async mintToken(userInputs: Input[], keys: string[], recipient: UnshieldedAddress) {
     const domainSep = new Uint8Array(32).fill(0);
-    const ruleKeys = keys.map((key) => ({ bytes: fromHex(key) }));
     const recipientBytes = { bytes: fromHex(recipient.hexString) };
+    const rulesAndInputs = zipRulesAndInputs(keys, userInputs);
 
     return await this.deployedContract?.callTx.mintSpecialToken(
-      userInputs,
+      rulesAndInputs,
       recipientBytes,
-      ruleKeys,
       domainSep
     );
   }
