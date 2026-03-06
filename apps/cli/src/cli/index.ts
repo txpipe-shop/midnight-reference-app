@@ -28,6 +28,7 @@ const askForInputs = async (rli: Interface): Promise<Input[]> => {
 
   return inputs;
 };
+
 const askForRules = async (rli: Interface): Promise<string[]> => {
   const rules = [];
   while (true) {
@@ -78,8 +79,8 @@ async function handleCircuits(
         break;
       case '3':
         try {
-          const address = await rli.question('Enter the public key of the rule owner to remove: ');
-          const tx = await contract.removeRule(address);
+          const hashKey = await rli.question('Enter the key of the rule to remove: ');
+          const tx = await contract.removeRule(hashKey);
           console.log('Rule removed on tx: ', tx?.public.txHash);
         } catch (err) {
           console.log(err);
