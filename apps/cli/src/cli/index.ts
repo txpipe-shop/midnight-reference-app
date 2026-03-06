@@ -12,29 +12,37 @@ import { circuitMenu, contractMenu } from './menus.js';
 
 // TODO: handle other types of inputs
 const askForInputs = async (rli: Interface): Promise<Input[]> => {
-  const inputs = []
+  const inputs = [];
   while (true) {
-    const input: string = await rli.question(`Enter the input ${inputs.length + 1} (type "done" to finish): `);
+    const input: string = await rli.question(
+      `Enter the input ${inputs.length + 1} (type "done" to finish): `
+    );
     if (input === 'done') break;
-    inputs.push({ uint: BigInt(input), boolean: false, bytes32: new Uint8Array(32), field: BigInt(0) });
+    inputs.push({
+      uint: BigInt(input),
+      boolean: false,
+      bytes32: new Uint8Array(32),
+      field: BigInt(0),
+    });
   }
 
-
   return inputs;
-}
+};
 const askForRules = async (rli: Interface): Promise<string[]> => {
-  const rules = []
+  const rules = [];
   while (true) {
-    const rule: string = await rli.question(`Enter the rule ${rules.length + 1} (type "done" to finish): `);
+    const rule: string = await rli.question(
+      `Enter the rule ${rules.length + 1} (type "done" to finish): `
+    );
     if (rule === 'done') break;
     rules.push(rule);
   }
   return rules;
-}
+};
 
 async function handleCircuits(
   contract: SentinelContract,
-  walletDetails: { seed: string, privateStateStoreName: string },
+  walletDetails: { seed: string; privateStateStoreName: string },
   walletCtx: WalletContext,
   rli: Interface
 ) {
@@ -47,7 +55,7 @@ async function handleCircuits(
           const rules = await askForRules(rli);
           const recipient = await walletCtx.wallet.unshielded.getAddress();
           const tx = await contract.mintToken(inputs, rules, recipient);
-          console.log("Minted unshielded token on tx: ", tx?.public.txHash);
+          console.log('Minted unshielded token on tx: ', tx?.public.txHash);
         } catch (err) {
           console.log(err);
         }
@@ -58,7 +66,12 @@ async function handleCircuits(
           const parsedRule = JSON.parse(rule, normalizeRule);
           const validatedRule = validateRules(parsedRule);
           const tx = await contract.addRule(validatedRule);
-          console.log("Rule ", SentinelContract.prettyRules(validatedRule), " added on tx: ", tx?.public.txHash);
+          console.log(
+            'Rule ',
+            SentinelContract.prettyRules(validatedRule),
+            ' added on tx: ',
+            tx?.public.txHash
+          );
         } catch (err) {
           console.log(err);
         }
@@ -67,7 +80,7 @@ async function handleCircuits(
         try {
           const address = await rli.question('Enter the public key of the rule owner to remove: ');
           const tx = await contract.removeRule(address);
-          console.log("Rule removed on tx: ", tx?.public.txHash);
+          console.log('Rule removed on tx: ', tx?.public.txHash);
         } catch (err) {
           console.log(err);
         }
@@ -106,7 +119,7 @@ async function handleCircuits(
 
 export async function runCli(
   config: Config,
-  walletDetails: { seed: string, privateStateStoreName: string },
+  walletDetails: { seed: string; privateStateStoreName: string },
   walletCtx: WalletContext,
   rli: Interface
 ): Promise<void> {
@@ -118,7 +131,11 @@ export async function runCli(
     switch (choice) {
       case '1': {
         const secretKey = crypto.getRandomValues(new Uint8Array(32));
-        const providers = await configureProviders(walletCtx, config, walletDetails.privateStateStoreName);
+        const providers = await configureProviders(
+          walletCtx,
+          config,
+          walletDetails.privateStateStoreName
+        );
         contract = await SentinelContract.deploy(providers, { secretKey });
 
         console.log(
@@ -131,7 +148,11 @@ export async function runCli(
           const contractAddress = await rli.question('Enter the contract address: ');
 
           const secretKey = crypto.getRandomValues(new Uint8Array(32));
-          const providers = await configureProviders(walletCtx, config, walletDetails.privateStateStoreName);
+          const providers = await configureProviders(
+            walletCtx,
+            config,
+            walletDetails.privateStateStoreName
+          );
           contract = await SentinelContract.join(providers, contractAddress, {
             secretKey,
           });

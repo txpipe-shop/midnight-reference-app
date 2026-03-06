@@ -172,7 +172,7 @@ type ClauseLike = ClauseBuilder | PropositionBuilder;
  * Can also be used alone in .when() / .or() for (A && B) || C — the missing slot is is_some: false.
  */
 class PropositionBuilder {
-  constructor(private readonly prop: Proposition) { }
+  constructor(private readonly prop: Proposition) {}
 
   /**
    * Combine this proposition with another to form a clause (pair): (this && other).
@@ -206,7 +206,7 @@ class ClauseBuilder {
   constructor(
     private readonly prop1: Proposition,
     private readonly prop2: Proposition
-  ) { }
+  ) {}
 
   /** Internal: convert to clause format */
   toClause(): Clause {
@@ -315,8 +315,18 @@ export function rules(): RulesBuilder {
   return new RulesBuilder();
 }
 
-enum ZodOrd { GT = 0, LT = 1, EQ = 2, NEQ = 3, GTE = 4, LTE = 5 }
-enum ZodEq { EQ = 0, NEQ = 1 }
+enum ZodOrd {
+  GT = 0,
+  LT = 1,
+  EQ = 2,
+  NEQ = 3,
+  GTE = 4,
+  LTE = 5,
+}
+enum ZodEq {
+  EQ = 0,
+  NEQ = 1,
+}
 const OrdSchema = z.nativeEnum(ZodOrd);
 const EqSchema = z.nativeEnum(ZodEq);
 
@@ -328,7 +338,7 @@ const BigIntSchema = z.union([
     } catch {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Invalid bigint string",
+        message: 'Invalid bigint string',
       });
       return z.NEVER;
     }
@@ -337,8 +347,7 @@ const BigIntSchema = z.union([
 
 const Uint8ArraySchema = z.union([
   z.instanceof(Uint8Array),
-  z.array(z.number().int().min(0).max(255))
-    .transform((arr) => new Uint8Array(arr)),
+  z.array(z.number().int().min(0).max(255)).transform((arr) => new Uint8Array(arr)),
 ]);
 
 const NumberPropSchema = z.object({
@@ -366,6 +375,7 @@ const NullifierPropSchema = z.object({
   nullifier: Uint8ArraySchema,
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const PropositionSchema: z.ZodType<any> = z.object({
   is_left: z.boolean(),
   left: NumberPropSchema,
@@ -401,8 +411,8 @@ export function validateRules(input: unknown): Rules {
 }
 
 export const parsedHelper = (_key: string, value: unknown) => {
-  if (typeof value === "string") {
-    if (value.startsWith("0x")) {
+  if (typeof value === 'string') {
+    if (value.startsWith('0x')) {
       const clean = value.slice(2);
       const bytes = new Uint8Array(clean.length / 2);
       for (let i = 0; i < bytes.length; i++) {

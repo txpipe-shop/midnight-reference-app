@@ -115,7 +115,6 @@ export {
   getBalancesAndAddresses,
   printBalances,
   type Addresses,
-  type Balances
+  type Balances,
 } from './utils/balances.js';
 export { WalletContext } from './utils/types.js';
-

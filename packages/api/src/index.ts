@@ -18,7 +18,11 @@ import {
 } from '@midnight-sentinel/contract';
 import { map, type Observable } from 'rxjs';
 
-export { parsedHelper as normalizeRule, rules as rulesBuilder, validateRules } from './ruleBuilder.js';
+export {
+  parsedHelper as normalizeRule,
+  rules as rulesBuilder,
+  validateRules,
+} from './ruleBuilder.js';
 
 export const toHex = (arr: Uint8Array) =>
   '0x' +
@@ -26,10 +30,14 @@ export const toHex = (arr: Uint8Array) =>
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
 
-const zipRulesAndInputs = (keys: string[], userInputs: Input[]): [{ bytes: Uint8Array }, Input][] => {
-  if (keys.length !== userInputs.length) throw new Error('Keys and user inputs must have the same length');
+const zipRulesAndInputs = (
+  keys: string[],
+  userInputs: Input[]
+): [{ bytes: Uint8Array }, Input][] => {
+  if (keys.length !== userInputs.length)
+    throw new Error('Keys and user inputs must have the same length');
   return keys.map((key, index) => [{ bytes: fromHex(key) }, userInputs[index]]);
-}
+};
 
 export interface Config {
   indexer: string;
