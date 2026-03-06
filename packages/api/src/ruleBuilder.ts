@@ -22,6 +22,7 @@ import {
   type Proposition,
   type Rules,
 } from '@midnight-sentinel/contract';
+import { z } from 'zod';
 
 // --- Dummy right-hand side for Proposition (unused branches when we only set one variant) ---
 const emptyBytes32 = (): Uint8Array => new Uint8Array(32);
@@ -313,3 +314,117 @@ class RulesBuilder {
 export function rules(): RulesBuilder {
   return new RulesBuilder();
 }
+
+enum ZodOrd {
+  GT = 0,
+  LT = 1,
+  EQ = 2,
+  NEQ = 3,
+  GTE = 4,
+  LTE = 5,
+}
+enum ZodEq {
+  EQ = 0,
+  NEQ = 1,
+}
+const OrdSchema = z.nativeEnum(ZodOrd);
+const EqSchema = z.nativeEnum(ZodEq);
+
+const BigIntSchema = z.union([
+  z.bigint(),
+  z.string().transform((v, ctx) => {
+    try {
+      return BigInt(v);
+    } catch {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Invalid bigint string',
+      });
+      return z.NEVER;
+    }
+  }),
+]);
+
+const Uint8ArraySchema = z.union([
+  z.instanceof(Uint8Array),
+  z.array(z.number().int().min(0).max(255)).transform((arr) => new Uint8Array(arr)),
+]);
+
+const NumberPropSchema = z.object({
+  op: OrdSchema,
+  value: BigIntSchema,
+});
+
+const BooleanPropSchema = z.object({
+  op: EqSchema,
+  value: z.boolean(),
+});
+
+const BytePropSchema = z.object({
+  op: EqSchema,
+  value: Uint8ArraySchema,
+});
+
+const FieldPropSchema = z.object({
+  op: EqSchema,
+  value: BigIntSchema,
+});
+
+const NullifierPropSchema = z.object({
+  op: EqSchema,
+  nullifier: Uint8ArraySchema,
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const PropositionSchema: z.ZodType<any> = z.object({
+  is_left: z.boolean(),
+  left: NumberPropSchema,
+  right: z.object({
+    is_left: z.boolean(),
+    left: BooleanPropSchema,
+    right: z.object({
+      is_left: z.boolean(),
+      left: BytePropSchema,
+      right: z.object({
+        is_left: z.boolean(),
+        left: FieldPropSchema,
+        right: NullifierPropSchema,
+      }),
+    }),
+  }),
+});
+
+const PropositionOptionSchema = z.object({
+  is_some: z.boolean(),
+  value: PropositionSchema,
+});
+
+export const RulesSchema = z.array(
+  z.object({
+    is_some: z.boolean(),
+    value: z.array(PropositionOptionSchema),
+  })
+);
+
+export function validateRules(input: unknown): Rules {
+  return RulesSchema.parse(input);
+}
+
+export const parsedHelper = (_key: string, value: unknown) => {
+  if (typeof value === 'string') {
+    if (value.startsWith('0x')) {
+      const clean = value.slice(2);
+      const bytes = new Uint8Array(clean.length / 2);
+      for (let i = 0; i < bytes.length; i++) {
+        bytes[i] = parseInt(clean.substr(i * 2, 2), 16);
+      }
+      return bytes;
+    }
+
+    if (/^-?\d+$/.test(value)) {
+      return BigInt(value);
+    }
+  }
+
+  return value;
+};

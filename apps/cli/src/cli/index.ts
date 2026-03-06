@@ -1,63 +1,117 @@
-import { rulesBuilder, SentinelContract } from '@midnight-sentinel/api';
+import { normalizeRule, SentinelContract, validateRules } from '@midnight-sentinel/api';
+import type { Input } from '@midnight-sentinel/contract';
 import { configureProviders } from '@midnight-sentinel/contract/providers';
 import {
   getBalancesAndAddresses,
   printBalances,
   type WalletContext,
 } from '@midnight-sentinel/wallet';
-import { type Logger } from 'pino';
 import type { Interface } from 'readline/promises';
 import { type Config } from '../config.js';
-import { GENESIS_MINT_WALLET_SEED } from '../utils/constants.js';
-import { circuitMenu, contractMenu, enterNumber } from './menus.js';
+import { circuitMenu, contractMenu } from './menus.js';
+
+// TODO: handle other types of inputs
+const askForInputs = async (rli: Interface): Promise<Input[]> => {
+  const inputs = [];
+  while (true) {
+    const input: string = await rli.question(
+      `Enter the input ${inputs.length + 1} (type "done" to finish): `
+    );
+    if (input === 'done') break;
+    inputs.push({
+      uint: BigInt(input),
+      boolean: false,
+      bytes32: new Uint8Array(32),
+      field: BigInt(0),
+    });
+  }
+
+  return inputs;
+};
+const askForRules = async (rli: Interface): Promise<string[]> => {
+  const rules = [];
+  while (true) {
+    const rule: string = await rli.question(
+      `Enter the rule ${rules.length + 1} (type "done" to finish): `
+    );
+    if (rule === 'done') break;
+    rules.push(rule);
+  }
+  return rules;
+};
 
 async function handleCircuits(
   contract: SentinelContract,
+  walletDetails: { seed: string; privateStateStoreName: string },
   walletCtx: WalletContext,
-  logger: Logger,
   rli: Interface
 ) {
   while (true) {
     const choice = await rli.question(circuitMenu);
-
     switch (choice) {
       case '1':
         try {
-          const input = await rli.question(enterNumber);
-          const address = await walletCtx.wallet.unshielded.getAddress();
-          const tx = await contract.mintToken(BigInt(input), Buffer.from(address.hexString, 'hex'));
-          logger.info(`Minting tx hash: ${tx?.public.txHash}`);
+          const inputs = await askForInputs(rli);
+          const rules = await askForRules(rli);
+          const recipient = await walletCtx.wallet.unshielded.getAddress();
+          const tx = await contract.mintToken(inputs, rules, recipient);
+          console.log('Minted unshielded token on tx: ', tx?.public.txHash);
         } catch (err) {
           console.log(err);
         }
         break;
       case '2':
         try {
-          // TODO: We need a way to get the rules from the user
-          const newRules = rulesBuilder()
-            .when((r) => r.uint.eq(123))
-            .or((r) => r.uint.eq(124))
-            .build();
-          await contract.updateRules(newRules);
+          const rule = await rli.question('Enter the rule to add (JSON): ');
+          const parsedRule = JSON.parse(rule, normalizeRule);
+          const validatedRule = validateRules(parsedRule);
+          const tx = await contract.addRule(validatedRule);
+          console.log(
+            'Rule ',
+            SentinelContract.prettyRules(validatedRule),
+            ' added on tx: ',
+            tx?.public.txHash
+          );
         } catch (err) {
           console.log(err);
         }
         break;
-      case '3': {
-        const { balances, addresses } = await getBalancesAndAddresses(
-          walletCtx.wallet,
-          GENESIS_MINT_WALLET_SEED
-        );
-        printBalances(balances, addresses);
+      case '3':
+        try {
+          const address = await rli.question('Enter the public key of the rule owner to remove: ');
+          const tx = await contract.removeRule(address);
+          console.log('Rule removed on tx: ', tx?.public.txHash);
+        } catch (err) {
+          console.log(err);
+        }
+        break;
+      case '4':
+        console.log(`Not implemented yet`);
+        break;
+      case '5':
+        try {
+          const { balances, addresses } = await getBalancesAndAddresses(
+            walletCtx.wallet,
+            walletDetails.seed
+          );
+          printBalances(balances, addresses);
+        } catch (err) {
+          console.log(err);
+        }
+        break;
+      case '6': {
+        try {
+          await contract.getCurrentState();
+        } catch (err) {
+          console.log(err);
+        }
         break;
       }
-      case '4':
-        logger.info(
-          `Exiting contract address: ${contract.deployedContract?.deployTxData.public.contractAddress}`
-        );
+      case '7':
+        console.log('Exiting...');
         return;
       default:
-        logger.error('Invalid choice');
+        console.error('Invalid choice');
         continue;
     }
   }
@@ -65,8 +119,8 @@ async function handleCircuits(
 
 export async function runCli(
   config: Config,
+  walletDetails: { seed: string; privateStateStoreName: string },
   walletCtx: WalletContext,
-  logger: Logger,
   rli: Interface
 ): Promise<void> {
   let contract: SentinelContract | null = null;
@@ -77,16 +131,14 @@ export async function runCli(
     switch (choice) {
       case '1': {
         const secretKey = crypto.getRandomValues(new Uint8Array(32));
-        console.log({ secretKey: Buffer.from(secretKey).toString('hex') });
+        const providers = await configureProviders(
+          walletCtx,
+          config,
+          walletDetails.privateStateStoreName
+        );
+        contract = await SentinelContract.deploy(providers, { secretKey });
 
-        const providers = await configureProviders(walletCtx, config);
-        // TODO: We need a way to get the rules from the user
-        const rules = rulesBuilder()
-          .when((r) => r.uint.eq(123))
-          .or((r) => r.uint.eq(124))
-          .build();
-        contract = await SentinelContract.deploy(providers, { secretKey }, rules);
-        logger.info(
+        console.log(
           `[Contract Address]: ${contract.deployedContract?.deployTxData.public.contractAddress}`
         );
         break;
@@ -94,36 +146,40 @@ export async function runCli(
       case '2':
         try {
           const contractAddress = await rli.question('Enter the contract address: ');
-          const secretKey = await rli.question('Enter the secret key: ');
 
-          const providers = await configureProviders(walletCtx, config);
+          const secretKey = crypto.getRandomValues(new Uint8Array(32));
+          const providers = await configureProviders(
+            walletCtx,
+            config,
+            walletDetails.privateStateStoreName
+          );
           contract = await SentinelContract.join(providers, contractAddress, {
-            secretKey: new Uint8Array(Buffer.from(secretKey, 'hex')),
+            secretKey,
           });
         } catch (error: unknown) {
-          logger.error('Error joining contract:');
+          console.error('Error joining contract:');
           if (error instanceof Error) {
-            logger.error(error.message);
+            console.error(error.message);
           }
-          logger.error(error);
+          console.error(error);
         }
         break;
       case '3': {
         const { balances, addresses } = await getBalancesAndAddresses(
           walletCtx.wallet,
-          GENESIS_MINT_WALLET_SEED
+          walletDetails.seed
         );
         printBalances(balances, addresses);
         break;
       }
       case '4':
-        logger.info('Exiting...');
+        console.log('Exiting...');
         return;
       default:
-        logger.error('Invalid choice');
+        console.error('Invalid choice');
         continue;
     }
 
-    if (contract) await handleCircuits(contract, walletCtx, logger, rli);
+    if (contract) await handleCircuits(contract, walletDetails, walletCtx, rli);
   }
 }

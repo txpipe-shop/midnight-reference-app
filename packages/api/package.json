@@ -31,9 +31,11 @@
     "@midnight-ntwrk/midnight-js-http-client-proof-provider": "3.0.0",
     "@midnight-ntwrk/midnight-js-indexer-public-data-provider": "3.0.0",
     "@midnight-ntwrk/midnight-js-types": "3.0.0",
+    "@midnight-ntwrk/wallet-sdk-address-format": "3.0.0",
     "@midnight-sentinel/contract": "workspace:*",
     "@midnight-sentinel/wallet": "workspace:*",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

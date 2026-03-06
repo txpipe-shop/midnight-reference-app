@@ -4,7 +4,6 @@ import { UnshieldedKeystore } from '@midnight-ntwrk/wallet-sdk-unshielded-wallet
 
 export interface Config {
   readonly privateStateStoreName: string;
-  readonly logDir: string;
   readonly zkConfigPath: string;
   readonly indexer: string;
   readonly indexerWS: string;
