@@ -65,15 +65,15 @@ constructor(pubKey: ZswapCoinPublicKey) {
 }
 
 ///////// EXPORTED CIRCUITS /////////
-export circuit addRule(owner: ZswapCoinPublicKey, rule: Rules): [] {
-  const ruleKey = hashCoinPublicKey(owner);
+export circuit addRule(owner: ZswapCoinPublicKey, nonce: Bytes<32>, rule: Rules): [] {
+  const ruleKey = hashCoinPublicKey(owner, nonce);
   // TODO: add whitelist
   rules.insert(disclose(ruleKey), disclose(rule));
 }
 
-export circuit removeRule(ruleKey: Bytes<32>): [] {
-  assert(isAdmin(), "You are not the admin of this contract");
-  assert(rules.member(disclose(ruleKey)), "Rule does not exist");
+export circuit removeRule(publicKey: ZswapCoinPublicKey, nonce: Bytes<32>): [] {
+  const ruleKey = hashCoinPublicKey(publicKey, nonce);
+  assert(isRuleOwner(ruleKey) || isAdmin(), "You are not the rule owner, the admin of this contract or the rule does not exist");
   rules.remove(disclose(ruleKey));
 }
 
@@ -95,9 +95,12 @@ export circuit mintSpecialToken(
 }
 
 ///////// HELPER CIRCUITS /////////
-circuit hashCoinPublicKey(cpk: ZswapCoinPublicKey): Bytes<32> {
-  const nonce = currentNonce();
+circuit hashCoinPublicKey(cpk: ZswapCoinPublicKey, nonce: Bytes<32>): Bytes<32> {
   return persistentCommit<Bytes<32>>(cpk.bytes, nonce);
+}
+
+circuit isRuleOwner(ruleKey: Bytes<32>): Boolean {
+  return rules.member(disclose(ruleKey));
 }
 
 circuit isAdmin(): Boolean {
@@ -179,4 +182,3 @@ export circuit nullifier(sk: Bytes<32>): Bytes<32> {
 
 ///////// WITNESSES /////////
 witness secretKey(): Bytes<32>;
-witness currentNonce(): Bytes<32>;

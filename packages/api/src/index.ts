@@ -225,13 +225,14 @@ export class SentinelContract {
     });
   }
 
-  async addRule(rule: SentinelRules) {
+  async addRule(rule: SentinelRules, nonce: Uint8Array) {
     const pubKey = this.providers.walletProvider.getCoinPublicKey();
-    return await this.deployedContract?.callTx.addRule({ bytes: fromHex(pubKey) }, rule);
+    return await this.deployedContract?.callTx.addRule({ bytes: fromHex(pubKey) }, nonce, rule);
   }
 
-  async removeRule(address: string) {
-    return await this.deployedContract?.callTx.removeRule(fromHex(address));
+  async removeRule(nonce: Uint8Array) {
+    const pubKey = this.providers.walletProvider.getCoinPublicKey();
+    return await this.deployedContract?.callTx.removeRule({ bytes: fromHex(pubKey) }, nonce);
   }
 
   async transferAdmin(newAdmin: Uint8Array) {
