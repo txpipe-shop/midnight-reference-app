@@ -27,9 +27,7 @@ export const askForInputs = async (rli: Interface): Promise<Input[]> => {
       'Enter space-separated values with prefixes: i<uint>, b<boolean>, x<bytes32-hex>, f<field>.'
     );
     console.log(
-      'Examples: "i31 btrue", "x0x' +
-      '0'.repeat(64) +
-      '", "f42". Press Enter to use all defaults.'
+      'Examples: "i31 btrue", "x0x' + '0'.repeat(64) + '", "f42". Press Enter to use all defaults.'
     );
 
     const input: Input = {
@@ -73,7 +71,8 @@ export const askForInputs = async (rli: Interface): Promise<Input[]> => {
           input.bytes32 = parseHexBytes32(value);
         } catch (err) {
           console.error(
-            `  Warning: ${err instanceof Error ? err.message : 'invalid bytes32 token'
+            `  Warning: ${
+              err instanceof Error ? err.message : 'invalid bytes32 token'
             }, keeping previous value`
           );
         }

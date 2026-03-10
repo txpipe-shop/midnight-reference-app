@@ -54,7 +54,9 @@ async function handleCircuits(
         break;
       case '3':
         try {
-          const nonce = await rli.question('You will remove the rule with your public key and the nonce you provided.\nEnter the nonce: ');
+          const nonce = await rli.question(
+            'You will remove the rule with your public key and the nonce you provided.\nEnter the nonce: '
+          );
           const nonceBytes = fromHex(nonce);
           const tx = await contract.removeRule(nonceBytes);
           console.log('Rule removed on tx: ', tx?.public.txHash);

@@ -21,7 +21,7 @@ import { map, type Observable } from 'rxjs';
 export {
   parsedHelper as normalizeRule,
   rules as rulesBuilder,
-  validateRules
+  validateRules,
 } from './ruleBuilder.js';
 
 export const toHex = (arr: Uint8Array) =>
@@ -30,10 +30,7 @@ export const toHex = (arr: Uint8Array) =>
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
 
-const zipRulesAndInputs = (
-  keys: Uint8Array[],
-  userInputs: Input[]
-): [Uint8Array, Input][] => {
+const zipRulesAndInputs = (keys: Uint8Array[], userInputs: Input[]): [Uint8Array, Input][] => {
   if (keys.length !== userInputs.length)
     throw new Error('Keys and user inputs must have the same length');
   return keys.map((key, index) => [key, userInputs[index]]);

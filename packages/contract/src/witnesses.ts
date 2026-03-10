@@ -8,7 +8,7 @@ export const witnesses = {
   secretKey: ({
     privateState,
   }: WitnessContext<Ledger, PrivateState>): [PrivateState, Uint8Array] => [
-      privateState,
-      privateState.secretKey,
-    ],
+    privateState,
+    privateState.secretKey,
+  ],
 };
