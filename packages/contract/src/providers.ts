@@ -30,9 +30,9 @@ export const configureProviders = async (
     privateStateProvider: levelPrivateStateProvider<PrivateStateId>({
       privateStateStoreName: privateStateStoreName + '-midnight',
       privateStoragePasswordProvider: function (): string | Promise<string> {
-        return "MyM1dnightPassword!";
+        return 'MyM1dnightPassword!';
       },
-      accountId: walletCtx.shieldedSecretKeys.coinPublicKey
+      accountId: walletCtx.shieldedSecretKeys.coinPublicKey,
     }),
     publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
     zkConfigProvider,

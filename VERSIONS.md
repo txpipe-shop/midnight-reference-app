@@ -12,7 +12,7 @@
 
 ## Project dependencies
 
-```json
+````json
 "dependencies": {
     "@midnight-ntwrk/compact-js": "2.5.0-rc.1",
     "@midnight-ntwrk/compact-runtime": "0.15.0-rc.1",
@@ -34,3 +34,4 @@
     "@midnight-ntwrk/wallet-sdk-unshielded-wallet": "2.1.0-rc.0",
   }
 ```json
+````

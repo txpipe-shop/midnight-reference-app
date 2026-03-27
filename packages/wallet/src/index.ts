@@ -24,7 +24,7 @@ import { Config, WalletContext } from './utils/types.js';
 
 export const buildWallet = async (config: Config, seed: string): Promise<WalletContext> => {
   // Sets networkId for local undeployed testnet
-  setNetworkId("undeployed");
+  setNetworkId('undeployed');
   // Derive HD keys and initialize the three sub-wallets
   const { wallet, shieldedSecretKeys, dustSecretKey, unshieldedKeystore } = await withStatus(
     'Building wallet',
@@ -37,16 +37,14 @@ export const buildWallet = async (config: Config, seed: string): Promise<WalletC
 
       const wallet = await WalletFacade.init({
         configuration: buildInitConfig(config),
-        shielded: (config) => ShieldedWallet(config).startWithSecretKeys(
-          shieldedSecretKeys
-        ),
-        unshielded: (config) => UnshieldedWallet(config).startWithPublicKey(
-        PublicKey.fromKeyStore(unshieldedKeystore)
-      ),
-        dust: (config) => DustWallet(config).startWithSecretKey(
-        dustSecretKey,
-        ledger.LedgerParameters.initialParameters().dust
-      )
+        shielded: (config) => ShieldedWallet(config).startWithSecretKeys(shieldedSecretKeys),
+        unshielded: (config) =>
+          UnshieldedWallet(config).startWithPublicKey(PublicKey.fromKeyStore(unshieldedKeystore)),
+        dust: (config) =>
+          DustWallet(config).startWithSecretKey(
+            dustSecretKey,
+            ledger.LedgerParameters.initialParameters().dust
+          ),
       });
       await wallet.start(shieldedSecretKeys, dustSecretKey);
 

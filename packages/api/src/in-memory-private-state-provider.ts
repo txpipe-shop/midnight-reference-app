@@ -33,7 +33,7 @@ import {
   type PrivateStateId,
   type PrivateStateProvider,
   type SigningKeyExport,
-  SigningKeyExportError
+  SigningKeyExportError,
 } from '@midnight-ntwrk/midnight-js-types';
 import { createCipheriv, createDecipheriv, pbkdf2Sync, randomBytes } from 'crypto';
 
@@ -98,7 +98,10 @@ const decrypt = (encryptedData: string, password: string, expectedSalt: Buffer):
 
   const salt = data.subarray(1, 1 + SALT_LENGTH);
   const iv = data.subarray(1 + SALT_LENGTH, 1 + SALT_LENGTH + IV_LENGTH);
-  const authTag = data.subarray(1 + SALT_LENGTH + IV_LENGTH, 1 + SALT_LENGTH + IV_LENGTH + AUTH_TAG_LENGTH);
+  const authTag = data.subarray(
+    1 + SALT_LENGTH + IV_LENGTH,
+    1 + SALT_LENGTH + IV_LENGTH + AUTH_TAG_LENGTH
+  );
   const encrypted = data.subarray(headerLength);
 
   if (!expectedSalt.equals(salt)) {
@@ -115,7 +118,9 @@ const decrypt = (encryptedData: string, password: string, expectedSalt: Buffer):
 
 const validateExportPassword = (password: string): void => {
   if (password.length < MIN_PASSWORD_LENGTH) {
-    throw new PrivateStateExportError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
+    throw new PrivateStateExportError(
+      `Password must be at least ${MIN_PASSWORD_LENGTH} characters`
+    );
   }
 };
 
@@ -146,7 +151,7 @@ const validateSalt = (salt: string): void => {
  */
 export const inMemoryPrivateStateProvider = <
   PSI extends PrivateStateId,
-  PS extends Contract.PrivateState<Contract.Any>
+  PS extends Contract.PrivateState<Contract.Any>,
 >(): PrivateStateProvider<PSI, PS> => {
   const record = new Map<string, PS>();
   const signingKeys = {} as Record<ContractAddress, SigningKey>;
@@ -154,7 +159,9 @@ export const inMemoryPrivateStateProvider = <
 
   const getScopedKey = (key: PSI): string => {
     if (contractAddress === null) {
-      throw new Error('Contract address not set. Call setContractAddress() before accessing private state.');
+      throw new Error(
+        'Contract address not set. Call setContractAddress() before accessing private state.'
+      );
     }
     return `${contractAddress}:${key}`;
   };
@@ -201,7 +208,9 @@ export const inMemoryPrivateStateProvider = <
      */
     clear(): Promise<void> {
       if (contractAddress === null) {
-        throw new Error('Contract address not set. Call setContractAddress() before accessing private state.');
+        throw new Error(
+          'Contract address not set. Call setContractAddress() before accessing private state.'
+        );
       }
       record.clear();
       return Promise.resolve();
@@ -274,7 +283,7 @@ export const inMemoryPrivateStateProvider = <
         stateCount: record.size,
         states: Object.fromEntries(
           Array.from(record.entries()).map(([key, value]) => [key, JSON.stringify(value)])
-        ) as Record<PSI, string>
+        ) as Record<PSI, string>,
       };
 
       const salt = randomBytes(SALT_LENGTH);
@@ -283,7 +292,7 @@ export const inMemoryPrivateStateProvider = <
       return {
         format: 'midnight-private-state-export',
         encryptedPayload,
-        salt: salt.toString('hex')
+        salt: salt.toString('hex'),
       };
     },
     /**
@@ -415,7 +424,7 @@ export const inMemoryPrivateStateProvider = <
         version: CURRENT_EXPORT_VERSION,
         exportedAt: new Date().toISOString(),
         keyCount,
-        keys: { ...signingKeys }
+        keys: { ...signingKeys },
       };
 
       const salt = randomBytes(SALT_LENGTH);
@@ -424,7 +433,7 @@ export const inMemoryPrivateStateProvider = <
       return {
         format: 'midnight-signing-key-export',
         encryptedPayload,
-        salt: salt.toString('hex')
+        salt: salt.toString('hex'),
       };
     },
     /**
@@ -524,6 +533,6 @@ export const inMemoryPrivateStateProvider = <
       }
 
       return { imported, skipped, overwritten };
-    }
+    },
   };
 };
