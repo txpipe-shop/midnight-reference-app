@@ -6,7 +6,6 @@ import { type WalletContext, createWalletAndMidnightProvider } from '@midnight-s
 import path from 'node:path';
 import {
   SentinelContractCircuitKeys,
-  sentinelContractPrivateStateKey,
   SentinelContractProviders,
   PrivateStateId,
 } from './types.js';
