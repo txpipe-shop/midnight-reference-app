@@ -1,6 +1,7 @@
 import { CompiledContract } from '@midnight-ntwrk/compact-js';
 import { SentinelContractConstructor, SentinelContractType } from './types.js';
 import { witnesses } from './witnesses.js';
+import { PrivateState } from './private-state.js';
 
 const tag = 'SentinelContract';
 export const CompactCompiledContract = CompiledContract.make<SentinelContractType>(

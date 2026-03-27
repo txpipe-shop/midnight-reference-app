@@ -1,5 +1,6 @@
 import { getNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import {
+  Bech32mSymbol,
   MidnightBech32m,
   ShieldedAddress,
   ShieldedCoinPublicKey,
@@ -45,7 +46,7 @@ function getUnshieldedAddress(seed: string): MidnightBech32m {
 
 function getAddresses(seed: string, state: FacadeState): Addresses {
   return {
-    dust: state.dust.dustAddress,
+    dust: state.dust.address[Bech32mSymbol].encode(getNetworkId(), state.dust.address).asString(),
     shielded: getShieldedAddress(state),
     unshielded: getUnshieldedAddress(seed).toString(),
   };
@@ -53,7 +54,7 @@ function getAddresses(seed: string, state: FacadeState): Addresses {
 
 export function getBalances(state: FacadeState): Balances {
   return {
-    dust: state.dust.walletBalance(new Date()),
+    dust: state.dust.balance(new Date()),
     shielded: state.shielded.balances,
     unshielded: state.unshielded.balances,
   };
