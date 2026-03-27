@@ -4,11 +4,7 @@ import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-pri
 import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
 import { type WalletContext, createWalletAndMidnightProvider } from '@midnight-sentinel/wallet';
 import path from 'node:path';
-import {
-  SentinelContractCircuitKeys,
-  SentinelContractProviders,
-  PrivateStateId,
-} from './types.js';
+import { SentinelContractCircuitKeys, SentinelContractProviders, PrivateStateId } from './types.js';
 
 // TODO: Maybe we can improve how these variables are defined
 const currentDir = path.resolve(new URL(import.meta.url).pathname, '..');
