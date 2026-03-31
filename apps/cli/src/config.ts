@@ -15,7 +15,7 @@ export const currentDir = path.resolve(new URL(import.meta.url).pathname, '..');
 // TODO: fix harcoded values
 export class StandaloneConfig implements Config {
   privateStateStoreName = sentinelContractPrivateStateKey;
-  logDir = '';
+  logDir = path.resolve(currentDir, '..', 'logs', 'standalone', `${new Date().toISOString()}.log`);
   zkConfigPath = path.resolve(
     currentDir,
     '..',
