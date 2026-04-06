@@ -1,5 +1,5 @@
-import * as ledger from '@midnight-ntwrk/ledger-v7';
-import { getNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
+import * as ledger from '@midnight-ntwrk/ledger-v8';
+import { getNetworkId, setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import { type MidnightProvider, type WalletProvider } from '@midnight-ntwrk/midnight-js-types';
 import { DustWallet } from '@midnight-ntwrk/wallet-sdk-dust-wallet';
 import { WalletFacade } from '@midnight-ntwrk/wallet-sdk-facade';
@@ -11,7 +11,7 @@ import {
   UnshieldedWallet,
 } from '@midnight-ntwrk/wallet-sdk-unshielded-wallet';
 import * as Rx from 'rxjs';
-import { buildDustConfig, buildShieldedConfig, buildUnshieldedConfig } from './utils/configs.js';
+import { buildInitConfig } from './utils/configs.js';
 import {
   deriveKeysFromSeed,
   registerForDustGeneration,
@@ -23,6 +23,8 @@ import {
 import { Config, WalletContext } from './utils/types.js';
 
 export const buildWallet = async (config: Config, seed: string): Promise<WalletContext> => {
+  // Sets networkId for local undeployed testnet
+  setNetworkId('undeployed');
   // Derive HD keys and initialize the three sub-wallets
   const { wallet, shieldedSecretKeys, dustSecretKey, unshieldedKeystore } = await withStatus(
     'Building wallet',
@@ -33,18 +35,17 @@ export const buildWallet = async (config: Config, seed: string): Promise<WalletC
       const dustSecretKey = ledger.DustSecretKey.fromSeed(keys[Roles.Dust]);
       const unshieldedKeystore = createKeystore(keys[Roles.NightExternal], getNetworkId());
 
-      const shieldedWallet = ShieldedWallet(buildShieldedConfig(config)).startWithSecretKeys(
-        shieldedSecretKeys
-      );
-      const unshieldedWallet = UnshieldedWallet(buildUnshieldedConfig(config)).startWithPublicKey(
-        PublicKey.fromKeyStore(unshieldedKeystore)
-      );
-      const dustWallet = DustWallet(buildDustConfig(config)).startWithSecretKey(
-        dustSecretKey,
-        ledger.LedgerParameters.initialParameters().dust
-      );
-
-      const wallet = new WalletFacade(shieldedWallet, unshieldedWallet, dustWallet);
+      const wallet = await WalletFacade.init({
+        configuration: buildInitConfig(config),
+        shielded: (config) => ShieldedWallet(config).startWithSecretKeys(shieldedSecretKeys),
+        unshielded: (config) =>
+          UnshieldedWallet(config).startWithPublicKey(PublicKey.fromKeyStore(unshieldedKeystore)),
+        dust: (config) =>
+          DustWallet(config).startWithSecretKey(
+            dustSecretKey,
+            ledger.LedgerParameters.initialParameters().dust
+          ),
+      });
       await wallet.start(shieldedSecretKeys, dustSecretKey);
 
       return { wallet, shieldedSecretKeys, dustSecretKey, unshieldedKeystore };

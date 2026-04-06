@@ -4,16 +4,11 @@ import { levelPrivateStateProvider } from '@midnight-ntwrk/midnight-js-level-pri
 import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
 import { type WalletContext, createWalletAndMidnightProvider } from '@midnight-sentinel/wallet';
 import path from 'node:path';
-import {
-  SentinelContractCircuitKeys,
-  sentinelContractPrivateStateKey,
-  SentinelContractProviders,
-} from './types.js';
+import { SentinelContractCircuitKeys, SentinelContractProviders, PrivateStateId } from './types.js';
 
 // TODO: Maybe we can improve how these variables are defined
 const currentDir = path.resolve(new URL(import.meta.url).pathname, '..');
 export const contractConfig = {
-  privateStateStoreName: sentinelContractPrivateStateKey,
   zkConfigPath: path.resolve(currentDir, 'managed', 'sentinel'),
 };
 
@@ -26,12 +21,13 @@ export const configureProviders = async (
   const zkConfigProvider = new NodeZkConfigProvider<SentinelContractCircuitKeys>(
     contractConfig.zkConfigPath
   );
-
   return {
-    privateStateProvider: levelPrivateStateProvider<string>({
-      privateStateStoreName,
-      midnightDbName: privateStateStoreName + '-midnight',
-      walletProvider: walletAndMidnightProvider,
+    privateStateProvider: levelPrivateStateProvider<PrivateStateId>({
+      privateStateStoreName: privateStateStoreName + '-midnight',
+      privateStoragePasswordProvider: function (): string | Promise<string> {
+        return 'MyM1dnightPassword!';
+      },
+      accountId: walletCtx.shieldedSecretKeys.coinPublicKey,
     }),
     publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
     zkConfigProvider,

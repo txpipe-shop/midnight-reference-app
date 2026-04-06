@@ -3,6 +3,7 @@ import path from 'node:path';
 
 export interface Config {
   readonly privateStateStoreName: string;
+  readonly logDir: string;
   readonly zkConfigPath: string;
   readonly indexer: string;
   readonly indexerWS: string;
@@ -14,6 +15,7 @@ export const currentDir = path.resolve(new URL(import.meta.url).pathname, '..');
 // TODO: fix harcoded values
 export class StandaloneConfig implements Config {
   privateStateStoreName = sentinelContractPrivateStateKey;
+  logDir = path.resolve(currentDir, '..', 'logs', 'standalone', `${new Date().toISOString()}.log`);
   zkConfigPath = path.resolve(
     currentDir,
     '..',

@@ -11,11 +11,11 @@ import {
   Binding,
   FinalizedTransaction,
   Proof,
+  SignatureEnabled,
   Transaction,
   TransactionId,
-} from '@midnight-ntwrk/ledger-v7';
+} from '@midnight-ntwrk/ledger-v8';
 import { fromHex, toHex } from '@midnight-ntwrk/compact-runtime';
-import { SignatureEnabled } from '@midnight-ntwrk/ledger-v7';
 import { UnboundTransaction } from '@midnight-ntwrk/midnight-js-types';
 import { type ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
 

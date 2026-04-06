@@ -1,5 +1,4 @@
-import * as ledger from '@midnight-ntwrk/ledger-v7';
-import { unshieldedToken } from '@midnight-ntwrk/ledger-v7';
+import * as ledger from '@midnight-ntwrk/ledger-v8';
 import { WalletFacade } from '@midnight-ntwrk/wallet-sdk-facade';
 import { HDWallet, Roles } from '@midnight-ntwrk/wallet-sdk-hd';
 import { UnshieldedKeystore } from '@midnight-ntwrk/wallet-sdk-unshielded-wallet';
@@ -66,7 +65,7 @@ export const waitForFunds = (wallet: WalletFacade): Promise<bigint> =>
     wallet.state().pipe(
       Rx.throttleTime(10_000),
       Rx.filter((state) => state.isSynced),
-      Rx.map((s) => s.unshielded.balances[unshieldedToken().raw] ?? 0n),
+      Rx.map((s) => s.unshielded.balances[ledger.unshieldedToken().raw] ?? 0n),
       Rx.filter((balance) => balance > 0n)
     )
   );
@@ -86,7 +85,7 @@ export const registerForDustGeneration = async (
 
   // Check if dust is already available (e.g. from a previous designation)
   if (state.dust.availableCoins.length > 0) {
-    const dustBal = state.dust.walletBalance(new Date());
+    const dustBal = state.dust.balance(new Date());
     console.log(`  ✓ Dust tokens already available (${formatBalance(dustBal)} DUST)`);
     return;
   }
@@ -102,7 +101,7 @@ export const registerForDustGeneration = async (
         wallet.state().pipe(
           Rx.throttleTime(5_000),
           Rx.filter((s) => s.isSynced),
-          Rx.filter((s) => s.dust.walletBalance(new Date()) > 0n)
+          Rx.filter((s) => s.dust.balance(new Date()) > 0n)
         )
       )
     );
@@ -128,7 +127,7 @@ export const registerForDustGeneration = async (
       wallet.state().pipe(
         Rx.throttleTime(5_000),
         Rx.filter((s) => s.isSynced),
-        Rx.filter((s) => s.dust.walletBalance(new Date()) > 0n)
+        Rx.filter((s) => s.dust.balance(new Date()) > 0n)
       )
     )
   );
