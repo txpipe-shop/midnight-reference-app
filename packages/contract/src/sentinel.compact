@@ -57,8 +57,8 @@ export type Rules = Disjunction<2,2>;
 ///////// LEDGER /////////
 export ledger rules: Map<ZswapCoinPublicKey, Rules>;
 export ledger admin: Either<ZswapCoinPublicKey, ContractAddress>;
-//export ledger baseNonce: Bytes<32>;
-// export ledger mintCount: Counter;
+export ledger baseNonce: Bytes<32>;
+export ledger mintCount: Counter;
 
 ///////// CONSTRUCTOR /////////
 constructor(pubKey: ZswapCoinPublicKey) {
@@ -94,15 +94,22 @@ export circuit mintSpecialToken(
 
   const amount: Uint<64> = 1;
 
-  //TODO: shielded mints don't work on latest version
-  //const recipientPk = ownPublicKey();
-  // TODO: use coin base nonce here
-  //const nonce = evolveNonce(mintCount, baseNonce);
-  ///const recipient = left<ZswapCoinPublicKey, ContractAddress>(recipientPk);
-  //const _coin = mintShieldedToken(disclose(input.bytes32), amount, nonce, recipient);
-
   const recipient = right<ContractAddress, UserAddress>(address);
   const _coin = mintUnshieldedToken(disclose(domainSep), amount, disclose(recipient));
+}
+
+export circuit mintSpecialShieldedToken(
+  rulesAndInputs: Vector<1, [ZswapCoinPublicKey, Input]>,
+  address: ZswapCoinPublicKey,
+  domainSep: Bytes<32>
+): ShieldedCoinInfo {
+  assert(fold((acc, [rule, input]) => acc && satisfies(rule, input), true, disclose(rulesAndInputs)), "Rules not satisfied");
+
+  const amount: Uint<64> = 1;
+  mintCount += 1 ;
+  const nonce = evolveNonce(mintCount, baseNonce);
+  const recipient = left<ZswapCoinPublicKey, ContractAddress>(address);
+  return mintShieldedToken(disclose(domainSep), amount, nonce, disclose(recipient));
 }
 
 ///////// HELPER CIRCUITS /////////

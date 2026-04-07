@@ -1,4 +1,4 @@
-import { fromHex } from '@midnight-ntwrk/compact-runtime';
+import { CoinPublicKey, fromHex } from '@midnight-ntwrk/compact-runtime';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { UnshieldedAddress } from '@midnight-ntwrk/wallet-sdk-address-format';
 import {
@@ -244,6 +244,18 @@ export class SentinelContract {
     const rulesAndInputs = zipRulesAndInputs(keys, userInputs);
 
     return await this.deployedContract?.callTx.mintSpecialToken(
+      rulesAndInputs,
+      recipientBytes,
+      domainSep
+    );
+  }
+
+  async mintShieldedToken(userInputs: Input[], keys: string[], recipient: CoinPublicKey) {
+    const domainSep = new Uint8Array(32).fill(0);
+    const recipientBytes = { bytes: fromHex(recipient) };
+    const rulesAndInputs = zipRulesAndInputs(keys, userInputs);
+
+    return await this.deployedContract?.callTx.mintSpecialShieldedToken(
       rulesAndInputs,
       recipientBytes,
       domainSep

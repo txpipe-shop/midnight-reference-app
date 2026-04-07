@@ -24,16 +24,34 @@ export interface Addresses {
   unshielded: string;
 }
 
+export interface PublicKeys {
+  coin: string;
+  encryption: string;
+}
+
 const DIVIDER = '──────────────────────────────────────────────────────────────';
 const TNIGHT_TOKEN_ID = '0000000000000000000000000000000000000000000000000000000000000000';
 
-function getShieldedAddress(state: FacadeState): string {
-  const coinPubKey = ShieldedCoinPublicKey.fromHexString(
-    state.shielded.coinPublicKey.toHexString()
-  );
-  const encPubKey = ShieldedEncryptionPublicKey.fromHexString(
+function getCoinPublicKey(state: FacadeState): ShieldedCoinPublicKey {
+  return ShieldedCoinPublicKey.fromHexString(state.shielded.coinPublicKey.toHexString());
+}
+
+function getEncryptionPublicKey(state: FacadeState): ShieldedEncryptionPublicKey {
+  return ShieldedEncryptionPublicKey.fromHexString(
     state.shielded.encryptionPublicKey.toHexString()
   );
+}
+
+function getPublicKeys(state: FacadeState): PublicKeys {
+  return {
+    coin: getCoinPublicKey(state).toHexString(),
+    encryption: getEncryptionPublicKey(state).toHexString(),
+  };
+}
+
+function getShieldedAddress(state: FacadeState): string {
+  const coinPubKey = getCoinPublicKey(state);
+  const encPubKey = getEncryptionPublicKey(state);
   const address = new ShieldedAddress(coinPubKey, encPubKey);
   return MidnightBech32m.encode(getNetworkId(), address).toString();
 }
@@ -63,11 +81,12 @@ export function getBalances(state: FacadeState): Balances {
 export async function getBalancesAndAddresses(
   wallet: WalletFacade,
   seed: string
-): Promise<{ balances: Balances; addresses: Addresses }> {
+): Promise<{ balances: Balances; addresses: Addresses; pubKeys: PublicKeys }> {
   const state = await Rx.firstValueFrom(wallet.state().pipe(Rx.filter((s) => s.isSynced)));
   return {
     balances: getBalances(state),
     addresses: getAddresses(seed, state),
+    pubKeys: getPublicKeys(state),
   };
 }
 
@@ -93,7 +112,11 @@ function formatSection(
   return lines;
 }
 
-export function printBalances(balances: Balances, addresses?: Addresses): void {
+export function printBalances(
+  balances: Balances,
+  addresses?: Addresses,
+  pubKeys?: PublicKeys
+): void {
   const shieldedLines = Object.entries(balances.shielded).map(([token, balance]) =>
     formatTokenBalance(token, balance)
   );
@@ -113,7 +136,22 @@ export function printBalances(balances: Balances, addresses?: Addresses): void {
 
   const unshieldedSection = formatSection('UNSHIELDED', addresses?.unshielded, unshieldedLines);
 
-  const output = [...dustSection, ...shieldedSection, ...unshieldedSection, ''].join('\n');
+  const pubKeySection: string[] = [];
+
+  if (pubKeys) {
+    pubKeySection.push(' ');
+    pubKeySection.push(' Shielded Public Keys');
+    pubKeySection.push(`   Encryption Public Key: ${pubKeys.encryption}`);
+    pubKeySection.push(`   Coin Public Key: ${pubKeys.coin}`);
+  }
+
+  const output = [
+    ...dustSection,
+    ...shieldedSection,
+    ...pubKeySection,
+    ...unshieldedSection,
+    '',
+  ].join('\n');
 
   console.log(output);
 }

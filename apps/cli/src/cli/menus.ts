@@ -12,12 +12,13 @@ ${DIVIDER}
 export const circuitMenu: string = `
 ${DIVIDER}
   [1] Mint unshielded token
-  [2] Add a new rule
-  [3] Remove a rule
-  [4] Transfer admin
-  [5] Get balances
-  [6] See current rules
-  [7] Exit
+  [2] Mint shielded token
+  [3] Add a new rule
+  [4] Remove a rule
+  [5] Transfer admin
+  [6] Get balances
+  [7] See current rules
+  [8] Exit
 ${DIVIDER}
 `;
 

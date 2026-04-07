@@ -62,6 +62,17 @@ async function handleCircuits(
         break;
       case '2':
         try {
+          const inputs = await askForInputs(rli);
+          const rules = await askForRules(rli);
+          const recipient = await rli.question("Recipient's coin key: ");
+          const tx = await contract.mintShieldedToken(inputs, rules, recipient);
+          console.log('Minted shielded token on tx: ', tx?.public.txHash);
+        } catch (err) {
+          console.log(err);
+        }
+        break;
+      case '3':
+        try {
           const rule = await rli.question('Enter the rule to add (JSON): ');
           const parsedRule = JSON.parse(rule, normalizeRule);
           const validatedRule = validateRules(parsedRule);
@@ -76,7 +87,7 @@ async function handleCircuits(
           console.log(err);
         }
         break;
-      case '3':
+      case '4':
         try {
           const address = await rli.question('Enter the public key of the rule owner to remove: ');
           const tx = await contract.removeRule(address);
@@ -85,29 +96,28 @@ async function handleCircuits(
           console.log(err);
         }
         break;
-      case '4':
+      case '5':
         console.log(`Not implemented yet`);
         break;
-      case '5':
+      case '6':
         try {
-          const { balances, addresses } = await getBalancesAndAddresses(
+          const { balances, addresses, pubKeys } = await getBalancesAndAddresses(
             walletCtx.wallet,
             walletDetails.seed
           );
-          printBalances(balances, addresses);
+          printBalances(balances, addresses, pubKeys);
         } catch (err) {
           console.log(err);
         }
         break;
-      case '6': {
+      case '7':
         try {
           await contract.getCurrentState();
         } catch (err) {
           console.log(err);
         }
         break;
-      }
-      case '7':
+      case '8':
         console.log('Exiting...');
         return;
       default:
@@ -165,11 +175,11 @@ export async function runCli(
         }
         break;
       case '3': {
-        const { balances, addresses } = await getBalancesAndAddresses(
+        const { balances, addresses, pubKeys } = await getBalancesAndAddresses(
           walletCtx.wallet,
           walletDetails.seed
         );
-        printBalances(balances, addresses);
+        printBalances(balances, addresses, pubKeys);
         break;
       }
       case '4':
