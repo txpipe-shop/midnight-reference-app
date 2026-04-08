@@ -2,7 +2,7 @@ import * as ledger from '@midnight-ntwrk/ledger-v8';
 import { getNetworkId, setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import { type MidnightProvider, type WalletProvider } from '@midnight-ntwrk/midnight-js-types';
 import { DustWallet } from '@midnight-ntwrk/wallet-sdk-dust-wallet';
-import { WalletFacade } from '@midnight-ntwrk/wallet-sdk-facade';
+import { CombinedTokenTransfer, WalletFacade } from '@midnight-ntwrk/wallet-sdk-facade';
 import { Roles } from '@midnight-ntwrk/wallet-sdk-hd';
 import { ShieldedWallet } from '@midnight-ntwrk/wallet-sdk-shielded';
 import {
@@ -21,6 +21,7 @@ import {
   withStatus,
 } from './utils/index.js';
 import { Config, WalletContext } from './utils/types.js';
+import { MidnightBech32m, ShieldedAddress } from '@midnight-ntwrk/wallet-sdk-address-format';
 
 export const buildWallet = async (config: Config, seed: string): Promise<WalletContext> => {
   // Sets networkId for local undeployed testnet
@@ -109,6 +110,49 @@ export const createWalletAndMidnightProvider = async (
       return ctx.wallet.submitTransaction(tx);
     },
   };
+};
+
+export const sendShielded = async (
+  receiver: string,
+  coinType: string,
+  walletCtx: WalletContext
+): Promise<string> => {
+  const state = await Rx.firstValueFrom(
+    walletCtx.wallet.state().pipe(Rx.filter((s) => s.isSynced))
+  );
+  const spendCoin = state.shielded.availableCoins.find((c) => c.coin.type == coinType)?.coin;
+  const parsed = MidnightBech32m.parse(receiver);
+  const receiverAddress = ShieldedAddress.codec.decode(getNetworkId(), parsed);
+  if (spendCoin) {
+    const outputsToCreate: CombinedTokenTransfer[] = [
+      {
+        type: 'shielded',
+        outputs: [
+          {
+            type: spendCoin.type,
+            amount: spendCoin.value,
+            receiverAddress: receiverAddress,
+          },
+        ],
+      },
+    ];
+    const txHash = walletCtx.wallet
+      .transferTransaction(
+        outputsToCreate,
+        {
+          shieldedSecretKeys: walletCtx.shieldedSecretKeys,
+          dustSecretKey: walletCtx.dustSecretKey,
+        },
+        {
+          ttl: new Date(Date.now() + 30 * 60 * 1000),
+        }
+      )
+      .then((unprovenRecipe) => walletCtx.wallet.finalizeRecipe(unprovenRecipe))
+      .then((finalizedTx) => walletCtx.wallet.submitTransaction(finalizedTx));
+    return txHash;
+  } else {
+    throw new Error('Coin not found');
+  }
 };
 
 export {

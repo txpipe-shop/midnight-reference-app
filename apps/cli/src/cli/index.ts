@@ -4,6 +4,7 @@ import { configureProviders } from '@midnight-sentinel/contract/providers';
 import {
   getBalancesAndAddresses,
   printBalances,
+  sendShielded,
   type WalletContext,
 } from '@midnight-sentinel/wallet';
 import type { Interface } from 'readline/promises';
@@ -64,9 +65,11 @@ async function handleCircuits(
         try {
           const inputs = await askForInputs(rli);
           const rules = await askForRules(rli);
-          const recipient = await rli.question("Recipient's coin key: ");
+          const recipient = (await walletCtx.wallet.shielded.getAddress()).coinPublicKeyString();
           const tx = await contract.mintShieldedToken(inputs, rules, recipient);
-          console.log('Minted shielded token on tx: ', tx?.public.txHash);
+          console.log(
+            `Minted shielded token of type ${tx?.private.newCoins[0].type} on tx ${tx?.public.txHash}`
+          );
         } catch (err) {
           console.log(err);
         }
@@ -174,7 +177,25 @@ export async function runCli(
           console.error(error);
         }
         break;
-      case '3': {
+      case '3':
+        try {
+          const spendCoinType = await rli.question('Enter the type of the coin to spend: ');
+          const receiverAddress = await rli.question('Enter the recipients shielded address: ');
+          const hash = await sendShielded(receiverAddress, spendCoinType, walletCtx);
+          if (hash) {
+            console.log(`Successfully sent shielded coin on tx ${hash}`);
+          } else {
+            throw new Error(':(');
+          }
+        } catch (error: unknown) {
+          console.error('Error sending shielded coin:');
+          if (error instanceof Error) {
+            console.error(error.message);
+          }
+          console.error(error);
+        }
+        break;
+      case '4': {
         const { balances, addresses, pubKeys } = await getBalancesAndAddresses(
           walletCtx.wallet,
           walletDetails.seed
@@ -182,7 +203,7 @@ export async function runCli(
         printBalances(balances, addresses, pubKeys);
         break;
       }
-      case '4':
+      case '5':
         console.log('Exiting...');
         return;
       default:

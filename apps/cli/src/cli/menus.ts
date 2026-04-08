@@ -4,8 +4,9 @@ export const contractMenu: string = `
 ${DIVIDER}
   [1] Deploy a new sentinel contract
   [2] Join an existing sentinel contract
-  [3] Get balances
-  [4] Exit
+  [3] Send shielded coin
+  [4] Get balances
+  [5] Exit
 ${DIVIDER}
 `;
 
