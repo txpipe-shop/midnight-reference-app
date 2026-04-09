@@ -30,13 +30,10 @@ export const toHex = (arr: Uint8Array) =>
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
 
-const zipRulesAndInputs = (
-  keys: string[],
-  userInputs: Input[]
-): [{ bytes: Uint8Array }, Input][] => {
+const zipRulesAndInputs = (keys: Uint8Array[], userInputs: Input[]): [Uint8Array, Input][] => {
   if (keys.length !== userInputs.length)
     throw new Error('Keys and user inputs must have the same length');
-  return keys.map((key, index) => [{ bytes: fromHex(key) }, userInputs[index]]);
+  return keys.map((key, index) => [key, userInputs[index]]);
 };
 
 export interface Config {
@@ -219,19 +216,20 @@ export class SentinelContract {
       }
 
       for (const item of rules) {
-        console.log('Owner: ', toHex(item[0].bytes));
+        console.log('Key: ', toHex(item[0]));
         console.log('Rules: ', SentinelContract.prettyRules(item[1]));
       }
     });
   }
 
-  async addRule(rule: SentinelRules) {
+  async addRule(rule: SentinelRules, nonce: Uint8Array) {
     const pubKey = this.providers.walletProvider.getCoinPublicKey();
-    return await this.deployedContract?.callTx.addRule({ bytes: fromHex(pubKey) }, rule);
+    return await this.deployedContract?.callTx.addRule({ bytes: fromHex(pubKey) }, nonce, rule);
   }
 
-  async removeRule(address: string) {
-    return await this.deployedContract?.callTx.removeRule({ bytes: fromHex(address) });
+  async removeRule(nonce: Uint8Array) {
+    const pubKey = this.providers.walletProvider.getCoinPublicKey();
+    return await this.deployedContract?.callTx.removeRule({ bytes: fromHex(pubKey) }, nonce);
   }
 
   async transferAdmin(newAdmin: Uint8Array) {
@@ -241,7 +239,8 @@ export class SentinelContract {
   async mintToken(userInputs: Input[], keys: string[], recipient: UnshieldedAddress) {
     const domainSep = new Uint8Array(32).fill(0);
     const recipientBytes = { bytes: fromHex(recipient.hexString) };
-    const rulesAndInputs = zipRulesAndInputs(keys, userInputs);
+    const bytesKeys = keys.map((key) => fromHex(key));
+    const rulesAndInputs = zipRulesAndInputs(bytesKeys, userInputs);
 
     return await this.deployedContract?.callTx.mintSpecialToken(
       rulesAndInputs,

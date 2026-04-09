@@ -12,10 +12,10 @@ export const Rules = ({ rules }: { rules: Ledger['rules'] }) => {
 
   return (
     <pre className="p-4 bg-muted rounded-md text-sm font-mono overflow-auto max-h-[300px]">
-      {[...rules].map(([owner, ownerRules], idx) => (
+      {[...rules].map(([ruleKey, rule], idx) => (
         <div key={idx}>
-          <div>Owner: {toHex(owner.bytes)}</div>
-          <div>Rules: {SentinelContract.prettyRules(ownerRules)}</div>
+          <div>Key: {toHex(ruleKey)}</div>
+          <div>Rules: {SentinelContract.prettyRules(rule)}</div>
         </div>
       ))}
     </pre>

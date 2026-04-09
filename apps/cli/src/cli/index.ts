@@ -1,5 +1,5 @@
+import { communicationCommitmentRandomness, fromHex, toHex } from '@midnight-ntwrk/compact-runtime';
 import { normalizeRule, SentinelContract, validateRules } from '@midnight-sentinel/api';
-import type { Input } from '@midnight-sentinel/contract';
 import { configureProviders } from '@midnight-sentinel/contract/providers';
 import {
   getBalancesAndAddresses,
@@ -9,36 +9,7 @@ import {
 import type { Interface } from 'readline/promises';
 import { type Config } from '../config.js';
 import { circuitMenu, contractMenu } from './menus.js';
-
-// TODO: handle other types of inputs
-const askForInputs = async (rli: Interface): Promise<Input[]> => {
-  const inputs = [];
-  while (true) {
-    const input: string = await rli.question(
-      `Enter the input ${inputs.length + 1} (type "done" to finish): `
-    );
-    if (input === 'done') break;
-    inputs.push({
-      uint: BigInt(input),
-      boolean: false,
-      bytes32: new Uint8Array(32),
-      field: BigInt(0),
-    });
-  }
-
-  return inputs;
-};
-const askForRules = async (rli: Interface): Promise<string[]> => {
-  const rules = [];
-  while (true) {
-    const rule: string = await rli.question(
-      `Enter the rule ${rules.length + 1} (type "done" to finish): `
-    );
-    if (rule === 'done') break;
-    rules.push(rule);
-  }
-  return rules;
-};
+import { askForInputs, askForRules } from './prompts.js';
 
 async function handleCircuits(
   contract: SentinelContract,
@@ -65,7 +36,12 @@ async function handleCircuits(
           const rule = await rli.question('Enter the rule to add (JSON): ');
           const parsedRule = JSON.parse(rule, normalizeRule);
           const validatedRule = validateRules(parsedRule);
-          const tx = await contract.addRule(validatedRule);
+
+          const nonceHex = communicationCommitmentRandomness();
+          const nonce = fromHex(nonceHex).slice(0, 32);
+          console.log('Your nonce for this rule is: ', toHex(nonce));
+
+          const tx = await contract.addRule(validatedRule, nonce);
           console.log(
             'Rule ',
             SentinelContract.prettyRules(validatedRule),
@@ -78,8 +54,11 @@ async function handleCircuits(
         break;
       case '3':
         try {
-          const address = await rli.question('Enter the public key of the rule owner to remove: ');
-          const tx = await contract.removeRule(address);
+          const nonce = await rli.question(
+            'You will remove the rule with your public key and the nonce you provided.\nEnter the nonce: '
+          );
+          const nonceBytes = fromHex(nonce);
+          const tx = await contract.removeRule(nonceBytes);
           console.log('Rule removed on tx: ', tx?.public.txHash);
         } catch (err) {
           console.log(err);
