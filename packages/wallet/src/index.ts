@@ -118,4 +118,19 @@ export {
   type Addresses,
   type Balances,
 } from './utils/balances.js';
+export { signTransactionIntents, withStatus } from './utils/index.js';
 export { WalletContext } from './utils/types.js';
+export {
+  ShieldedAddress,
+  ShieldedCoinPublicKey,
+  ShieldedEncryptionPublicKey,
+} from '@midnight-ntwrk/wallet-sdk-address-format';
+
+/** Wait until at least one shielded token balance is non-zero. Returns the balances map. */
+export const waitForShieldedBalance = (wallet: WalletFacade): Promise<Record<string, bigint>> =>
+  Rx.firstValueFrom(
+    wallet.state().pipe(
+      Rx.filter((s) => s.isSynced && Object.keys(s.shielded.balances).length > 0),
+      Rx.map((s) => s.shielded.balances as Record<string, bigint>),
+    ),
+  );

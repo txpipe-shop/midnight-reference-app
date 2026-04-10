@@ -7,6 +7,7 @@
     "dev": "tsx src/index.ts -w DEPLOY",
     "dev-join": "tsx src/index.ts -w JOIN",
     "dev-third": "tsx src/index.ts -w THIRD",
+    "dev-sponsor": "tsx src/zswap-sponsor.ts",
     "start": "node dist/index.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

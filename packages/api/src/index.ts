@@ -238,6 +238,7 @@ export class SentinelContract {
     await this.deployedContract?.callTx.transferAdmin({ bytes: newAdmin });
   }
 
+
   async mintToken(userInputs: Input[], keys: string[], recipient: UnshieldedAddress) {
     const domainSep = new Uint8Array(32).fill(0);
     const recipientBytes = { bytes: fromHex(recipient.hexString) };
@@ -247,6 +248,18 @@ export class SentinelContract {
       rulesAndInputs,
       recipientBytes,
       domainSep
+    );
+  }
+
+  async mintFreeToken(recipientCoinPubKeyHex: string) {
+    const domainSep = new Uint8Array(32).fill(1);
+    const mintNonce = crypto.getRandomValues(new Uint8Array(32));
+    const amount = 1000n;
+    return await this.deployedContract?.callTx.mintDirectShielded(
+      domainSep,
+      amount,
+      mintNonce,
+      { bytes: fromHex(recipientCoinPubKeyHex) },
     );
   }
 }
