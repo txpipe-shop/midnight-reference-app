@@ -7,6 +7,11 @@ settings:
 overrides:
   '@midnight-ntwrk/ledger-v8': 8.0.0
 
+patchedDependencies:
+  '@midnight-ntwrk/compact-runtime@0.15.0-rc.1':
+    hash: 7810941c2247812bf075dd054c44369216da921a25b301a0c1b0409fd1cc92df
+    path: patches/@midnight-ntwrk__compact-runtime@0.15.0-rc.1.patch
+
 importers:
 
   .:
@@ -37,7 +42,7 @@ importers:
     dependencies:
       '@midnight-ntwrk/compact-runtime':
         specifier: 0.15.0-rc.1
-        version: 0.15.0-rc.1
+        version: 0.15.0-rc.1(patch_hash=7810941c2247812bf075dd054c44369216da921a25b301a0c1b0409fd1cc92df)
       '@midnight-ntwrk/ledger-v8':
         specifier: 8.0.0
         version: 8.0.0
@@ -62,6 +67,9 @@ importers:
       pino:
         specifier: ^10.3.1
         version: 10.3.1
+      rxjs:
+        specifier: ^7.8.2
+        version: 7.8.2
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
@@ -198,7 +206,7 @@ importers:
         version: 2.5.0-rc.1
       '@midnight-ntwrk/compact-runtime':
         specifier: ^0.15.0-rc.1
-        version: 0.15.0-rc.1
+        version: 0.15.0-rc.1(patch_hash=7810941c2247812bf075dd054c44369216da921a25b301a0c1b0409fd1cc92df)
       '@midnight-ntwrk/dapp-connector-api':
         specifier: 4.0.1
         version: 4.0.1
@@ -250,7 +258,7 @@ importers:
         version: 2.5.0-rc.1
       '@midnight-ntwrk/compact-runtime':
         specifier: 0.15.0-rc.1
-        version: 0.15.0-rc.1
+        version: 0.15.0-rc.1(patch_hash=7810941c2247812bf075dd054c44369216da921a25b301a0c1b0409fd1cc92df)
       '@midnight-ntwrk/midnight-js-contracts':
         specifier: 3.2.1-0-pre.3ce66bd
         version: 3.2.1-0-pre.3ce66bd
@@ -5548,7 +5556,7 @@ snapshots:
       '@types/object-inspect': 1.13.0
       object-inspect: 1.13.4
 
-  '@midnight-ntwrk/compact-runtime@0.15.0-rc.1':
+  '@midnight-ntwrk/compact-runtime@0.15.0-rc.1(patch_hash=7810941c2247812bf075dd054c44369216da921a25b301a0c1b0409fd1cc92df)':
     dependencies:
       '@midnight-ntwrk/onchain-runtime-v3': 3.0.0
       '@types/object-inspect': 1.13.0

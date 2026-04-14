@@ -15,15 +15,16 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@midnight-ntwrk/ledger-v8": "8.0.3",
-    "@midnight-ntwrk/zswap": "4.0.0",
     "@midnight-ntwrk/compact-runtime": "0.15.0-rc.1",
+    "@midnight-ntwrk/ledger-v8": "8.0.3",
     "@midnight-ntwrk/midnight-js-contracts": "3.2.1-0-pre.3ce66bd",
+    "@midnight-ntwrk/zswap": "4.0.0",
     "@midnight-sentinel/api": "workspace:*",
     "@midnight-sentinel/contract": "workspace:*",
     "@midnight-sentinel/wallet": "workspace:*",
     "axios": "^1.13.5",
-    "pino": "^10.3.1"
+    "pino": "^10.3.1",
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

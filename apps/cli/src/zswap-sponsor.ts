@@ -25,7 +25,6 @@ import {
   ShieldedCoinPublicKey,
   ShieldedEncryptionPublicKey,
   type WalletContext,
-  withStatus,
 } from '@midnight-sentinel/wallet';
 import { StandaloneConfig } from './config.js';
 import {

@@ -1,0 +1,28 @@
+diff --git a/dist/compact-types.js b/dist/compact-types.js
+index 5bbafe8efa0947515719789df88c7ba72294fb74..03632c89f1e7f35b32eaf7ba61397a08c89aec89 100644
+--- a/dist/compact-types.js
++++ b/dist/compact-types.js
+@@ -315,19 +315,20 @@ export const CompactTypeOpaqueString = {
+  */
+ export const Bytes32Descriptor = new CompactTypeBytes(32);
+ export const MaxUint8Descriptor = new CompactTypeUnsignedInteger(18446744073709551615n, 8);
++export const MaxUint16Descriptor = new CompactTypeUnsignedInteger(340282366920938463463374607431768211455n, 16);
+ export const ShieldedCoinInfoDescriptor = {
+     alignment() {
+-        return Bytes32Descriptor.alignment().concat(Bytes32Descriptor.alignment().concat(MaxUint8Descriptor.alignment()));
++        return Bytes32Descriptor.alignment().concat(Bytes32Descriptor.alignment().concat(MaxUint16Descriptor.alignment()));
+     },
+     fromValue(value) {
+         return {
+             nonce: Bytes32Descriptor.fromValue(value),
+             color: Bytes32Descriptor.fromValue(value),
+-            value: MaxUint8Descriptor.fromValue(value),
++            value: MaxUint16Descriptor.fromValue(value),
+         };
+     },
+     toValue(value) {
+-        return Bytes32Descriptor.toValue(value.nonce).concat(Bytes32Descriptor.toValue(value.color).concat(MaxUint8Descriptor.toValue(value.value)));
++        return Bytes32Descriptor.toValue(value.nonce).concat(Bytes32Descriptor.toValue(value.color).concat(MaxUint16Descriptor.toValue(value.value)));
+     },
+ };
+ export const ZswapCoinPublicKeyDescriptor = {
