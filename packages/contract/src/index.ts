@@ -7,7 +7,7 @@ export const CompactCompiledContract = CompiledContract.make<SentinelContractTyp
   tag,
   SentinelContractConstructor
 ).pipe(
-  CompiledContract.withWitnesses(witnesses),
+  CompiledContract.withVacantWitnesses,
   CompiledContract.withCompiledFileAssets(
     /* @vite-ignore */
     new URL('./managed/sentinel', import.meta.url).pathname
