@@ -2,15 +2,19 @@ const DIVIDER = '─────────────────────
 
 export const contractMenu: string = `
 ${DIVIDER}
-  [1] Deploy a new sentinel contract
-  [2] Join an existing sentinel contract
-  [3] Get balances
-  [4] Exit
+  [1] Deploy a new contract
+  [2] Join an existing contract
+  [3] Request DUST sponsorship
+  [4] Get balances
+  [5] Exit
 ${DIVIDER}
 `;
 
 export const circuitMenu: string = `
 ${DIVIDER}
-  [1] Exit
+  [1] Delegate NIGHT
+  [2] Redeem rewards
+  [3] (Admin) Register new NIGHTs for DUST generation
+  [4] (Admin) Deposit rewards
 ${DIVIDER}
 `;

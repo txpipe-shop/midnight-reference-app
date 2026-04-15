@@ -10,9 +10,9 @@ import { type Config } from '../config.js';
 import { circuitMenu, contractMenu } from './menus.js';
 
 async function handleCircuits(
-  contract: SentinelContract,
-  walletDetails: { seed: string; privateStateStoreName: string },
-  walletCtx: WalletContext,
+  _contract: SentinelContract,
+  _walletDetails: { seed: string; privateStateStoreName: string },
+  _walletCtx: WalletContext,
   rli: Interface
 ) {
   while (true) {
