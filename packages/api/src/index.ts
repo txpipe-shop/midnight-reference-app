@@ -51,7 +51,7 @@ export class SentinelContract {
       compiledContract: CompactCompiledContract,
       privateStateId: sentinelContractPrivateStateKey,
       initialPrivateState: privateState,
-      args: [{ bytes: fromHex(providers.walletProvider.getCoinPublicKey()) }]
+      args: [{ bytes: fromHex(providers.walletProvider.getCoinPublicKey()) }],
     });
 
     const contractAddress = deployedContract.deployTxData.public.contractAddress;
