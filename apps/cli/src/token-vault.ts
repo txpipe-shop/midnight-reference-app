@@ -19,7 +19,8 @@ import {
   GENESIS_MINT_WALLET_SEED_ONE,
   GENESIS_MINT_WALLET_SEED_TWO,
 } from './utils/constants.js';
-import { firstValueFrom, filter, map } from 'rxjs';
+import { firstValueFrom, filter, map, delay } from 'rxjs';
+import type { CoinPublicKey, EncPublicKey } from '@midnight-ntwrk/ledger-v8';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -120,12 +121,27 @@ const main = async () => {
   });
   console.log(`  ✓ Deposit submitted. Tx Hash: ${tx?.public.txHash}`);
 
-  // ── 8. Final balances ─────────────────────────────────────────────────────
-  console.log('\n=== Final balances ===');
+  // ── 8. Wallet balances ─────────────────────────────────────────────────────
+  console.log('\n=== Wallet balances ===');
+  await showBalances('Wallet A', ctxA, GENESIS_MINT_WALLET_SEED_ONE);
+  await showBalances('Wallet B', ctxB, GENESIS_MINT_WALLET_SEED_TWO);
+  contract.state$.pipe
+  delay(5000);
+
+  // ── Withdraw ────────────────────────────────────────────────────────────
+  console.log('  Withdrawing 100 shielded token ');
+
+  await contract.deployedContract?.callTx.withdrawShielded(
+    BigInt(100),
+    {bytes: fromHex(coinPubKeyHex)},
+  );
+
+  // ── 8. Wallet balances ─────────────────────────────────────────────────────
+  console.log('\n=== Wallet balances ===');
   await showBalances('Wallet A', ctxA, GENESIS_MINT_WALLET_SEED_ONE);
   await showBalances('Wallet B', ctxB, GENESIS_MINT_WALLET_SEED_TWO);
 
-  // ── 9. Cleanup ────────────────────────────────────────────────────────────
+  // ── Cleanup ────────────────────────────────────────────────────────────
   await Promise.all([ctxA.wallet.stop(), ctxB.wallet.stop()]);
 };
 

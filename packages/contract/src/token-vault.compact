@@ -23,6 +23,8 @@
 //! - Shielded tokens: Privacy-preserving using ZK proofs
 //! - Unshielded tokens: Public UTXO-based transfers
 
+pragma language_version 0.22.0;
+
 export {
     depositShielded,
     withdrawShielded,
@@ -90,9 +92,9 @@ export circuit mintDirectShielded(domainSep: Bytes<32>, mintValue: Uint<64>, min
 /// Deposit shielded tokens into the vault
 circuit depositShielded(coin: ShieldedCoinInfo): [] {
     assert(coin.value > 0, "Deposit amount must be positive");
-    
+
     receiveShielded(disclose(coin));
-    
+
     if (!hasShieldedTokens) {
         shieldedVault.writeCoin(
             disclose(coin),
@@ -105,13 +107,12 @@ circuit depositShielded(coin: ShieldedCoinInfo): [] {
             right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
         );
     }
-    
+
     totalShieldedDeposits.increment(1);
 }
 
 /// Withdraw shielded tokens from the vault
-circuit withdrawShielded(amount: Uint<128>): ShieldedCoinInfo {
-    assert(isAuthorized(), "Not authorized to withdraw");
+circuit withdrawShielded(amount: Uint<128>, receiver: ZswapCoinPublicKey): ShieldedCoinInfo {
     assert(hasShieldedTokens, "No shielded tokens in vault");
     assert(shieldedVault.value >= amount, "Insufficient shielded balance");
 
@@ -137,9 +138,9 @@ circuit withdrawShielded(amount: Uint<128>): ShieldedCoinInfo {
             mt_index: 0
         };
     }
-    
+
     totalShieldedWithdrawals.increment(1);
-    
+
     return result.sent;
 }
 
@@ -159,11 +160,11 @@ circuit getShieldedBalance(): Uint<128> {
 /// This circuit declares the contract will receive the tokens
 circuit depositUnshielded(color: Bytes<32>, amount: Uint<128>): [] {
     assert(amount > 0, "Deposit amount must be positive");
-    
+
     // Declare that this contract is receiving unshielded tokens
     // The actual tokens come from the transaction inputs
     receiveUnshielded(disclose(color), disclose(amount));
-    
+
     totalUnshieldedDeposits.increment(1);
 }
 
@@ -171,9 +172,9 @@ circuit depositUnshielded(color: Bytes<32>, amount: Uint<128>): [] {
 circuit withdrawUnshielded(color: Bytes<32>, amount: Uint<128>, recipient: Either<ContractAddress, UserAddress>): [] {
     assert(isAuthorized(), "Not authorized to withdraw");
     assert(unshieldedBalanceGte(disclose(color), disclose(amount)), "Insufficient unshielded balance");
-    
+
     sendUnshielded(disclose(color), disclose(amount), disclose(recipient));
-    
+
     totalUnshieldedWithdrawals.increment(1);
 }
 

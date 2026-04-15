@@ -24,7 +24,7 @@
       "@midnight-ntwrk/ledger-v8": "8.0.0"
     },
     "patchedDependencies": {
-      "@midnight-ntwrk/compact-runtime@0.15.0-rc.1": "patches/@midnight-ntwrk__compact-runtime@0.15.0-rc.1.patch"
+      "@midnight-ntwrk/compact-runtime@0.15.0": "patches/@midnight-ntwrk__compact-runtime@0.15.0-rc.1.patch"
     }
   }
 }
