@@ -1,5 +1,4 @@
-import { normalizeRule, SentinelContract, validateRules } from '@midnight-sentinel/api';
-import type { Input } from '@midnight-sentinel/contract';
+import { SentinelContract } from '@midnight-sentinel/api';
 import { configureProviders } from '@midnight-sentinel/contract/providers';
 import {
   getBalancesAndAddresses,
@@ -10,104 +9,16 @@ import type { Interface } from 'readline/promises';
 import { type Config } from '../config.js';
 import { circuitMenu, contractMenu } from './menus.js';
 
-// TODO: handle other types of inputs
-const askForInputs = async (rli: Interface): Promise<Input[]> => {
-  const inputs = [];
-  while (true) {
-    const input: string = await rli.question(
-      `Enter the input ${inputs.length + 1} (type "done" to finish): `
-    );
-    if (input === 'done') break;
-    inputs.push({
-      uint: BigInt(input),
-      boolean: false,
-      bytes32: new Uint8Array(32),
-      field: BigInt(0),
-    });
-  }
-
-  return inputs;
-};
-const askForRules = async (rli: Interface): Promise<string[]> => {
-  const rules = [];
-  while (true) {
-    const rule: string = await rli.question(
-      `Enter the rule ${rules.length + 1} (type "done" to finish): `
-    );
-    if (rule === 'done') break;
-    rules.push(rule);
-  }
-  return rules;
-};
-
 async function handleCircuits(
-  contract: SentinelContract,
-  walletDetails: { seed: string; privateStateStoreName: string },
-  walletCtx: WalletContext,
+  _contract: SentinelContract,
+  _walletDetails: { seed: string; privateStateStoreName: string },
+  _walletCtx: WalletContext,
   rli: Interface
 ) {
   while (true) {
     const choice = await rli.question(circuitMenu);
     switch (choice) {
       case '1':
-        try {
-          const inputs = await askForInputs(rli);
-          const rules = await askForRules(rli);
-          const recipient = await walletCtx.wallet.unshielded.getAddress();
-          const tx = await contract.mintToken(inputs, rules, recipient);
-          console.log('Minted unshielded token on tx: ', tx?.public.txHash);
-        } catch (err) {
-          console.log(err);
-        }
-        break;
-      case '2':
-        try {
-          const rule = await rli.question('Enter the rule to add (JSON): ');
-          const parsedRule = JSON.parse(rule, normalizeRule);
-          const validatedRule = validateRules(parsedRule);
-          const tx = await contract.addRule(validatedRule);
-          console.log(
-            'Rule ',
-            SentinelContract.prettyRules(validatedRule),
-            ' added on tx: ',
-            tx?.public.txHash
-          );
-        } catch (err) {
-          console.log(err);
-        }
-        break;
-      case '3':
-        try {
-          const address = await rli.question('Enter the public key of the rule owner to remove: ');
-          const tx = await contract.removeRule(address);
-          console.log('Rule removed on tx: ', tx?.public.txHash);
-        } catch (err) {
-          console.log(err);
-        }
-        break;
-      case '4':
-        console.log(`Not implemented yet`);
-        break;
-      case '5':
-        try {
-          const { balances, addresses } = await getBalancesAndAddresses(
-            walletCtx.wallet,
-            walletDetails.seed
-          );
-          printBalances(balances, addresses);
-        } catch (err) {
-          console.log(err);
-        }
-        break;
-      case '6': {
-        try {
-          await contract.getCurrentState();
-        } catch (err) {
-          console.log(err);
-        }
-        break;
-      }
-      case '7':
         console.log('Exiting...');
         return;
       default:
