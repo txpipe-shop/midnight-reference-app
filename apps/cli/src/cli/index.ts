@@ -10,15 +10,18 @@ import { type Config } from '../config.js';
 import { circuitMenu, contractMenu } from './menus.js';
 
 async function handleCircuits(
-  _contract: SentinelContract,
+  contract: SentinelContract,
   _walletDetails: { seed: string; privateStateStoreName: string },
-  _walletCtx: WalletContext,
+  walletCtx: WalletContext,
   rli: Interface
 ) {
   while (true) {
     const choice = await rli.question(circuitMenu);
     switch (choice) {
       case '1':
+        await contract.getCurrentState();
+        return;
+      case '2':
         console.log('Exiting...');
         return;
       default:

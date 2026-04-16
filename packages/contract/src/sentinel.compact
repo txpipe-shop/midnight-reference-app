@@ -5,15 +5,14 @@ import CompactStandardLibrary;
 ///////// TYPES /////////
 
 ///////// LEDGER /////////
-export ledger admin: Either<ZswapCoinPublicKey, ContractAddress>;
-
-///////// CONSTRUCTOR /////////
-constructor(pubKey: ZswapCoinPublicKey) {
-  const deployAdmin = left<ZswapCoinPublicKey, ContractAddress>(pubKey);
-  admin = disclose(deployAdmin);
-}
+export ledger owner: ZswapCoinPublicKey;
+export ledger delegators: Map<ZswapCoinPublicKey, Uint<128>>;
+export ledger shieldedVault: QualifiedShieldedCoinInfo;
+export ledger rewardsVault: QualifiedShieldedCoinInfo;
+export ledger hasShielded: Boolean;
+export ledger hasRewards: Boolean;
 
 ///////// EXPORTED CIRCUITS /////////
 
 ///////// WITNESSES /////////
-witness secretKey(): Bytes<32>;
+witness localSecretKey(): Bytes<32>;
