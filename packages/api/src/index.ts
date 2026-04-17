@@ -1,7 +1,7 @@
 import { fromHex } from '@midnight-ntwrk/compact-runtime';
 import {
   decodeQualifiedShieldedCoinInfo,
-  QualifiedShieldedCoinInfo,
+  QualifiedShieldedCoinInfo
 } from '@midnight-ntwrk/ledger-v8';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import {
@@ -135,5 +135,17 @@ export class SentinelContract {
         console.log(`Public Key: ${toHex(item[0].bytes)}, Amount delegated: ${item[1].valueOf()}`);
       }
     });
+  }
+
+  async delegate(key: string, value: bigint) {
+    const tx = await this.deployedContract?.callTx.delegate(
+      { bytes: fromHex(key) },
+      {
+        nonce: new Uint8Array(32).fill(0),
+        color: new Uint8Array(32).fill(0),
+        value,
+      }
+    );
+    console.log(`Sent ${value} NIGHTs on tx: ${tx?.public.txHash}`);
   }
 }

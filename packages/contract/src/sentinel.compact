@@ -17,8 +17,28 @@ constructor(key: ZswapCoinPublicKey) {
   hasRewards = disclose(false);
 }
 
-
 ///////// EXPORTED CIRCUITS /////////
+
+export circuit delegate(key: ZswapCoinPublicKey, coin: ShieldedCoinInfo): [] {
+  assert(coin.value > 0, "Deposit amount must be positive");
+
+  receiveShielded(disclose(coin));
+
+  if (!hasShielded) {
+      shieldedVault.writeCoin(
+          disclose(coin),
+          right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
+      );
+      hasShielded = true;
+  } else {
+      shieldedVault.writeCoin(
+          mergeCoinImmediate(shieldedVault, disclose(coin)),
+          right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
+      );
+  }
+
+  delegators.insert(disclose(key), disclose(coin.value));
+}
 
 ///////// WITNESSES /////////
 witness localSecretKey(): Bytes<32>;
