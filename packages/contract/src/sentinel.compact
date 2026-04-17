@@ -2,8 +2,6 @@ pragma language_version 0.22;
 
 import CompactStandardLibrary;
 
-///////// TYPES /////////
-
 ///////// LEDGER /////////
 export ledger owner: ZswapCoinPublicKey;
 export ledger delegators: Map<ZswapCoinPublicKey, Uint<128>>;
@@ -11,6 +9,14 @@ export ledger shieldedVault: QualifiedShieldedCoinInfo;
 export ledger rewardsVault: QualifiedShieldedCoinInfo;
 export ledger hasShielded: Boolean;
 export ledger hasRewards: Boolean;
+
+///////// CONSTRUCTOR /////////
+constructor(key: ZswapCoinPublicKey) {
+  owner = disclose(key);
+  hasShielded = disclose(false);
+  hasRewards = disclose(false);
+}
+
 
 ///////// EXPORTED CIRCUITS /////////
 

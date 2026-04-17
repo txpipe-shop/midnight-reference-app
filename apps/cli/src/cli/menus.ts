@@ -16,5 +16,7 @@ ${DIVIDER}
   [2] Redeem rewards
   [3] (Admin) Register new NIGHTs for DUST generation
   [4] (Admin) Deposit rewards
+  [5] Get contract state
+  [6] Exit
 ${DIVIDER}
 `;

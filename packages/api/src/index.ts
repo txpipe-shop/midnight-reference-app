@@ -1,3 +1,4 @@
+import { fromHex } from '@midnight-ntwrk/compact-runtime';
 import {
   decodeQualifiedShieldedCoinInfo,
   QualifiedShieldedCoinInfo,
@@ -54,12 +55,14 @@ export class SentinelContract {
 
   static async deploy(
     providers: SentinelContractProviders,
-    privateState: PrivateState
+    privateState: PrivateState,
+    key: string
   ): Promise<SentinelContract> {
     const deployedContract = await deployContract<SentinelContractType>(providers, {
       compiledContract: CompactCompiledContract,
       privateStateId: sentinelContractPrivateStateKey,
       initialPrivateState: privateState,
+      args: [{ bytes: fromHex(key) }],
     });
 
     const contractAddress = deployedContract.deployTxData.public.contractAddress;
