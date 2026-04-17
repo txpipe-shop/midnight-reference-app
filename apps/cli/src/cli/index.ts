@@ -10,15 +10,30 @@ import { type Config } from '../config.js';
 import { circuitMenu, contractMenu } from './menus.js';
 
 async function handleCircuits(
-  _contract: SentinelContract,
+  contract: SentinelContract,
   _walletDetails: { seed: string; privateStateStoreName: string },
-  _walletCtx: WalletContext,
+  walletCtx: WalletContext,
   rli: Interface
 ) {
   while (true) {
     const choice = await rli.question(circuitMenu);
     switch (choice) {
       case '1':
+        console.log('Not implemented.');
+        return;
+      case '2':
+        console.log('Not implemented.');
+        return;
+      case '3':
+        console.log('Not implemented.');
+        return;
+      case '4':
+        console.log('Not implemented.');
+        return;
+      case '5':
+        await contract.getCurrentState();
+        return;
+      case '6':
         console.log('Exiting...');
         return;
       default:
@@ -47,7 +62,8 @@ export async function runCli(
           config,
           walletDetails.privateStateStoreName
         );
-        contract = await SentinelContract.deploy(providers, { secretKey });
+        const key = walletCtx.shieldedSecretKeys.coinPublicKey;
+        contract = await SentinelContract.deploy(providers, { secretKey }, key);
 
         console.log(
           `[Contract Address]: ${contract.deployedContract?.deployTxData.public.contractAddress}`
@@ -57,7 +73,6 @@ export async function runCli(
       case '2':
         try {
           const contractAddress = await rli.question('Enter the contract address: ');
-
           const secretKey = crypto.getRandomValues(new Uint8Array(32));
           const providers = await configureProviders(
             walletCtx,
@@ -76,6 +91,10 @@ export async function runCli(
         }
         break;
       case '3': {
+        console.log('Not implemented.');
+        break;
+      }
+      case '4': {
         const { balances, addresses } = await getBalancesAndAddresses(
           walletCtx.wallet,
           walletDetails.seed
@@ -83,7 +102,7 @@ export async function runCli(
         printBalances(balances, addresses);
         break;
       }
-      case '4':
+      case '5':
         console.log('Exiting...');
         return;
       default:

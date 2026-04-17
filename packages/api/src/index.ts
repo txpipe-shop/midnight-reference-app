@@ -1,7 +1,12 @@
 import { fromHex } from '@midnight-ntwrk/compact-runtime';
+import {
+  decodeQualifiedShieldedCoinInfo,
+  QualifiedShieldedCoinInfo,
+} from '@midnight-ntwrk/ledger-v8';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import {
   CompactCompiledContract,
+  Ledger,
   ledger,
   sentinelContractPrivateStateKey,
   type ContractAddress,
@@ -25,7 +30,12 @@ export interface Config {
 }
 
 export interface SentinelDerivedState {
-  adminString: string;
+  owner: string;
+  delegators: Ledger['delegators'];
+  shieldedVault: QualifiedShieldedCoinInfo;
+  rewardsVault: QualifiedShieldedCoinInfo;
+  hasShielded: boolean;
+  hasRewards: boolean;
 }
 
 export class SentinelContract {
@@ -45,13 +55,14 @@ export class SentinelContract {
 
   static async deploy(
     providers: SentinelContractProviders,
-    privateState: PrivateState
+    privateState: PrivateState,
+    key: string
   ): Promise<SentinelContract> {
     const deployedContract = await deployContract<SentinelContractType>(providers, {
       compiledContract: CompactCompiledContract,
       privateStateId: sentinelContractPrivateStateKey,
       initialPrivateState: privateState,
-      args: [{ bytes: fromHex(providers.walletProvider.getCoinPublicKey()) }],
+      args: [{ bytes: fromHex(key) }],
     });
 
     const contractAddress = deployedContract.deployTxData.public.contractAddress;
@@ -60,11 +71,13 @@ export class SentinelContract {
       .pipe(
         map((contractState) => {
           const ledgerState = ledger(contractState.data);
-          const adminBytes = ledgerState.admin.is_left
-            ? ledgerState.admin.left.bytes
-            : ledgerState.admin.right.bytes;
           return {
-            adminString: toHex(adminBytes),
+            owner: toHex(ledgerState.owner.bytes),
+            delegators: ledgerState.delegators,
+            shieldedVault: decodeQualifiedShieldedCoinInfo(ledgerState.shieldedVault),
+            rewardsVault: decodeQualifiedShieldedCoinInfo(ledgerState.rewardsVault),
+            hasShielded: ledgerState.hasShielded,
+            hasRewards: ledgerState.hasRewards,
           };
         })
       );
@@ -90,11 +103,13 @@ export class SentinelContract {
       .pipe(
         map((contractState) => {
           const ledgerState = ledger(contractState.data);
-          const adminBytes = ledgerState.admin.is_left
-            ? ledgerState.admin.left.bytes
-            : ledgerState.admin.right.bytes;
           return {
-            adminString: toHex(adminBytes),
+            owner: toHex(ledgerState.owner.bytes),
+            delegators: ledgerState.delegators,
+            shieldedVault: decodeQualifiedShieldedCoinInfo(ledgerState.shieldedVault),
+            rewardsVault: decodeQualifiedShieldedCoinInfo(ledgerState.rewardsVault),
+            hasShielded: ledgerState.hasShielded,
+            hasRewards: ledgerState.hasRewards,
           };
         })
       );
@@ -103,6 +118,22 @@ export class SentinelContract {
   }
 
   async getCurrentState() {
-    // TO DO!
+    let subscription: { unsubscribe: () => void } | null = null;
+
+    subscription = this.state$.subscribe((state) => {
+      // Ensure we only handle the first emission
+      subscription?.unsubscribe();
+
+      console.log('Owner: ', state.owner);
+      console.log('Shielded vault: ', state.shieldedVault);
+      console.log('Rewards vault: ', state.rewardsVault);
+      if (state.delegators.isEmpty()) {
+        console.log('No delegators found');
+        return;
+      }
+      for (const item of state.delegators) {
+        console.log(`Public Key: ${toHex(item[0].bytes)}, Amount delegated: ${item[1].valueOf()}`);
+      }
+    });
   }
 }

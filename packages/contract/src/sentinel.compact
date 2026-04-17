@@ -2,18 +2,23 @@ pragma language_version 0.22;
 
 import CompactStandardLibrary;
 
-///////// TYPES /////////
-
 ///////// LEDGER /////////
-export ledger admin: Either<ZswapCoinPublicKey, ContractAddress>;
+export ledger owner: ZswapCoinPublicKey;
+export ledger delegators: Map<ZswapCoinPublicKey, Uint<128>>;
+export ledger shieldedVault: QualifiedShieldedCoinInfo;
+export ledger rewardsVault: QualifiedShieldedCoinInfo;
+export ledger hasShielded: Boolean;
+export ledger hasRewards: Boolean;
 
 ///////// CONSTRUCTOR /////////
-constructor(pubKey: ZswapCoinPublicKey) {
-  const deployAdmin = left<ZswapCoinPublicKey, ContractAddress>(pubKey);
-  admin = disclose(deployAdmin);
+constructor(key: ZswapCoinPublicKey) {
+  owner = disclose(key);
+  hasShielded = disclose(false);
+  hasRewards = disclose(false);
 }
+
 
 ///////// EXPORTED CIRCUITS /////////
 
 ///////// WITNESSES /////////
-witness secretKey(): Bytes<32>;
+witness localSecretKey(): Bytes<32>;
