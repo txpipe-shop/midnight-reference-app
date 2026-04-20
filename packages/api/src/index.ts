@@ -241,6 +241,11 @@ export class SentinelContract {
     );
     return existingPrivateState ?? createPrivateState(crypto.getRandomValues(new Uint8Array(32)));
   }
+
+  async redeemRewards() {
+    const tx = await this.deployedContract?.callTx.redeemRewards();
+    console.log(`Redeemed rewards on tx: ${tx?.public.txHash}`);
+  }
 }
 
 /** Rolling 30-minute TTL for all transactions. */
