@@ -3,22 +3,49 @@ pragma language_version 0.22;
 import CompactStandardLibrary;
 
 ///////// LEDGER /////////
-export ledger owner: ZswapCoinPublicKey;
-export ledger delegators: Map<ZswapCoinPublicKey, Uint<128>>;
+export ledger owner: Bytes<32>;
+export ledger delegators: Map<Bytes<32>, Uint<128>>;
 export ledger shieldedVault: QualifiedShieldedCoinInfo;
 export ledger rewardsVault: QualifiedShieldedCoinInfo;
 export ledger hasShielded: Boolean;
 export ledger hasRewards: Boolean;
 
 ///////// CONSTRUCTOR /////////
-constructor(key: ZswapCoinPublicKey) {
-  owner = disclose(key);
+constructor() {
+  const sk = localSecretKey();
+  owner = disclose(publicKey(sk));
   hasShielded = disclose(false);
   hasRewards = disclose(false);
 }
 
-
 ///////// EXPORTED CIRCUITS /////////
+
+export circuit delegate(coin: ShieldedCoinInfo): [] {
+  assert(coin.value > 0, "Deposit amount must be positive");
+
+  receiveShielded(disclose(coin));
+
+  if (!hasShielded) {
+      shieldedVault.writeCoin(
+          disclose(coin),
+          right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
+      );
+      hasShielded = true;
+  } else {
+      shieldedVault.writeCoin(
+          mergeCoinImmediate(shieldedVault, disclose(coin)),
+          right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
+      );
+  }
+
+  delegators.insert(disclose(publicKey(localSecretKey())), disclose(coin.value));
+}
+
+///////// HELPER CIRCUITS /////////
+
+circuit publicKey(sk: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<2, Bytes<32>>>([pad(32, "dust-sponsorship:pk:"), sk]);
+}
 
 ///////// WITNESSES /////////
 witness localSecretKey(): Bytes<32>;

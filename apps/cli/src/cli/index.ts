@@ -19,7 +19,13 @@ async function handleCircuits(
     const choice = await rli.question(circuitMenu);
     switch (choice) {
       case '1':
-        console.log('Not implemented.');
+        try {
+          const key = walletCtx.shieldedSecretKeys.coinPublicKey;
+          const amount = await rli.question('Enter the amount you would like to delegate: ');
+          await contract.delegate(key, BigInt(amount));
+        } catch (e) {
+          console.log('Error delegating: ', e);
+        }
         return;
       case '2':
         console.log('Not implemented.');
@@ -62,8 +68,7 @@ export async function runCli(
           config,
           walletDetails.privateStateStoreName
         );
-        const key = walletCtx.shieldedSecretKeys.coinPublicKey;
-        contract = await SentinelContract.deploy(providers, { secretKey }, key);
+        contract = await SentinelContract.deploy(providers, { secretKey });
 
         console.log(
           `[Contract Address]: ${contract.deployedContract?.deployTxData.public.contractAddress}`

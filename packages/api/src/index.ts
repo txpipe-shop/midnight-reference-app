@@ -1,4 +1,3 @@
-import { fromHex } from '@midnight-ntwrk/compact-runtime';
 import {
   decodeQualifiedShieldedCoinInfo,
   QualifiedShieldedCoinInfo,
@@ -55,14 +54,12 @@ export class SentinelContract {
 
   static async deploy(
     providers: SentinelContractProviders,
-    privateState: PrivateState,
-    key: string
+    privateState: PrivateState
   ): Promise<SentinelContract> {
     const deployedContract = await deployContract<SentinelContractType>(providers, {
       compiledContract: CompactCompiledContract,
       privateStateId: sentinelContractPrivateStateKey,
       initialPrivateState: privateState,
-      args: [{ bytes: fromHex(key) }],
     });
 
     const contractAddress = deployedContract.deployTxData.public.contractAddress;
@@ -72,7 +69,7 @@ export class SentinelContract {
         map((contractState) => {
           const ledgerState = ledger(contractState.data);
           return {
-            owner: toHex(ledgerState.owner.bytes),
+            owner: toHex(ledgerState.owner),
             delegators: ledgerState.delegators,
             shieldedVault: decodeQualifiedShieldedCoinInfo(ledgerState.shieldedVault),
             rewardsVault: decodeQualifiedShieldedCoinInfo(ledgerState.rewardsVault),
@@ -104,7 +101,7 @@ export class SentinelContract {
         map((contractState) => {
           const ledgerState = ledger(contractState.data);
           return {
-            owner: toHex(ledgerState.owner.bytes),
+            owner: toHex(ledgerState.owner),
             delegators: ledgerState.delegators,
             shieldedVault: decodeQualifiedShieldedCoinInfo(ledgerState.shieldedVault),
             rewardsVault: decodeQualifiedShieldedCoinInfo(ledgerState.rewardsVault),
@@ -132,8 +129,17 @@ export class SentinelContract {
         return;
       }
       for (const item of state.delegators) {
-        console.log(`Public Key: ${toHex(item[0].bytes)}, Amount delegated: ${item[1].valueOf()}`);
+        console.log(`Public Key: ${toHex(item[0])}, Amount delegated: ${item[1].valueOf()}`);
       }
     });
+  }
+
+  async delegate(key: string, value: bigint) {
+    const tx = await this.deployedContract?.callTx.delegate({
+      nonce: new Uint8Array(32).fill(0),
+      color: new Uint8Array(32).fill(0),
+      value,
+    });
+    console.log(`Sent ${value} NIGHTs on tx: ${tx?.public.txHash}`);
   }
 }
