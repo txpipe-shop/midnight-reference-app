@@ -61,6 +61,25 @@ export circuit depositRewards(coin: ShieldedCoinInfo): [] {
   }
 }
 
+export circuit redeemRewards():[] {
+  assert(delegators.member(disclose(publicKey(localSecretKey()))), "You must be a delegator to redeem rewards");
+  assert(hasRewards, "No tokens in vault");
+
+  const callerKey = ownPublicKey();
+  const vault = rewardsVault.read();
+  sendShielded(
+    vault,
+    left<ZswapCoinPublicKey, ContractAddress>(disclose(callerKey)),
+    disclose(vault.value)
+  );
+  hasRewards = false;
+  rewardsVault = QualifiedShieldedCoinInfo {
+      nonce: pad(32, ""),
+      color: pad(32, ""),
+      value: 0,
+      mt_index: 0
+  };
+}
 
 ///////// HELPER CIRCUITS /////////
 

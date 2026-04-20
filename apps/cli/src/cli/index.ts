@@ -28,7 +28,11 @@ async function handleCircuits(
         }
         return;
       case '2':
-        console.log('Not implemented.');
+        try {
+          await contract.redeemRewards();
+        } catch (e) {
+          console.log('Error redeeming rewards: ', e);
+        }
         return;
       case '3':
         console.log('Not implemented.');
