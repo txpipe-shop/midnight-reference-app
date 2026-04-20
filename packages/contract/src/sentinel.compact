@@ -61,6 +61,27 @@ export circuit withdraw(recipient: UserAddress): [] {
   };
 }
 
+
+export circuit depositRewards(coin: ShieldedCoinInfo): [] {
+  assert(coin.value > 0, "Deposit amount must be positive");
+
+  receiveShielded(disclose(coin));
+
+  if (!hasRewards) {
+    rewardsVault.writeCoin(
+      disclose(coin),
+      right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
+    );
+    hasRewards = true;
+  } else {
+    rewardsVault.writeCoin(
+        mergeCoinImmediate(shieldedVault, disclose(coin)),
+        right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
+    );
+  }
+}
+
+
 ///////// HELPER CIRCUITS /////////
 
 circuit publicKey(sk: Bytes<32>): Bytes<32> {
