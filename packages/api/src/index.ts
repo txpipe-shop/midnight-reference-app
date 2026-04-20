@@ -142,4 +142,13 @@ export class SentinelContract {
     });
     console.log(`Sent ${value} NIGHTs on tx: ${tx?.public.txHash}`);
   }
+
+  async depositRewards(value: bigint, nonce: Uint8Array<ArrayBufferLike>, color: Uint8Array<ArrayBufferLike>) {
+    const tx = await this.deployedContract?.callTx.depositRewards({
+      nonce,
+      color,
+      value,
+    });
+    console.log(`Deposited ${value} rewards on tx: ${tx?.public.txHash}`);
+  }
 }
