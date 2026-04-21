@@ -59,7 +59,7 @@ export class SentinelContract {
     const deployedContract = await deployContract<SentinelContractType>(providers, {
       compiledContract: CompactCompiledContract,
       privateStateId: sentinelContractPrivateStateKey,
-      initialPrivateState: await this.getPrivateState(providers),
+      initialPrivateState: await this.getPrivateState(providers, ''),
     });
 
     const contractAddress = deployedContract.deployTxData.public.contractAddress;
@@ -91,7 +91,7 @@ export class SentinelContract {
       contractAddress,
       compiledContract: CompactCompiledContract,
       privateStateId: sentinelContractPrivateStateKey,
-      initialPrivateState: await this.getPrivateState(providers),
+      initialPrivateState: await this.getPrivateState(providers, contractAddress),
     });
 
     const state$ = providers.publicDataProvider
@@ -147,12 +147,14 @@ export class SentinelContract {
     const address = UnshieldedAddress.codec.decode(getNetworkId(), parsed);
     const tx = await this.deployedContract?.callTx.withdraw({ bytes: address.data });
 
-    console.log(`Withdrew ${tx?.private.newCoins[0].value}} NIGHTs on tx: ${tx?.public.txHash}`);
+    console.log(`Withdrew ${tx?.private.newCoins[0].value} NIGHTs on tx: ${tx?.public.txHash}`);
   }
 
   private static async getPrivateState(
-    providers: SentinelContractProviders
+    providers: SentinelContractProviders,
+    contractAddress: string
   ): Promise<PrivateState> {
+    providers.privateStateProvider.setContractAddress(contractAddress);
     const existingPrivateState = await providers.privateStateProvider.get(
       sentinelContractPrivateStateKey
     );
