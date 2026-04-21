@@ -101,6 +101,15 @@ export circuit redeemRewards():[] {
   };
 }
 
+
+
+///////// HELPER CIRCUIT TO MINT TOKENS TO PAY /////////
+
+export circuit mintDirectShielded(domainSep: Bytes<32>, mintValue: Uint<64>, mintNonce: Bytes<32>, publicKey: ZswapCoinPublicKey): [] {
+  mintShieldedToken(disclose(domainSep), disclose(mintValue), disclose(mintNonce), left<ZswapCoinPublicKey, ContractAddress>(disclose(publicKey)));
+}
+
+
 ///////// HELPER CIRCUITS /////////
 
 circuit publicKey(sk: Bytes<32>): Bytes<32> {

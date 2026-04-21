@@ -21,6 +21,7 @@ import {
   type SentinelContractType,
 } from '@midnight-sentinel/contract';
 import { getNetworkId, WalletContext } from '@midnight-sentinel/wallet';
+import { fromHex } from '@midnight-ntwrk/compact-runtime';
 import { map, type Observable } from 'rxjs';
 
 export const toHex = (arr: Uint8Array) =>
@@ -246,6 +247,20 @@ export class SentinelContract {
     const tx = await this.deployedContract?.callTx.redeemRewards();
     console.log(`Redeemed rewards on tx: ${tx?.public.txHash}`);
   }
+
+
+  async mintFreeToken(recipientCoinPubKeyHex: string) {
+    const domainSep = new Uint8Array(32).fill(1);
+    const mintNonce = crypto.getRandomValues(new Uint8Array(32));
+    const amount = 1000n;
+    return await this.deployedContract?.callTx.mintDirectShielded(
+      domainSep,
+      amount,
+      mintNonce,
+      { bytes: fromHex(recipientCoinPubKeyHex) },
+    );
+  }
+
 }
 
 /** Rolling 30-minute TTL for all transactions. */
