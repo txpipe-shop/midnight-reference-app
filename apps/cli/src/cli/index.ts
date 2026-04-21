@@ -26,19 +26,24 @@ async function handleCircuits(
         } catch (e) {
           console.log('Error delegating: ', e);
         }
-        return;
+        break;
       case '2':
         console.log('Not implemented.');
         return;
       case '3':
-        console.log('Not implemented.');
-        return;
+        try {
+          const address = walletCtx.unshieldedKeystore.getBech32Address().toString();
+          await contract.withdraw(address);
+        } catch (e) {
+          console.log('Error wthdrawing: ', e);
+        }
+        break;
       case '4':
         console.log('Not implemented.');
         return;
       case '5':
         await contract.getCurrentState();
-        return;
+        break;
       case '6':
         console.log('Exiting...');
         return;
@@ -62,13 +67,12 @@ export async function runCli(
 
     switch (choice) {
       case '1': {
-        const secretKey = crypto.getRandomValues(new Uint8Array(32));
         const providers = await configureProviders(
           walletCtx,
           config,
           walletDetails.privateStateStoreName
         );
-        contract = await SentinelContract.deploy(providers, { secretKey });
+        contract = await SentinelContract.deploy(providers);
 
         console.log(
           `[Contract Address]: ${contract.deployedContract?.deployTxData.public.contractAddress}`
@@ -78,15 +82,12 @@ export async function runCli(
       case '2':
         try {
           const contractAddress = await rli.question('Enter the contract address: ');
-          const secretKey = crypto.getRandomValues(new Uint8Array(32));
           const providers = await configureProviders(
             walletCtx,
             config,
             walletDetails.privateStateStoreName
           );
-          contract = await SentinelContract.join(providers, contractAddress, {
-            secretKey,
-          });
+          contract = await SentinelContract.join(providers, contractAddress);
         } catch (error: unknown) {
           console.error('Error joining contract:');
           if (error instanceof Error) {
