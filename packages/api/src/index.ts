@@ -55,10 +55,7 @@ export class SentinelContract {
     this.state$ = state$;
   }
 
-  static async deploy(
-    providers: SentinelContractProviders,
-    _privateState: PrivateState
-  ): Promise<SentinelContract> {
+  static async deploy(providers: SentinelContractProviders): Promise<SentinelContract> {
     const deployedContract = await deployContract<SentinelContractType>(providers, {
       compiledContract: CompactCompiledContract,
       privateStateId: sentinelContractPrivateStateKey,
@@ -88,8 +85,7 @@ export class SentinelContract {
 
   static async join(
     providers: SentinelContractProviders,
-    contractAddress: ContractAddress,
-    _privateState: PrivateState
+    contractAddress: ContractAddress
   ): Promise<SentinelContract> {
     const deployedContract = await findDeployedContract<SentinelContractType>(providers, {
       contractAddress,
