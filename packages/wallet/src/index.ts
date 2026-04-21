@@ -119,3 +119,4 @@ export {
   type Balances,
 } from './utils/balances.js';
 export { WalletContext } from './utils/types.js';
+export { getNetworkId };

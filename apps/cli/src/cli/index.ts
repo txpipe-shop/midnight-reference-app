@@ -26,19 +26,24 @@ async function handleCircuits(
         } catch (e) {
           console.log('Error delegating: ', e);
         }
-        return;
+        break;
       case '2':
         console.log('Not implemented.');
         return;
       case '3':
-        console.log('Not implemented.');
-        return;
+        try {
+          const address = walletCtx.unshieldedKeystore.getBech32Address().toString();
+          await contract.withdraw(address);
+        } catch (e) {
+          console.log('Error wthdrawing: ', e);
+        }
+        break;
       case '4':
         console.log('Not implemented.');
         return;
       case '5':
         await contract.getCurrentState();
-        return;
+        break;
       case '6':
         console.log('Exiting...');
         return;

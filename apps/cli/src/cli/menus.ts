@@ -14,7 +14,7 @@ export const circuitMenu: string = `
 ${DIVIDER}
   [1] Delegate NIGHT
   [2] Redeem rewards
-  [3] (Admin) Register new NIGHTs for DUST generation
+  [3] (Admin) Withdraw NIGHTs
   [4] (Admin) Deposit rewards
   [5] Get contract state
   [6] Exit

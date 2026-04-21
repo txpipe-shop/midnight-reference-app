@@ -3,8 +3,10 @@ import {
   QualifiedShieldedCoinInfo,
 } from '@midnight-ntwrk/ledger-v8';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
+import { MidnightBech32m, UnshieldedAddress } from '@midnight-ntwrk/wallet-sdk-address-format';
 import {
   CompactCompiledContract,
+  createPrivateState,
   Ledger,
   ledger,
   sentinelContractPrivateStateKey,
@@ -14,6 +16,7 @@ import {
   type SentinelContractProviders,
   type SentinelContractType,
 } from '@midnight-sentinel/contract';
+import { getNetworkId } from '@midnight-sentinel/wallet';
 import { map, type Observable } from 'rxjs';
 
 export const toHex = (arr: Uint8Array) =>
@@ -54,12 +57,12 @@ export class SentinelContract {
 
   static async deploy(
     providers: SentinelContractProviders,
-    privateState: PrivateState
+    _privateState: PrivateState
   ): Promise<SentinelContract> {
     const deployedContract = await deployContract<SentinelContractType>(providers, {
       compiledContract: CompactCompiledContract,
       privateStateId: sentinelContractPrivateStateKey,
-      initialPrivateState: privateState,
+      initialPrivateState: await this.getPrivateState(providers),
     });
 
     const contractAddress = deployedContract.deployTxData.public.contractAddress;
@@ -86,13 +89,13 @@ export class SentinelContract {
   static async join(
     providers: SentinelContractProviders,
     contractAddress: ContractAddress,
-    privateState: PrivateState
+    _privateState: PrivateState
   ): Promise<SentinelContract> {
     const deployedContract = await findDeployedContract<SentinelContractType>(providers, {
       contractAddress,
       compiledContract: CompactCompiledContract,
       privateStateId: sentinelContractPrivateStateKey,
-      initialPrivateState: privateState,
+      initialPrivateState: await this.getPrivateState(providers),
     });
 
     const state$ = providers.publicDataProvider
@@ -141,5 +144,22 @@ export class SentinelContract {
       value,
     });
     console.log(`Sent ${value} NIGHTs on tx: ${tx?.public.txHash}`);
+  }
+
+  async withdraw(addressString: string) {
+    const parsed = MidnightBech32m.parse(addressString);
+    const address = UnshieldedAddress.codec.decode(getNetworkId(), parsed);
+    const tx = await this.deployedContract?.callTx.withdraw({ bytes: address.data });
+
+    console.log(`Withdrew ${tx?.private.newCoins[0].value}} NIGHTs on tx: ${tx?.public.txHash}`);
+  }
+
+  private static async getPrivateState(
+    providers: SentinelContractProviders
+  ): Promise<PrivateState> {
+    const existingPrivateState = await providers.privateStateProvider.get(
+      sentinelContractPrivateStateKey
+    );
+    return existingPrivateState ?? createPrivateState(crypto.getRandomValues(new Uint8Array(32)));
   }
 }

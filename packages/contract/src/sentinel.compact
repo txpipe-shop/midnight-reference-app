@@ -41,10 +41,36 @@ export circuit delegate(coin: ShieldedCoinInfo): [] {
   delegators.insert(disclose(publicKey(localSecretKey())), disclose(coin.value));
 }
 
+export circuit withdraw(recipient: UserAddress): [] {
+  assert(isOwner(), "You are not the owner of this contract.");
+  assert(shieldedVault.value > 0, "Nothing to withdraw.");
+
+  sendShielded(
+    shieldedVault,
+    left<ZswapCoinPublicKey, ContractAddress>(ownPublicKey()),
+    disclose(shieldedVault.value)
+  );
+
+  hasShielded = false;
+
+  shieldedVault = QualifiedShieldedCoinInfo {
+      nonce: pad(32, ""),
+      color: pad(32, ""),
+      value: 0,
+      mt_index: 0
+  };
+}
+
 ///////// HELPER CIRCUITS /////////
 
 circuit publicKey(sk: Bytes<32>): Bytes<32> {
   return persistentHash<Vector<2, Bytes<32>>>([pad(32, "dust-sponsorship:pk:"), sk]);
+}
+
+circuit isOwner(): Boolean {
+  const sk = localSecretKey();
+  const pk = publicKey(sk);
+  return pk == owner;
 }
 
 ///////// WITNESSES /////////
