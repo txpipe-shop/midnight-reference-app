@@ -61,7 +61,7 @@ const REWARD_AMOUNT = 100n;
 const TTL = () => new Date(Date.now() + 30 * 60 * 1_000);
 
 /** Delay after each transaction to let the indexer catch up before querying balances. */
-const SYNC_DELAY_MS = 3_000;
+const SYNC_DELAY_MS = 10_000;
 
 const sleep = (ms: number) => {
   console.log("Going sleep sleep");
