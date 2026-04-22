@@ -36,7 +36,7 @@ import {
   GENESIS_MINT_WALLET_SEED_TWO,
   MINT_WALLET_SEED_FOUR,
 } from './utils/constants.js';
-import Rx from 'rxjs'
+import Rx from 'rxjs';
 import { encodeQualifiedShieldedCoinInfo, type ZswapLocalState } from '@midnight-ntwrk/ledger-v8';
 import assert from 'assert';
 
@@ -49,10 +49,13 @@ const DELEGATE_1_AMOUNT = 1_000n;
 const DELEGATE_2_AMOUNT = 2_000n;
 
 /** Tokens User offers into the swap. */
-const USER_OFFER = 200n;
+const USER_OFFER = 300n;
 
 /** Tokens User wants back (Admin nets OFFER - WANT = 100 tokens as fee). */
 const USER_WANT = 100n;
+
+/** Tokens User wants to send to Delegator 2 */
+const DEL2_WANT = 100n;
 
 /** Reward tokens Admin deposits for delegators. */
 const REWARD_AMOUNT = 100n;
@@ -64,9 +67,9 @@ const TTL = () => new Date(Date.now() + 30 * 60 * 1_000);
 const SYNC_DELAY_MS = 10_000;
 
 const sleep = (ms: number) => {
-  console.log("Going sleep sleep");
+  console.log('Going sleep sleep');
   return new Promise<void>((r) => setTimeout(r, ms));
-}
+};
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -74,7 +77,7 @@ const sleep = (ms: number) => {
 function shieldedAddrOf(ctx: WalletContext): ShieldedAddress {
   return new ShieldedAddress(
     ShieldedCoinPublicKey.fromHexString(ctx.shieldedSecretKeys.coinPublicKey),
-    ShieldedEncryptionPublicKey.fromHexString(ctx.shieldedSecretKeys.encryptionPublicKey),
+    ShieldedEncryptionPublicKey.fromHexString(ctx.shieldedSecretKeys.encryptionPublicKey)
   );
 }
 
@@ -92,7 +95,7 @@ async function getRawState(ctx: WalletContext) {
 function tokenTypeToQualified(state: ZswapLocalState, tokenType: string) {
   for (const coin of state.coins) {
     if (coin.type === tokenType) {
-      return encodeQualifiedShieldedCoinInfo(coin)
+      return encodeQualifiedShieldedCoinInfo(coin);
     }
   }
 }
@@ -106,11 +109,11 @@ const main = async () => {
   console.log('\n=== 1. Building wallets ===');
   const [admin, del1, del2, user] = await Promise.all([
     // These three wallets have both shielded and unshielded NIGHT and DUST
-    buildWallet(config, GENESIS_MINT_WALLET_SEED_ONE),   // Admin
-    buildWallet(config, GENESIS_MINT_WALLET_SEED_TWO),   // Delegator 1
+    buildWallet(config, GENESIS_MINT_WALLET_SEED_ONE), // Admin
+    buildWallet(config, GENESIS_MINT_WALLET_SEED_TWO), // Delegator 1
     buildWallet(config, GENESIS_MINT_WALLET_SEED_THREE), // Delegator 2
     // Empty by default — we will mint tokens to this wallet
-    buildWallet(config, MINT_WALLET_SEED_FOUR),  // User
+    buildWallet(config, MINT_WALLET_SEED_FOUR), // User
   ]);
 
   // ── 2. Initial balances ───────────────────────────────────────────────────
@@ -120,30 +123,34 @@ const main = async () => {
   await showBalances('Delegator 2', del2, GENESIS_MINT_WALLET_SEED_THREE);
   await showBalances('User', user, MINT_WALLET_SEED_FOUR);
 
-
   // ── 3. Admin deploys SentinelContract ─────────────────────────────────────
   console.log('\n=== 3. Admin deploys SentinelContract ===');
   const providers = await configureProviders(admin, config, 'delegation-contract');
 
   const contract = await SentinelContract.deploy(providers);
-  console.log('  ✓ Contract deployed at:', contract.deployedContract?.deployTxData.public.contractAddress);
+  console.log(
+    '  ✓ Contract deployed at:',
+    contract.deployedContract?.deployTxData.public.contractAddress
+  );
   await sleep(SYNC_DELAY_MS);
 
   // ── 4. Mint custom tokens to User ─────────────────────────────────────────
   const userProvider = await configureProviders(user, config, 'delegation-contract');
   console.log('\n=== 4. Minting custom tokens to User ===');
-  const userContract = await SentinelContract.join(userProvider, contract.deployedContract?.deployTxData.public.contractAddress!)
+  const contractAddress = contract.deployedContract?.deployTxData.public.contractAddress;
+  if (!contractAddress) throw new Error('Contract address not found after deployment');
+  const userContract = await SentinelContract.join(userProvider, contractAddress);
 
   const { balances: preMintUser } = await getBalancesAndAddresses(
     admin.wallet,
     MINT_WALLET_SEED_FOUR
   );
   const knownTokensAdmin = new Set(Object.keys(preMintUser.shielded));
-  console.dir(Object.keys(preMintUser.shielded))
+  console.dir(Object.keys(preMintUser.shielded));
 
   await userContract.mintFreeToken(
     user.shieldedSecretKeys.coinPublicKey,
-    user.shieldedSecretKeys.encryptionPublicKey,
+    user.shieldedSecretKeys.encryptionPublicKey
   );
   console.log('  ✓ Minted to User');
   await sleep(SYNC_DELAY_MS);
@@ -165,7 +172,7 @@ const main = async () => {
   const del1Providers = await configureProviders(del1, config, 'delegator-1');
   const del1Contract = await SentinelContract.join(
     del1Providers,
-    contract.deployedContract!.deployTxData.public.contractAddress,
+    contract.deployedContract!.deployTxData.public.contractAddress
   );
 
   await del1Contract.delegate(del1.shieldedSecretKeys.coinPublicKey, DELEGATE_1_AMOUNT);
@@ -179,7 +186,7 @@ const main = async () => {
   const del2Providers = await configureProviders(del2, config, 'delegator-2');
   const del2Contract = await SentinelContract.join(
     del2Providers,
-    contract.deployedContract!.deployTxData.public.contractAddress,
+    contract.deployedContract!.deployTxData.public.contractAddress
   );
 
   await del2Contract.delegate(del2.shieldedSecretKeys.coinPublicKey, DELEGATE_2_AMOUNT);
@@ -202,6 +209,7 @@ const main = async () => {
   console.log('\n=== 8. User sends tokens (Admin sponsors DUST) ===');
 
   const addrUser = shieldedAddrOf(user);
+  const addrDel2 = shieldedAddrOf(del2);
 
   // Step 8a — User initiates the swap (does NOT pay fees).
   console.log('  User: initSwap...');
@@ -210,11 +218,14 @@ const main = async () => {
     [
       {
         type: 'shielded',
-        outputs: [{ type: customToken, amount: USER_WANT, receiverAddress: addrUser }],
+        outputs: [
+          { type: customToken, amount: USER_WANT, receiverAddress: addrUser },
+          { type: customToken, amount: DEL2_WANT, receiverAddress: addrDel2 },
+        ],
       },
     ],
     { shieldedSecretKeys: user.shieldedSecretKeys, dustSecretKey: user.dustSecretKey },
-    { ttl: TTL(), payFees: false },
+    { ttl: TTL(), payFees: false }
   );
   console.log('  User: finalizeRecipe...');
   const userFinalizedSwap = await user.wallet.finalizeRecipe(userSwapRecipe);
@@ -224,7 +235,7 @@ const main = async () => {
   const adminRecipe = await admin.wallet.balanceFinalizedTransaction(
     userFinalizedSwap,
     { shieldedSecretKeys: admin.shieldedSecretKeys, dustSecretKey: admin.dustSecretKey },
-    { ttl: TTL(), tokenKindsToBalance: 'all' },
+    { ttl: TTL(), tokenKindsToBalance: 'all' }
   );
   console.log('  Admin: finalizeRecipe...');
   const adminFinalizedTx = await admin.wallet.finalizeRecipe(adminRecipe);
@@ -236,18 +247,15 @@ const main = async () => {
 
   await showBalances('User', user, MINT_WALLET_SEED_FOUR);
   await showBalances('Admin', admin, GENESIS_MINT_WALLET_SEED_ONE);
+  await showBalances('Delegator 2', del2, GENESIS_MINT_WALLET_SEED_THREE);
 
   // ── 9. Admin deposits rewards into contract ──────────────────────────────
   console.log('\n=== 9. Admin deposits rewards into contract ===');
   const adminState = await getRawState(admin);
   const qualifiedCoin = tokenTypeToQualified(adminState.shielded.state.state, customToken);
 
-  assert(qualifiedCoin, "Did not find reward token")
-  await contract.depositRewards(
-    BigInt(REWARD_AMOUNT),
-    qualifiedCoin.nonce,
-    qualifiedCoin.color,
-  );
+  assert(qualifiedCoin, 'Did not find reward token');
+  await contract.depositRewards(BigInt(REWARD_AMOUNT), qualifiedCoin.nonce, qualifiedCoin.color);
   console.log('  ✓ Rewards deposited');
   await sleep(SYNC_DELAY_MS);
 

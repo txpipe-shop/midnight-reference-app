@@ -6,8 +6,12 @@ import {
   Proof,
   Binding,
 } from '@midnight-ntwrk/ledger-v8';
-import { deployContract, findDeployedContract, withContractScopedTransaction } from '@midnight-ntwrk/midnight-js-contracts';
 import { MidnightBech32m, ShieldedAddress } from '@midnight-ntwrk/wallet-sdk-address-format';
+import {
+  deployContract,
+  findDeployedContract,
+  withContractScopedTransaction,
+} from '@midnight-ntwrk/midnight-js-contracts';
 import {
   CompactCompiledContract,
   createPrivateState,
@@ -260,7 +264,7 @@ export class SentinelContract {
           domainSep,
           amount,
           mintNonce,
-          { bytes: fromHex(recipientCoinPubKeyHex) },
+          { bytes: fromHex(recipientCoinPubKeyHex) }
         );
       },
       { additionalCoinEncPublicKeyMappings: additionalMappings }

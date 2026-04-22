@@ -51,7 +51,7 @@ const TTL = () => new Date(Date.now() + 30 * 60 * 1_000);
 function shieldedAddrOf(ctx: WalletContext): ShieldedAddress {
   return new ShieldedAddress(
     ShieldedCoinPublicKey.fromHexString(ctx.shieldedSecretKeys.coinPublicKey),
-    ShieldedEncryptionPublicKey.fromHexString(ctx.shieldedSecretKeys.encryptionPublicKey),
+    ShieldedEncryptionPublicKey.fromHexString(ctx.shieldedSecretKeys.encryptionPublicKey)
   );
 }
 
@@ -90,7 +90,10 @@ const main = async () => {
   console.log('\n=== Deploying contract and minting shielded tokens ===');
 
   // Snapshot Wallet A's shielded token keys before minting so we can identify the new one.
-  const { balances: preMintA } = await getBalancesAndAddresses(ctxA.wallet, GENESIS_MINT_WALLET_SEED_ONE);
+  const { balances: preMintA } = await getBalancesAndAddresses(
+    ctxA.wallet,
+    GENESIS_MINT_WALLET_SEED_ONE
+  );
   const knownTokens = new Set(Object.keys(preMintA.shielded));
 
   const providers = await configureProviders(ctxA, config, 'zswap-sponsor-contract');
@@ -103,7 +106,7 @@ const main = async () => {
   console.log('  Minting shielded tokens to Wallet A...');
   await contract.mintFreeToken(
     ctxA.shieldedSecretKeys.coinPublicKey,
-    ctxA.shieldedSecretKeys.encryptionPublicKey,
+    ctxA.shieldedSecretKeys.encryptionPublicKey
   );
   console.log('  ✓ Minted to Wallet A');
   await sleep(10_000);
@@ -111,13 +114,16 @@ const main = async () => {
   console.log('  Minting shielded tokens to Wallet C...');
   await contract.mintFreeToken(
     ctxC.shieldedSecretKeys.coinPublicKey,
-    ctxC.shieldedSecretKeys.encryptionPublicKey,
+    ctxC.shieldedSecretKeys.encryptionPublicKey
   );
   console.log('  ✓ Minted to Wallet C');
   await sleep(10_000);
 
   // Find the newly minted token by comparing against the pre-mint snapshot.
-  const { balances: postMintA } = await getBalancesAndAddresses(ctxA.wallet, GENESIS_MINT_WALLET_SEED_ONE);
+  const { balances: postMintA } = await getBalancesAndAddresses(
+    ctxA.wallet,
+    GENESIS_MINT_WALLET_SEED_ONE
+  );
   const customToken = Object.keys(postMintA.shielded).find((k) => !knownTokens.has(k))!;
   if (!customToken) throw new Error('Custom token not found in Wallet A after minting');
 
@@ -142,9 +148,14 @@ const main = async () => {
   console.log('  Wallet A: initSwap...');
   const swapRecipe = await ctxA.wallet.initSwap(
     { shielded: { [customToken]: OFFER_AMOUNT } },
-    [{ type: 'shielded', outputs: [{ type: customToken, amount: WANT_AMOUNT, receiverAddress: addrA }] }],
+    [
+      {
+        type: 'shielded',
+        outputs: [{ type: customToken, amount: WANT_AMOUNT, receiverAddress: addrA }],
+      },
+    ],
     { shieldedSecretKeys: ctxA.shieldedSecretKeys, dustSecretKey: ctxA.dustSecretKey },
-    { ttl: TTL(), payFees: false },
+    { ttl: TTL(), payFees: false }
   );
   console.log('  Wallet A: finalizeRecipe...');
   const finalizedSwapTx = await ctxA.wallet.finalizeRecipe(swapRecipe);
@@ -154,7 +165,7 @@ const main = async () => {
   const walletCRecipe = await ctxC.wallet.balanceFinalizedTransaction(
     finalizedSwapTx,
     { shieldedSecretKeys: ctxC.shieldedSecretKeys, dustSecretKey: ctxC.dustSecretKey },
-    { ttl: TTL(), tokenKindsToBalance: 'all' },
+    { ttl: TTL(), tokenKindsToBalance: 'all' }
   );
   console.log('  Wallet C: finalizeRecipe...');
   const walletCFinalizedTx = await ctxC.wallet.finalizeRecipe(walletCRecipe);
