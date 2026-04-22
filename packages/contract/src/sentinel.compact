@@ -75,7 +75,7 @@ export circuit depositRewards(coin: ShieldedCoinInfo): [] {
     hasRewards = true;
   } else {
     rewardsVault.writeCoin(
-        mergeCoinImmediate(shieldedVault, disclose(coin)),
+        mergeCoinImmediate(rewardsVault, disclose(coin)),
         right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
     );
   }

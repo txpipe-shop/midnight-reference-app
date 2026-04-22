@@ -10,8 +10,8 @@
     }
   },
   "scripts": {
-    "clean": "rm -rf dist",
-    "build": "pnpm clean && tsc --project tsconfig.build.json",
+    "clean": "rm -rf dist .turbo node_modules",
+    "build": "tsc --project tsconfig.build.json",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",

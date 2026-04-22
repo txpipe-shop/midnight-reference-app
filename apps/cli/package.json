@@ -2,11 +2,12 @@
   "name": "@midnight-sentinel/cli",
   "type": "module",
   "scripts": {
-    "clean": "rm -rf dist",
-    "build": "pnpm clean && tsc --project tsconfig.build.json",
+    "clean": "rm -rf dist .turbo midnight-level-db node_modules",
+    "build": "tsc --project tsconfig.build.json",
     "dev": "tsx src/index.ts -w DEPLOY",
     "dev-join": "tsx src/index.ts -w JOIN",
     "dev-third": "tsx src/index.ts -w THIRD",
+    "dev-delegation": "tsx src/delegation-flow-example.ts",
     "start": "node dist/index.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -14,15 +15,18 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@midnight-ntwrk/ledger-v8": "8.0.3",
-    "@midnight-ntwrk/zswap": "4.0.0",
     "@midnight-ntwrk/compact-runtime": "0.15.0",
+    "@midnight-ntwrk/ledger-v8": "8.0.3",
     "@midnight-ntwrk/midnight-js-contracts": "4.0.4",
+    "@midnight-ntwrk/wallet-sdk-address-format": "3.1.0-rc.0",
+    "@midnight-ntwrk/zswap": "4.0.0",
     "@midnight-sentinel/api": "workspace:*",
     "@midnight-sentinel/contract": "workspace:*",
     "@midnight-sentinel/wallet": "workspace:*",
+    "@scure/bip39": "^2.2.0",
     "axios": "^1.13.5",
-    "pino": "^10.3.1"
+    "pino": "^10.3.1",
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
