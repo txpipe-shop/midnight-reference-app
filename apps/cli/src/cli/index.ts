@@ -40,9 +40,15 @@ async function handleCircuits(
         break;
       case '4':
         try {
-          const amount = await rli.question('Enter the amount you would like to deposit as rewards: ');
+          const amount = await rli.question(
+            'Enter the amount you would like to deposit as rewards: '
+          );
           // TODO: wire up to wallet
-          await contract.depositRewards(BigInt(amount), new Uint8Array(32).fill(0), new Uint8Array(32).fill(0));
+          await contract.depositRewards(
+            BigInt(amount),
+            new Uint8Array(32).fill(0),
+            new Uint8Array(32).fill(0)
+          );
         } catch (e) {
           console.log('Error depositing rewards: ', e);
         }
