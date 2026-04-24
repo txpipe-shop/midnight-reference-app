@@ -173,4 +173,9 @@ export class SentinelContract {
     });
     console.log(`Deposited ${value} rewards on tx: ${tx?.public.txHash}`);
   }
+
+  async redeemRewards() {
+    const tx = await this.deployedContract?.callTx.redeemRewards();
+    console.log(`Redeemed rewards on tx: ${tx?.public.txHash}`);
+  }
 }
