@@ -21,7 +21,7 @@
   "packageManager": "pnpm@10.29.3",
   "pnpm": {
     "overrides": {
-      "@midnight-ntwrk/ledger-v8": "8.0.0"
+      "@midnight-ntwrk/ledger-v8": "8.0.3"
     }
   }
 }

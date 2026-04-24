@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@midnight-ntwrk/ledger-v8': 8.0.0
+  '@midnight-ntwrk/ledger-v8': 8.0.3
 
 importers:
 
@@ -39,8 +39,8 @@ importers:
         specifier: 0.15.0
         version: 0.15.0
       '@midnight-ntwrk/ledger-v8':
-        specifier: 8.0.0
-        version: 8.0.0
+        specifier: 8.0.3
+        version: 8.0.3
       '@midnight-ntwrk/midnight-js-contracts':
         specifier: 4.0.4
         version: 4.0.4
@@ -203,8 +203,8 @@ importers:
         specifier: 4.0.1
         version: 4.0.1
       '@midnight-ntwrk/ledger-v8':
-        specifier: 8.0.0
-        version: 8.0.0
+        specifier: 8.0.3
+        version: 8.0.3
       '@midnight-ntwrk/midnight-js-contracts':
         specifier: 4.0.4
         version: 4.0.4
@@ -286,8 +286,8 @@ importers:
   packages/wallet:
     dependencies:
       '@midnight-ntwrk/ledger-v8':
-        specifier: 8.0.0
-        version: 8.0.0
+        specifier: 8.0.3
+        version: 8.0.3
       '@midnight-ntwrk/midnight-js-network-id':
         specifier: 4.0.4
         version: 4.0.4
@@ -834,8 +834,8 @@ packages:
   '@midnight-ntwrk/dapp-connector-api@4.0.1':
     resolution: {integrity: sha512-IstRo8xfmlJlGgUcAJeRzPUmGCp0/xZR3/bfTOk33MHrzbGmB79r/zYziGavcclo1pkkoBHAodX4vz3xgFxczw==}
 
-  '@midnight-ntwrk/ledger-v8@8.0.0':
-    resolution: {integrity: sha512-IL3bJJ4WiLCV81Fn4zHfxxnH3f8kx5WB/uIj3Jhz0XneuwBI7vHXbsOz8aLb3sZqFbFw5kuzFX660sZy1qzv4Q==}
+  '@midnight-ntwrk/ledger-v8@8.0.3':
+    resolution: {integrity: sha512-2BLMfHnZyKAHZxaGWjlenhity096lZ9jvyp1qrQH5J3ogpy7H5ostCW8kRj70dGv5T55qDAC5nJ+wnU/8CGUcQ==}
 
   '@midnight-ntwrk/midnight-js-contracts@4.0.4':
     resolution: {integrity: sha512-lu9A45upwvPSy/YohU0TMvaeL2ru1zJt6axbuGwGup2L16p+fN8ojjHji6YGEC6XkgyISH3L0GfsgxsQKmt56g==}
@@ -5527,7 +5527,7 @@ snapshots:
     dependencies:
       '@effect/platform': 0.95.0(effect@3.21.0)
       '@midnight-ntwrk/compact-runtime': 0.15.0
-      '@midnight-ntwrk/ledger-v8': 8.0.0
+      '@midnight-ntwrk/ledger-v8': 8.0.3
       '@midnight-ntwrk/platform-js': 2.2.4
       effect: 3.21.0
       tslib: 2.8.1
@@ -5540,7 +5540,7 @@ snapshots:
 
   '@midnight-ntwrk/dapp-connector-api@4.0.1': {}
 
-  '@midnight-ntwrk/ledger-v8@8.0.0': {}
+  '@midnight-ntwrk/ledger-v8@8.0.3': {}
 
   '@midnight-ntwrk/midnight-js-contracts@4.0.4':
     dependencies:
@@ -5636,13 +5636,13 @@ snapshots:
 
   '@midnight-ntwrk/wallet-sdk-address-format@3.1.0-rc.0':
     dependencies:
-      '@midnight-ntwrk/ledger-v8': 8.0.0
+      '@midnight-ntwrk/ledger-v8': 8.0.3
       '@scure/base': 2.0.0
       '@subsquid/scale-codec': 4.0.1
 
   '@midnight-ntwrk/wallet-sdk-capabilities@3.2.0(ws@8.19.0)':
     dependencies:
-      '@midnight-ntwrk/ledger-v8': 8.0.0
+      '@midnight-ntwrk/ledger-v8': 8.0.3
       '@midnight-ntwrk/wallet-sdk-abstractions': 2.0.0
       '@midnight-ntwrk/wallet-sdk-indexer-client': 1.2.0(ws@8.19.0)
       '@midnight-ntwrk/wallet-sdk-node-client': 1.1.0
@@ -5661,7 +5661,7 @@ snapshots:
 
   '@midnight-ntwrk/wallet-sdk-capabilities@3.2.0-rc.0(ws@8.19.0)':
     dependencies:
-      '@midnight-ntwrk/ledger-v8': 8.0.0
+      '@midnight-ntwrk/ledger-v8': 8.0.3
       '@midnight-ntwrk/wallet-sdk-abstractions': 2.0.0
       '@midnight-ntwrk/wallet-sdk-indexer-client': 1.2.0-rc.0(ws@8.19.0)
       '@midnight-ntwrk/wallet-sdk-node-client': 1.1.0
@@ -5680,7 +5680,7 @@ snapshots:
 
   '@midnight-ntwrk/wallet-sdk-dust-wallet@3.0.0-rc.0(ws@8.19.0)':
     dependencies:
-      '@midnight-ntwrk/ledger-v8': 8.0.0
+      '@midnight-ntwrk/ledger-v8': 8.0.3
       '@midnight-ntwrk/wallet-sdk-abstractions': 2.0.0
       '@midnight-ntwrk/wallet-sdk-address-format': 3.1.0-rc.0
       '@midnight-ntwrk/wallet-sdk-capabilities': 3.2.0-rc.0(ws@8.19.0)
@@ -5699,7 +5699,7 @@ snapshots:
 
   '@midnight-ntwrk/wallet-sdk-facade@3.0.0-rc.0(ws@8.19.0)':
     dependencies:
-      '@midnight-ntwrk/ledger-v8': 8.0.0
+      '@midnight-ntwrk/ledger-v8': 8.0.3
       '@midnight-ntwrk/wallet-sdk-address-format': 3.1.0-rc.0
       '@midnight-ntwrk/wallet-sdk-capabilities': 3.2.0(ws@8.19.0)
       '@midnight-ntwrk/wallet-sdk-dust-wallet': 3.0.0-rc.0(ws@8.19.0)
@@ -5764,7 +5764,7 @@ snapshots:
   '@midnight-ntwrk/wallet-sdk-prover-client@1.2.0':
     dependencies:
       '@effect/platform': 0.94.5(effect@3.21.0)
-      '@midnight-ntwrk/ledger-v8': 8.0.0
+      '@midnight-ntwrk/ledger-v8': 8.0.3
       '@midnight-ntwrk/wallet-sdk-utilities': 1.1.0
       '@midnight-ntwrk/zkir-v2': 2.1.0
       effect: 3.21.0
@@ -5779,7 +5779,7 @@ snapshots:
 
   '@midnight-ntwrk/wallet-sdk-shielded@2.1.0-rc.0(ws@8.19.0)':
     dependencies:
-      '@midnight-ntwrk/ledger-v8': 8.0.0
+      '@midnight-ntwrk/ledger-v8': 8.0.3
       '@midnight-ntwrk/wallet-sdk-abstractions': 2.0.0
       '@midnight-ntwrk/wallet-sdk-address-format': 3.1.0-rc.0
       '@midnight-ntwrk/wallet-sdk-capabilities': 3.2.0-rc.0(ws@8.19.0)
@@ -5798,7 +5798,7 @@ snapshots:
 
   '@midnight-ntwrk/wallet-sdk-unshielded-wallet@2.1.0-rc.0(ws@8.19.0)':
     dependencies:
-      '@midnight-ntwrk/ledger-v8': 8.0.0
+      '@midnight-ntwrk/ledger-v8': 8.0.3
       '@midnight-ntwrk/wallet-sdk-abstractions': 2.0.0
       '@midnight-ntwrk/wallet-sdk-address-format': 3.1.0-rc.0
       '@midnight-ntwrk/wallet-sdk-capabilities': 3.2.0-rc.0(ws@8.19.0)
