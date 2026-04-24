@@ -160,4 +160,17 @@ export class SentinelContract {
     );
     return existingPrivateState ?? createPrivateState(crypto.getRandomValues(new Uint8Array(32)));
   }
+
+  async depositRewards(
+    value: bigint,
+    nonce: Uint8Array<ArrayBufferLike>,
+    color: Uint8Array<ArrayBufferLike>
+  ) {
+    const tx = await this.deployedContract?.callTx.depositRewards({
+      nonce,
+      color,
+      value,
+    });
+    console.log(`Deposited ${value} rewards on tx: ${tx?.public.txHash}`);
+  }
 }
