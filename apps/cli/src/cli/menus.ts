@@ -5,8 +5,9 @@ ${DIVIDER}
   [1] Deploy a new contract
   [2] Join an existing contract
   [3] Request DUST sponsorship
-  [4] Get balances
-  [5] Exit
+  [4] Start ZSwap
+  [5] Get balances
+  [6] Exit
 ${DIVIDER}
 `;
 

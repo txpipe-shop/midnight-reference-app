@@ -111,11 +111,25 @@ export async function runCli(
           console.error(error);
         }
         break;
-      case '3': {
-        console.log('Not implemented.');
+      case '3':
+        try {
+          const raw = await rli.question('Enter the raw transaction recipe: ');
+          await SentinelContract.zswapSponsor(walletCtx, raw);
+        } catch (e) {
+          console.log('Error sponsoring DUST: ', e);
+        }
         break;
-      }
-      case '4': {
+      case '4':
+        try {
+          const tokenColor = await rli.question('Enter token type to send (shielded): ');
+          const tokenAmount = await rli.question('Enter amount to send: ');
+          const recAddr = await rli.question('Enter address of the receiver: ');
+          await SentinelContract.startZswap(walletCtx, tokenColor, tokenAmount, recAddr);
+        } catch (e) {
+          console.log('Error initiating zswap', e);
+        }
+        break;
+      case '5': {
         const { balances, addresses } = await getBalancesAndAddresses(
           walletCtx.wallet,
           walletDetails.seed
@@ -123,7 +137,7 @@ export async function runCli(
         printBalances(balances, addresses);
         break;
       }
-      case '5':
+      case '6':
         console.log('Exiting...');
         return;
       default:

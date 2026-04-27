@@ -1,8 +1,13 @@
 import {
   decodeQualifiedShieldedCoinInfo,
   QualifiedShieldedCoinInfo,
+  Transaction,
+  SignatureEnabled,
+  Proof,
+  Binding,
 } from '@midnight-ntwrk/ledger-v8';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
+import { MidnightBech32m, ShieldedAddress } from '@midnight-ntwrk/wallet-sdk-address-format';
 import {
   CompactCompiledContract,
   createPrivateState,
@@ -15,6 +20,7 @@ import {
   type SentinelContractProviders,
   type SentinelContractType,
 } from '@midnight-sentinel/contract';
+import { getNetworkId, WalletContext } from '@midnight-sentinel/wallet';
 import { map, type Observable } from 'rxjs';
 
 export const toHex = (arr: Uint8Array) =>
@@ -153,6 +159,57 @@ export class SentinelContract {
     console.log(`[redeemRewards] Redeemed rewards on tx: ${tx?.public.txHash}`);
   }
 
+  static async startZswap(ctx: WalletContext, color: string, amount: string, addr: string) {
+    console.log(`[startZswap] Initiating swap: ${amount} tokens of type ${color} to ${addr}...`);
+    const shieldedAddr = ShieldedAddress.codec.decode(getNetworkId(), MidnightBech32m.parse(addr));
+    const swapRecipe = await ctx.wallet.initSwap(
+      { shielded: { [color]: BigInt(amount) } },
+      [
+        {
+          type: 'shielded',
+          outputs: [{ type: color, amount: BigInt(amount), receiverAddress: shieldedAddr }],
+        },
+      ],
+      { shieldedSecretKeys: ctx.shieldedSecretKeys, dustSecretKey: ctx.dustSecretKey },
+      { ttl: TTL(), payFees: false }
+    );
+    console.log('[startZswap] Finalizing recipe...');
+    const finalizedSwapTx = await ctx.wallet.finalizeRecipe(swapRecipe);
+    const serializedSwap = finalizedSwapTx.serialize();
+    const hex = Buffer.from(serializedSwap).toString('hex');
+    console.log('[startZswap] Serialized transaction (hex):');
+    console.log(hex);
+    console.log(`[startZswap] Transaction length: ${hex.length} chars (hex)`);
+  }
+
+  static async zswapSponsor(ctx: WalletContext, finalizedSwapRaw: string) {
+    console.log('[zswapSponsor] Loading transaction from input...');
+    const finalizedSwapBuffer = new Uint8Array(Buffer.from(finalizedSwapRaw.trim(), 'hex'));
+    console.log(`[zswapSponsor] Deserializing transaction (${finalizedSwapRaw.length} chars)...`);
+    const tx = Transaction.deserialize<SignatureEnabled, Proof, Binding>(
+      'signature',
+      'proof',
+      'binding',
+      finalizedSwapBuffer
+    );
+    console.log('[zswapSponsor] Balancing transaction with DUST sponsorship...');
+    const txHash = await ctx.wallet
+      .balanceFinalizedTransaction(
+        tx,
+        { shieldedSecretKeys: ctx.shieldedSecretKeys, dustSecretKey: ctx.dustSecretKey },
+        { ttl: TTL(), tokenKindsToBalance: ['dust'] }
+      )
+      .then((recipe) => {
+        console.log('[zswapSponsor] Finalizing recipe...');
+        return ctx.wallet.finalizeRecipe(recipe);
+      })
+      .then((finalized) => {
+        console.log('[zswapSponsor] Submitting transaction...');
+        return ctx.wallet.submitTransaction(finalized);
+      });
+    console.log(`[zswapSponsor] ✓ Transaction submitted: ${txHash}`);
+  }
+
   async getCurrentState() {
     console.log('[getCurrentState] Fetching contract state...');
     let subscription: { unsubscribe: () => void } | null = null;
@@ -185,3 +242,6 @@ export class SentinelContract {
     return existingPrivateState ?? createPrivateState(crypto.getRandomValues(new Uint8Array(32)));
   }
 }
+
+/** Rolling 30-minute TTL for all transactions. */
+const TTL = () => new Date(Date.now() + 30 * 60 * 1_000);
