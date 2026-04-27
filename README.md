@@ -1,6 +1,7 @@
 # Midnight Sentinel Reference App
 
-A reference implementation of the Sentinel smart contract on the Midnight blockchain, demonstrating delegation, rewards distribution, and token minting workflows via a CLI application.
+A reference implementation of the Sentinel smart contract on the Midnight blockchain, demonstrating delegation, rewards distribution, and dust exchange.
+The app aims to solve the problem of DUST capacity by allowing a set of users, the `delegators`, to delegate their NIGHT for DUST generation. In exchange, other users, the `beneficiaries` can ask the app to pay their DUST fees.
 
 ## Architecture
 
@@ -44,13 +45,7 @@ In the project's root:
 pnpm install
 ```
 
-to install all dependencies, and
-
-```bash
-docker compose up -d
-```
-
-to silently start the docker services: `node`, `indexer` and `proof server`.
+to install all dependencies.
 
 In `apps/cli/`, build all packages:
 
@@ -59,6 +54,14 @@ pnpm build
 ```
 
 ## Running the CLI
+
+On the project root run:
+
+```bash
+docker compose up -d
+```
+
+to silently start the docker services: `node`, `indexer` and `proof server`.
 
 ### Interactive Menu
 
@@ -80,9 +83,10 @@ Once running, the CLI presents a menu:
 ```
 1. Deploy new contract
 2. Join existing contract
-3. (Reserved)
-4. View balances
-5. Exit
+3. (Admin) Submit transaction sponsoring DUST
+4. Start ZSwap to request DUST sponsorship
+5. View balances
+6. Exit
 ```
 
 After selecting deploy or join, a secondary menu allows you to:
@@ -93,6 +97,8 @@ After selecting deploy or join, a secondary menu allows you to:
 4. Deposit rewards
 5. View current state
 6. Return to main menu
+
+A more in-depth explanation on the cli and its usage can be found in the respective [readme](./apps/cli/README.md).
 
 ## Configuration
 
@@ -106,3 +112,10 @@ proofServer: 'http://127.0.0.1:6300',
 ```
 
 Wallet seeds are defined in `apps/cli/src/utils/constants.ts` for the three default wallets.
+
+## Current limitations
+
+At the time of writing (27-04-2026):
+
+- deposits/withdrawals of unshielded tokens in contracts is not working, so the app is implemented using shielded tokens, which cannot be registered for DUST generation
+- transaction building from scratch is difficult and even more so if it includes interactions with contracts, in an ideal implementation the Admin account wouldn't need to withdraw the NIGHTs nor deposit the rewards, because token transfers could be handled directly with the contract and the admin would only need to provide their DUST key.
