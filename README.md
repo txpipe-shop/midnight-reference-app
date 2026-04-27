@@ -86,6 +86,7 @@ Once running, the CLI presents a menu:
 ```
 
 After selecting deploy or join, a secondary menu allows you to:
+
 1. Delegate NIGHT tokens
 2. Redeem rewards
 3. Withdraw funds

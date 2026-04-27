@@ -3,7 +3,6 @@ import {
   QualifiedShieldedCoinInfo,
 } from '@midnight-ntwrk/ledger-v8';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
-import { MidnightBech32m, UnshieldedAddress } from '@midnight-ntwrk/wallet-sdk-address-format';
 import {
   CompactCompiledContract,
   createPrivateState,
@@ -16,7 +15,6 @@ import {
   type SentinelContractProviders,
   type SentinelContractType,
 } from '@midnight-sentinel/contract';
-import { getNetworkId } from '@midnight-sentinel/wallet';
 import { map, type Observable } from 'rxjs';
 
 export const toHex = (arr: Uint8Array) =>
@@ -130,7 +128,9 @@ export class SentinelContract {
     console.log('[withdraw] Building withdraw transaction...');
     const tx = await this.deployedContract?.callTx.withdraw();
 
-    console.log(`[withdraw] Withdrew ${tx?.private.newCoins[0].value} NIGHTs on tx: ${tx?.public.txHash}`);
+    console.log(
+      `[withdraw] Withdrew ${tx?.private.newCoins[0].value} NIGHTs on tx: ${tx?.public.txHash}`
+    );
   }
 
   async depositRewards(
