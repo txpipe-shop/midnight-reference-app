@@ -36,8 +36,7 @@ async function handleCircuits(
         return;
       case '3':
         try {
-          const address = walletCtx.unshieldedKeystore.getBech32Address().toString();
-          await contract.withdraw(address);
+          await contract.withdraw();
         } catch (e) {
           console.log('Error wthdrawing: ', e);
         }

@@ -56,6 +56,7 @@ export class SentinelContract {
   }
 
   static async deploy(providers: SentinelContractProviders): Promise<SentinelContract> {
+    console.log('[deploy] Starting contract deployment...');
     const deployedContract = await deployContract<SentinelContractType>(providers, {
       compiledContract: CompactCompiledContract,
       privateStateId: sentinelContractPrivateStateKey,
@@ -87,6 +88,7 @@ export class SentinelContract {
     providers: SentinelContractProviders,
     contractAddress: ContractAddress
   ): Promise<SentinelContract> {
+    console.log('[join] Finding existing contract...');
     const deployedContract = await findDeployedContract<SentinelContractType>(providers, {
       contractAddress,
       compiledContract: CompactCompiledContract,
@@ -110,10 +112,49 @@ export class SentinelContract {
         })
       );
 
+    console.log('[join] Contract joined');
     return new SentinelContract(providers, deployedContract, state$);
   }
 
+  async delegate(key: string, value: bigint) {
+    console.log('[delegate] Building delegate transaction...');
+    const tx = await this.deployedContract?.callTx.delegate({
+      nonce: new Uint8Array(32).fill(0),
+      color: new Uint8Array(32).fill(0),
+      value,
+    });
+    console.log(`[delegate] Sent ${value} NIGHTs on tx: ${tx?.public.txHash}`);
+  }
+
+  async withdraw() {
+    console.log('[withdraw] Building withdraw transaction...');
+    const tx = await this.deployedContract?.callTx.withdraw();
+
+    console.log(`[withdraw] Withdrew ${tx?.private.newCoins[0].value} NIGHTs on tx: ${tx?.public.txHash}`);
+  }
+
+  async depositRewards(
+    value: bigint,
+    nonce: Uint8Array<ArrayBufferLike>,
+    color: Uint8Array<ArrayBufferLike>
+  ) {
+    console.log('[depositRewards] Building deposit transaction...');
+    const tx = await this.deployedContract?.callTx.depositRewards({
+      nonce,
+      color,
+      value,
+    });
+    console.log(`[depositRewards] Deposited ${value} rewards on tx: ${tx?.public.txHash}`);
+  }
+
+  async redeemRewards() {
+    console.log('[redeemRewards] Building redeem transaction...');
+    const tx = await this.deployedContract?.callTx.redeemRewards();
+    console.log(`[redeemRewards] Redeemed rewards on tx: ${tx?.public.txHash}`);
+  }
+
   async getCurrentState() {
+    console.log('[getCurrentState] Fetching contract state...');
     let subscription: { unsubscribe: () => void } | null = null;
 
     subscription = this.state$.subscribe((state) => {
@@ -133,23 +174,6 @@ export class SentinelContract {
     });
   }
 
-  async delegate(key: string, value: bigint) {
-    const tx = await this.deployedContract?.callTx.delegate({
-      nonce: new Uint8Array(32).fill(0),
-      color: new Uint8Array(32).fill(0),
-      value,
-    });
-    console.log(`Sent ${value} NIGHTs on tx: ${tx?.public.txHash}`);
-  }
-
-  async withdraw(addressString: string) {
-    const parsed = MidnightBech32m.parse(addressString);
-    const address = UnshieldedAddress.codec.decode(getNetworkId(), parsed);
-    const tx = await this.deployedContract?.callTx.withdraw({ bytes: address.data });
-
-    console.log(`Withdrew ${tx?.private.newCoins[0].value} NIGHTs on tx: ${tx?.public.txHash}`);
-  }
-
   private static async getPrivateState(
     providers: SentinelContractProviders,
     contractAddress: string
@@ -159,23 +183,5 @@ export class SentinelContract {
       sentinelContractPrivateStateKey
     );
     return existingPrivateState ?? createPrivateState(crypto.getRandomValues(new Uint8Array(32)));
-  }
-
-  async depositRewards(
-    value: bigint,
-    nonce: Uint8Array<ArrayBufferLike>,
-    color: Uint8Array<ArrayBufferLike>
-  ) {
-    const tx = await this.deployedContract?.callTx.depositRewards({
-      nonce,
-      color,
-      value,
-    });
-    console.log(`Deposited ${value} rewards on tx: ${tx?.public.txHash}`);
-  }
-
-  async redeemRewards() {
-    const tx = await this.deployedContract?.callTx.redeemRewards();
-    console.log(`Redeemed rewards on tx: ${tx?.public.txHash}`);
   }
 }

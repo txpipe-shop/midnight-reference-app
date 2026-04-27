@@ -38,9 +38,19 @@ Refer to [VERSIONS.md](./VERSIONS.md) for details on working component and depen
 
 ## Installation
 
+In the project's root:
+
 ```bash
 pnpm install
 ```
+
+to install all dependencies, and
+
+```bash
+docker compose up -d
+```
+
+to silently start the docker services: `node`, `indexer` and `proof server`.
 
 In `apps/cli/`, build all packages:
 
@@ -56,13 +66,13 @@ Select which wallet to use:
 
 ```bash
 # Deployer wallet (genesis seed one)
-pnpm run dev -w DEPLOY
+pnpm run dev
 
 # Joiner wallet (genesis seed two)
-pnpm run dev -w JOIN
+pnpm run dev-join
 
 # Third wallet (genesis seed three)
-pnpm run dev -w THIRD
+pnpm run dev-third
 ```
 
 Once running, the CLI presents a menu:

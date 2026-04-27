@@ -84,6 +84,7 @@ export const createWalletAndMidnightProvider = async (
       return state.shielded.encryptionPublicKey.toHexString();
     },
     async balanceTx(tx, ttl?) {
+      console.log('[balanceTx] Starting transaction balancing...');
       const recipe = await ctx.wallet.balanceUnboundTransaction(
         tx,
         {
@@ -92,6 +93,7 @@ export const createWalletAndMidnightProvider = async (
         },
         { ttl: ttl ?? new Date(Date.now() + 30 * 60 * 1000) }
       );
+      console.log('[balanceTx] Transaction balanced, signing...');
 
       // Work around wallet SDK bug: signRecipe uses hardcoded 'pre-proof'
       // marker when cloning intents, but proven (UnboundTransaction) intents
@@ -103,9 +105,13 @@ export const createWalletAndMidnightProvider = async (
         signTransactionIntents(recipe.balancingTransaction, signFn, 'pre-proof');
       }
 
-      return ctx.wallet.finalizeRecipe(recipe);
+      console.log('[balanceTx] Transaction signed, finalizing...');
+      const finalized = ctx.wallet.finalizeRecipe(recipe);
+      console.log('[balanceTx] Transaction finalized.');
+      return finalized;
     },
     submitTx(tx) {
+      console.log('[submitTx] Submitting transaction to network...');
       return ctx.wallet.submitTransaction(tx);
     },
   };

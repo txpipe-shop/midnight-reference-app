@@ -41,7 +41,7 @@ export circuit delegate(coin: ShieldedCoinInfo): [] {
   delegators.insert(disclose(publicKey(localSecretKey())), disclose(coin.value));
 }
 
-export circuit withdraw(recipient: UserAddress): [] {
+export circuit withdraw(): [] {
   assert(isOwner(), "You are not the owner of this contract.");
   assert(shieldedVault.value > 0, "Nothing to withdraw.");
 
