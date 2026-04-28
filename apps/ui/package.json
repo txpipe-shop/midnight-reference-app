@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "clean": "rm -rf dist .turbo public/managed node_modules",
     "copy-keys": "mkdir -p public/managed/sentinel && cp -r ../../packages/contract/dist/managed/sentinel/* public/managed/sentinel/",
     "dev": "pnpm copy-keys && vite",
     "build": "pnpm copy-keys && tsc -b && vite build",

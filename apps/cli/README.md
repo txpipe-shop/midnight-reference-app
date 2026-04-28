@@ -34,6 +34,20 @@ pnpm run dev-join
 pnpm run dev-third
 ```
 
+### Complete examples
+
+The app includes two example scripts. The [`zswap-sponsor-example`](../cli/src/zswap-sponsor-example.ts) shows a simple zswap with dust fees sponsored by the admin. The [`delegation-flow-example`](../cli/src/delegation-flow-example.ts) showcases the whole functionality from contract deployment, NIGHT delegation, dust sponsorship and reward distribution.
+
+To run the examples:
+
+```bash
+# Whole example
+pnpm run dev-delegation
+
+# zswap only
+pnpm tsx src/zswap-sponsor-example.ts
+```
+
 ## Main Menu Options
 
 1. **Deploy a new contract** - Deploys a fresh SentinelContract and displays the contract address

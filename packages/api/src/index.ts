@@ -6,8 +6,12 @@ import {
   Proof,
   Binding,
 } from '@midnight-ntwrk/ledger-v8';
-import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { MidnightBech32m, ShieldedAddress } from '@midnight-ntwrk/wallet-sdk-address-format';
+import {
+  deployContract,
+  findDeployedContract,
+  withContractScopedTransaction,
+} from '@midnight-ntwrk/midnight-js-contracts';
 import {
   CompactCompiledContract,
   createPrivateState,
@@ -21,6 +25,7 @@ import {
   type SentinelContractType,
 } from '@midnight-sentinel/contract';
 import { getNetworkId, WalletContext } from '@midnight-sentinel/wallet';
+import { fromHex } from '@midnight-ntwrk/compact-runtime';
 import { map, type Observable } from 'rxjs';
 
 export const toHex = (arr: Uint8Array) =>
@@ -240,6 +245,30 @@ export class SentinelContract {
       sentinelContractPrivateStateKey
     );
     return existingPrivateState ?? createPrivateState(crypto.getRandomValues(new Uint8Array(32)));
+  }
+
+  async mintFreeToken(recipientCoinPubKeyHex: string, recipientEncPubKeyHex: string) {
+    const domainSep = new Uint8Array(32).fill(1);
+    const mintNonce = crypto.getRandomValues(new Uint8Array(32));
+    const amount = 1000n;
+
+    const additionalMappings = new Map<string, string>([
+      [recipientCoinPubKeyHex, recipientEncPubKeyHex],
+    ]);
+
+    return await withContractScopedTransaction(
+      this.providers,
+      async (txCtx) => {
+        await this.deployedContract?.callTx.mintDirectShielded(
+          txCtx,
+          domainSep,
+          amount,
+          mintNonce,
+          { bytes: fromHex(recipientCoinPubKeyHex) }
+        );
+      },
+      { additionalCoinEncPublicKeyMappings: additionalMappings }
+    );
   }
 }
 

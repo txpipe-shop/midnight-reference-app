@@ -75,7 +75,7 @@ export circuit depositRewards(coin: ShieldedCoinInfo): [] {
     hasRewards = true;
   } else {
     rewardsVault.writeCoin(
-        mergeCoinImmediate(shieldedVault, disclose(coin)),
+        mergeCoinImmediate(rewardsVault, disclose(coin)),
         right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
     );
   }
@@ -100,6 +100,15 @@ export circuit redeemRewards():[] {
       mt_index: 0
   };
 }
+
+
+
+///////// HELPER CIRCUIT TO MINT TOKENS TO PAY /////////
+
+export circuit mintDirectShielded(domainSep: Bytes<32>, mintValue: Uint<64>, mintNonce: Bytes<32>, publicKey: ZswapCoinPublicKey): [] {
+  mintShieldedToken(disclose(domainSep), disclose(mintValue), disclose(mintNonce), left<ZswapCoinPublicKey, ContractAddress>(disclose(publicKey)));
+}
+
 
 ///////// HELPER CIRCUITS /////////
 
