@@ -201,7 +201,7 @@ const main = async () => {
     admin.wallet,
     GENESIS_MINT_WALLET_SEED_ONE
   );
-  await contract.withdraw(adminAddresses.unshielded);
+  await contract.withdraw();
   console.log('  ✓ Admin withdrew NIGHT from contract');
   await sleep(SYNC_DELAY_MS);
 
