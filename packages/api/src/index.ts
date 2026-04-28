@@ -270,7 +270,6 @@ export class SentinelContract {
       { additionalCoinEncPublicKeyMappings: additionalMappings }
     );
   }
-
 }
 
 /** Rolling 30-minute TTL for all transactions. */

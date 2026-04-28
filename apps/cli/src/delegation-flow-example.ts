@@ -197,10 +197,6 @@ const main = async () => {
 
   // ── 7. Admin withdraws shielded NIGHT from contract ───────────────────────
   console.log('\n=== 7. Admin withdraws shielded NIGHT from contract ===');
-  const { addresses: adminAddresses } = await getBalancesAndAddresses(
-    admin.wallet,
-    GENESIS_MINT_WALLET_SEED_ONE
-  );
   await contract.withdraw();
   console.log('  ✓ Admin withdrew NIGHT from contract');
   await sleep(SYNC_DELAY_MS);
