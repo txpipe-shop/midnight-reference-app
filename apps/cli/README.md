@@ -1,35 +1,72 @@
 # Sentinel CLI
 
-This package provides an interactive command-line interface (CLI) to test and interact with the `SentinelContract`.
+Interactive command-line interface for testing and interacting with the `SentinelContract` on Midnight network.
 
 ## Overview
 
-The `apps/cli` application allows you to spin up a local standalone Midnight network environment (using test containers for the node, indexer, and proof server), synchronize a wallet, and interact with the ZK contract through a guided terminal menu.
+The CLI provides a menu-driven interface to:
 
-## Features
+- Deploy or join Sentinel contracts
+- Manage delegations and rewards
+- Execute ZSwap transactions with DUST sponsorship
+- Check wallet balances and contract state
 
-- **Contract Deployment**: Deploys a new `SentinelContract` onto the network with a predefined set of rules.
-- **Contract Joining**: Allows joining an already deployed contract by entering its contract address.
-- **Token Minting**: Once a contract is deployed or joined, the CLI provides an option to execute the `mintSpecialToken` circuit. It gathers the required input from the user to satisfy the contract's rules and attempts to mint the token unshielded.
+## Prerequisites
+
+- Node.js >= 22
+- pnpm
+- Running Midnight network (standalone or remote)
 
 ## Usage
 
-You can run the CLI directly from source in development mode:
+### Development Mode
+
+Select which wallet to use:
 
 ```bash
-pnpm install
-pnpm turbo build
+# Deployer wallet (genesis seed one)
 pnpm run dev
+
+# Joiner wallet (genesis seed two)
+pnpm run dev-join
+
+# Third wallet (genesis seed three)
+pnpm run dev-third
 ```
 
-### Menu Flow
+## Main Menu Options
 
-When starting the CLI, you will be presented with the main menu:
+1. **Deploy a new contract** - Deploys a fresh SentinelContract and displays the contract address
+2. **Join an existing contract** - Connect to an existing contract by providing its address
+3. **(Admin) Submit transaction sponsoring DUST** - Submit a serialized transaction for DUST fee sponsorship
+4. **Start ZSwap to request DUST sponsorship** - Initiate a shielded token swap (outputs hex-serialized transaction)
+5. **Get balances** - Display wallet balances (shielded/unshielded)
+6. **Exit** - Quit the CLI
 
-1. **Deploy contract**: Deploys a new `SentinelContract` and displays its network address.
-2. **Join contract**: Prompts for a contract address to attach to an existing deployment.
-3. **Exit**: Gracefully shuts down containers and exits.
+## Circuit Menu Options (After Deploy/Join)
 
-After deploying or joining a contract, you have access to the circuit menu:
+1. **Delegate NIGHT** - Delegate NIGHT tokens by providing amount
+2. **Redeem rewards** - Claim accumulated delegation rewards
+3. **(Admin) Withdraw NIGHTs** - Admin function to withdraw delegated tokens
+4. **(Admin) Deposit rewards** - Admin function to deposit reward tokens
+5. **Get contract state** - View current contract state (owner, delegators, vaults)
+6. **Exit** - Return to main menu
 
-1. **Mint Token**: Prompts for a numeric input. The CLI constructs the transaction invoking `mintSpecialToken` passing the input to see if it satisfies the contract rules. If successful, you will receive a transaction hash.
+## ZSwap Workflow
+
+The ZSwap feature enables atomic token swaps with DUST sponsorship:
+
+### Step 1: Start ZSwap to request DUST sponsorship (Option 4 in main menu)
+
+- Enter token type (shielded token color)
+- Enter amount to swap
+- Enter receiver's shielded address
+- Returns hex-encoded serialized transaction
+
+### Step 2: (Admin) Submit transaction sponsoring DUST (Option 3 in main menu)
+
+- Paste the hex-encoded transaction from step 1
+- Admin wallet balances the transaction and pays DUST fees
+- Transaction is submitted to the network
+
+**Note:** These two operations typically run in different wallet contexts - the swap initiator (who doesn't pay fees) and the sponsor (who pays DUST fees).
