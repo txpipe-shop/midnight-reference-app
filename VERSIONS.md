@@ -11,9 +11,9 @@
 - Compact JS: 2.5.1
 - Midnight.js: 4.1.1
 - On-chain runtime: 3.0.0
-- Indexer: 4.0.0
-- Proof server: 8.0.2
-- Midnight node: 0.22.0
+- Indexer (standalone devnet): 4.2.1
+- Proof server: 8.1.0
+- Midnight node (local devnet): 0.22.5
 - Node.js: 24.13.1
 
 ## Project dependencies
