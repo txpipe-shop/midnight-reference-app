@@ -1,13 +1,18 @@
-pragma language_version 0.22;
+pragma language_version 0.23;
 
 import CompactStandardLibrary;
 
 ///////// LEDGER /////////
 export ledger owner: Bytes<32>;
+
 export ledger delegators: Map<Bytes<32>, Uint<128>>;
+
 export ledger shieldedVault: QualifiedShieldedCoinInfo;
+
 export ledger rewardsVault: QualifiedShieldedCoinInfo;
+
 export ledger hasShielded: Boolean;
+
 export ledger hasRewards: Boolean;
 
 ///////// CONSTRUCTOR /////////
@@ -26,15 +31,15 @@ export circuit delegate(coin: ShieldedCoinInfo): [] {
   receiveShielded(disclose(coin));
 
   if (!hasShielded) {
-      shieldedVault.writeCoin(
-          disclose(coin),
-          right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
+    shieldedVault.writeCoin(
+      disclose(coin),
+      right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
       );
-      hasShielded = true;
+    hasShielded = true;
   } else {
-      shieldedVault.writeCoin(
-          mergeCoinImmediate(shieldedVault, disclose(coin)),
-          right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
+    shieldedVault.writeCoin(
+      mergeCoinImmediate(shieldedVault, disclose(coin)),
+      right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
       );
   }
 
@@ -49,18 +54,13 @@ export circuit withdraw(): [] {
     shieldedVault,
     left<ZswapCoinPublicKey, ContractAddress>(ownPublicKey()),
     disclose(shieldedVault.value)
-  );
+    );
 
   hasShielded = false;
 
-  shieldedVault = QualifiedShieldedCoinInfo {
-      nonce: pad(32, ""),
-      color: pad(32, ""),
-      value: 0,
-      mt_index: 0
-  };
+  shieldedVault =
+    QualifiedShieldedCoinInfo { nonce: pad(32, ""), color: pad(32, ""), value: 0, mt_index: 0 };
 }
-
 
 export circuit depositRewards(coin: ShieldedCoinInfo): [] {
   assert(coin.value > 0, "Deposit amount must be positive");
@@ -71,18 +71,20 @@ export circuit depositRewards(coin: ShieldedCoinInfo): [] {
     rewardsVault.writeCoin(
       disclose(coin),
       right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
-    );
+      );
     hasRewards = true;
   } else {
     rewardsVault.writeCoin(
-        mergeCoinImmediate(rewardsVault, disclose(coin)),
-        right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
-    );
+      mergeCoinImmediate(rewardsVault, disclose(coin)),
+      right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
+      );
   }
 }
 
-export circuit redeemRewards():[] {
-  assert(delegators.member(disclose(publicKey(localSecretKey()))), "You must be a delegator to redeem rewards");
+export circuit redeemRewards(): [] {
+  assert(delegators.member(disclose(publicKey(localSecretKey()))),
+         "You must be a delegator to redeem rewards"
+         );
   assert(hasRewards, "No tokens in vault");
 
   const callerKey = ownPublicKey();
@@ -91,24 +93,27 @@ export circuit redeemRewards():[] {
     vault,
     left<ZswapCoinPublicKey, ContractAddress>(disclose(callerKey)),
     disclose(vault.value)
-  );
+    );
   hasRewards = false;
-  rewardsVault = QualifiedShieldedCoinInfo {
-      nonce: pad(32, ""),
-      color: pad(32, ""),
-      value: 0,
-      mt_index: 0
-  };
+  rewardsVault =
+    QualifiedShieldedCoinInfo { nonce: pad(32, ""), color: pad(32, ""), value: 0, mt_index: 0 };
 }
-
-
 
 ///////// HELPER CIRCUIT TO MINT TOKENS TO PAY /////////
 
-export circuit mintDirectShielded(domainSep: Bytes<32>, mintValue: Uint<64>, mintNonce: Bytes<32>, publicKey: ZswapCoinPublicKey): [] {
-  mintShieldedToken(disclose(domainSep), disclose(mintValue), disclose(mintNonce), left<ZswapCoinPublicKey, ContractAddress>(disclose(publicKey)));
+export circuit mintDirectShielded(
+                 domainSep: Bytes<32>,
+                 mintValue: Uint<64>,
+                 mintNonce: Bytes<32>,
+                 publicKey: ZswapCoinPublicKey
+                 ): [] {
+  mintShieldedToken(
+    disclose(domainSep),
+    disclose(mintValue),
+    disclose(mintNonce),
+    left<ZswapCoinPublicKey, ContractAddress>(disclose(publicKey))
+    );
 }
-
 
 ///////// HELPER CIRCUITS /////////
 

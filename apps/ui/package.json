@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@midnight-ntwrk/dapp-connector-api": "4.0.1",
-    "@midnight-ntwrk/onchain-runtime-v2": "^2.0.1",
+    "@midnight-ntwrk/onchain-runtime-v3": "3.0.0",
     "@midnight-sentinel/api": "workspace:*",
     "@midnight-sentinel/contract": "workspace:*",
     "@radix-ui/react-label": "^2.1.8",
