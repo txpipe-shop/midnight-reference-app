@@ -705,7 +705,46 @@ contracts, generated artifacts, runners, or reports.
 | Operator CLI | Implemented | Deployment configuration, policy-bound sponsor submission, and pause/resume. |
 | Existing UI compatibility | Confirmed | TypeScript and the Vite production bundle complete with the new constructor/state shape; no sponsorship workflow was added. |
 | Deterministic production runtime check | Confirmed | Exact payment credited `100`, one receipt recorded, duplicates rejected, and pause enforced. |
-| Fresh production-path devnet run | Pending | Full-ZK Sentinel artifacts were generated, but no node/indexer/proof-server containers were running at the final check. |
+| Fresh production-path devnet run | Confirmed | The complete production preparation, inspection, DUST-only balancing, reinspection, submission, and indexed-state verification finished with verdict `CONFIRMED`. |
 
 Implementation details and commands are documented in
 [`SPONSORSHIP_IMPLEMENTATION.md`](SPONSORSHIP_IMPLEMENTATION.md).
+
+## Frozen production evidence — 2026-07-27
+
+The production vertical slice was executed successfully against the isolated
+`undeployed` devnet. The retained report records verdict `confirmed`, with all
+three service health probes passing.
+
+Run the complete verification from the repository root with:
+
+```bash
+pnpm --dir packages/contract verify:sponsorship:production
+```
+
+The verified stack was:
+
+| Component | Version |
+| --- | --- |
+| Compact compiler | `0.31.1` |
+| Compact language | `0.23.0` |
+| Ledger | `8.0.3` |
+| Midnight.js | `4.1.1` |
+| Node | `0.22.5` |
+| Indexer | `4.2.1` |
+| Proof server | `8.1.0` |
+| Network | `undeployed` |
+
+The run started at `2026-07-27T17:09:31.611Z` and completed at
+`2026-07-27T17:13:14.650Z`. Its successful composite transaction returned
+`SucceedEntirely`. Its intentionally expired fallible target returned
+`FailFallible` while the guaranteed sponsorship accounting remained committed.
+The final public state contained revenue `200`, purchase count `2`, receipt
+count `2`, two guaranteed target executions, and one fallible target execution.
+
+Sanitized machine-readable evidence, including service health, contract
+addresses, transaction identifiers, fee estimates, scenario statuses, and
+post-state, is frozen at
+[`verification-results/sponsorship-production-verification.json`](verification-results/sponsorship-production-verification.json).
+It contains no wallet seeds, secret keys, private call data, or complete
+serialized transactions.
