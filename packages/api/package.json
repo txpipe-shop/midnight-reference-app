@@ -17,9 +17,14 @@
       "require": "./dist/browser.js"
     },
     "./sponsorship": {
-      "types": "./dist/sponsorship.d.ts",
-      "import": "./dist/sponsorship.js",
-      "require": "./dist/sponsorship.js"
+      "types": "./dist/sponsorship/index.d.ts",
+      "import": "./dist/sponsorship/index.js",
+      "require": "./dist/sponsorship/index.js"
+    },
+    "./sponsorship/midnight": {
+      "types": "./dist/sponsorship/midnight.d.ts",
+      "import": "./dist/sponsorship/midnight.js",
+      "require": "./dist/sponsorship/midnight.js"
     }
   },
   "scripts": {

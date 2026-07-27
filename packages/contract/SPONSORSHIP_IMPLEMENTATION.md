@@ -17,9 +17,9 @@ The production Sentinel contract now owns:
 - sponsor-side replay protection preventing the same target communication
   commitment from being accepted twice.
 
-The experiment contracts and TypeScript runners under `src/verification`,
-`apps/cli/src/sponsorship-*-verification.ts`, and
-`.tmp-composite-target-check` remain retained as reproducibility evidence.
+The experiment contracts and TypeScript runners under `src/verification` and
+`apps/cli/src/verification` remain retained as reproducibility evidence.
+Generated scratch compiler directories are deliberately not retained.
 
 ## Transaction architecture
 
@@ -63,21 +63,25 @@ transaction and commits neither payment nor DUST.
 
 ## Public API
 
-`@midnight-sentinel/api/sponsorship` exports:
+`@midnight-sentinel/api/sponsorship` is the stable, SDK-independent domain
+surface. It exports:
 
-- `prepareSponsoredTransaction` for beneficiary-side composition;
-- `inspectSponsorshipRequest` for independent sponsor policy enforcement;
-- `sponsorAndSubmit` for DUST-only balancing, final inspection, submission,
-  and indexer confirmation;
+- `BeneficiarySponsorshipApi.prepare` for beneficiary-side composition;
+- `SponsorSponsorshipApi.inspect` for independent policy enforcement;
+- `SponsorSponsorshipApi.sponsorAndSubmit` for DUST-only balancing, final
+  inspection, submission, and indexer confirmation;
 - `sponsorshipAllowlistHash` for canonical single- or multi-target allowlists;
-- `nativeNightSponsorshipConfig` for a shielded native NIGHT campaign using
-  the sponsor wallet's real DUST public key;
-- `SponsorshipPolicyError`, whose `code` is suitable for operator logs and
-  retry policy.
+- `SponsorshipError`, with structured `code`, `stage`, `retryable`, and safe
+  JSON fields;
+- request, policy, inspection, and submission domain types containing only
+  serialized bytes and sponsorship metadata.
 
-`PreparedTargetCall` deliberately accepts a generated Midnight.js unproven
-contract call rather than a Sentinel-specific call. This is the seam that lets
-another application compose its interaction with the Sentinel receipt.
+`@midnight-sentinel/api/sponsorship/midnight` is the platform adapter. It owns
+the Wallet SDK, provider, unproven-call, and ZK configuration types and creates
+the stable beneficiary and sponsor capabilities. A target call becomes an
+opaque `SponsorshipTargetCall` before crossing into the domain API. Neither
+preparation nor inspection returns a raw ledger transaction or generated
+Compact receipt.
 
 ## Operator lifecycle
 
@@ -114,5 +118,5 @@ commitments are rejected by sponsor inspection against existing receipts.
 The retained composite devnet harness remains the evidence for combining two
 custom calls, preserving the target's guaranteed/fallible partition, adding
 only DUST, `SucceedEntirely`, and `FailFallible`. A fresh devnet run of the new
-production API path is still required before deploying this implementation
-outside an isolated development network.
+production API path completed with verdict `CONFIRMED`; its sanitized evidence
+is retained under `verification/results`.

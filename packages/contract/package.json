@@ -16,15 +16,15 @@
       "import": "./dist/providers.js",
       "require": "./dist/providers.js"
     },
-    "./sponsorship-verification": {
-      "types": "./dist/sponsorship-verification.d.ts",
-      "import": "./dist/sponsorship-verification.js",
-      "require": "./dist/sponsorship-verification.js"
+    "./verification/sponsorship": {
+      "types": "./dist/verification/sponsorship-contract.d.ts",
+      "import": "./dist/verification/sponsorship-contract.js",
+      "require": "./dist/verification/sponsorship-contract.js"
     },
-    "./composite-sponsorship-verification": {
-      "types": "./dist/composite-sponsorship-verification.d.ts",
-      "import": "./dist/composite-sponsorship-verification.js",
-      "require": "./dist/composite-sponsorship-verification.js"
+    "./verification/composite-sponsorship": {
+      "types": "./dist/verification/composite-sponsorship-contract.d.ts",
+      "import": "./dist/verification/composite-sponsorship-contract.js",
+      "require": "./dist/verification/composite-sponsorship-contract.js"
     }
   },
   "scripts": {

@@ -2,7 +2,7 @@ import {
   CompositeTargetCompiledContract,
   compositeTargetLedger,
   type CompositeTargetContractType,
-} from '@midnight-sentinel/contract/composite-sponsorship-verification';
+} from '@midnight-sentinel/contract/verification/composite-sponsorship';
 import {
   CompactCompiledContract,
   ledger as sentinelLedger,
@@ -10,12 +10,15 @@ import {
 import { configureProviders as configureRepositoryProviders } from '@midnight-sentinel/contract/providers';
 import { SentinelContract } from '@midnight-sentinel/api';
 import {
-  nativeNightSponsorshipConfig,
-  prepareSponsoredTransaction,
-  sponsorAndSubmit,
   sponsorshipAllowlistHash,
-  type SponsorPolicy,
+  type SponsorshipPolicy,
 } from '@midnight-sentinel/api/sponsorship';
+import {
+  createMidnightBeneficiarySponsorshipApi,
+  createMidnightSponsorSponsorshipApi,
+  createMidnightSponsorshipTarget,
+  nativeNightSponsorshipConfig,
+} from '@midnight-sentinel/api/sponsorship/midnight';
 import {
   buildUnfundedWallet,
   buildWallet,
@@ -33,11 +36,11 @@ import { mkdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as Rx from 'rxjs';
-import { StandaloneConfig } from './config.js';
+import { StandaloneConfig } from '../config.js';
 import {
   GENESIS_MINT_WALLET_SEED_ONE,
   GENESIS_MINT_WALLET_SEED_THREE,
-} from './utils/constants.js';
+} from '../utils/constants.js';
 
 const PRICE = 100n;
 const TIMEOUT_MS = 360_000;
@@ -50,7 +53,7 @@ const config = Object.assign(new StandaloneConfig(), {
 });
 const packageDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
-  '../../../packages/contract'
+  '../../../../packages/contract'
 );
 const sentinelZkPath = path.join(packageDir, 'src/managed/sentinel');
 const targetZkPath = path.join(packageDir, 'src/managed/composite-target');
@@ -223,7 +226,7 @@ const main = async () => {
       sentinelZkPath
     );
 
-    const policy: SponsorPolicy = {
+    const policy: SponsorshipPolicy = {
       sentinelAddress,
       sponsorId: nativeNightSponsorshipConfig(sponsor, policyHash, PRICE).sponsorId,
       policyHash,
@@ -232,6 +235,18 @@ const main = async () => {
       maxTtlMs: 65 * 60_000,
       maxFee: 1_000_000_000_000_000_000n,
     };
+    const beneficiarySponsorshipApi =
+      createMidnightBeneficiarySponsorshipApi({
+        sentinelAddress,
+        sentinelProviders: beneficiarySentinelProviders,
+        beneficiary,
+        proofServer: config.proofServer,
+      });
+    const sponsorSponsorshipApi = createMidnightSponsorSponsorshipApi({
+      policy,
+      sentinelProviders: sponsorSentinelProviders,
+      sponsor,
+    });
 
     const runScenario = async (
       purchaseId: Uint8Array,
@@ -260,26 +275,25 @@ const main = async () => {
       assert(targetCall.public.partitionedTranscript[0]);
       assert(targetCall.public.partitionedTranscript[1]);
 
-      const prepared = await prepareSponsoredTransaction({
-        targetCall,
-        targetZkConfigProvider: targetProviders.zkConfigProvider,
-        sentinelProviders: beneficiarySentinelProviders,
-        sentinelAddress,
-        beneficiary,
-        proofServer: config.proofServer,
-        ttl: TTL(),
+      const prepared = await beneficiarySponsorshipApi.prepare({
+        target: createMidnightSponsorshipTarget({
+          targetCall,
+          zkConfigProvider: targetProviders.zkConfigProvider,
+        }),
+        expiresAt: TTL(),
         purchaseId,
       });
-      assert(prepared.serializedTransaction.length > 0);
+      assert(prepared.transaction.length > 0);
 
       const targetCommitment = prepared.targetCommunicationCommitment;
       if (expectedStatus === 'FailFallible') await waitForWallClock(expiry);
-      const submitted = await sponsorAndSubmit(
-        prepared.serializedTransaction,
-        policy,
-        sponsorSentinelProviders,
-        sponsor
-      );
+      const inspected = await sponsorSponsorshipApi.inspect({
+        transaction: prepared.transaction,
+      });
+      assert.equal(inspected.hasDust, false);
+      const submitted = await sponsorSponsorshipApi.sponsorAndSubmit({
+        transaction: prepared.transaction,
+      });
       assert.equal(submitted.status, expectedStatus);
       assert.equal(submitted.targetCommunicationCommitment, targetCommitment);
       return {
@@ -358,12 +372,13 @@ const main = async () => {
     });
     throw error;
   } finally {
-    const resultDir = path.join(packageDir, 'verification-results');
-    await mkdir(resultDir, { recursive: true });
-    const reportPath = path.join(
-      resultDir,
-      'sponsorship-production-verification.json'
-    );
+    const reportPath =
+      process.env.SPONSORSHIP_VERIFICATION_REPORT ??
+      path.join(
+        packageDir,
+        'verification/results/sponsorship-production-verification.json'
+      );
+    await mkdir(path.dirname(reportPath), { recursive: true });
     await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`);
     console.log(`Production sponsorship verification: ${String(report.verdict).toUpperCase()}`);
     console.log(`Report: ${reportPath}`);

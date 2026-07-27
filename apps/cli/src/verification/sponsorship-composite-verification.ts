@@ -24,7 +24,7 @@ import {
   compositeTargetLedger,
   type CompositeSponsorshipContractType,
   type CompositeTargetContractType,
-} from '@midnight-sentinel/contract/composite-sponsorship-verification';
+} from '@midnight-sentinel/contract/verification/composite-sponsorship';
 import { configureProviders as configureRepositoryProviders } from '@midnight-sentinel/contract/providers';
 import {
   buildUnfundedWallet,
@@ -37,8 +37,8 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as Rx from 'rxjs';
-import { StandaloneConfig } from './config.js';
-import { GENESIS_MINT_WALLET_SEED_ONE, GENESIS_MINT_WALLET_SEED_THREE } from './utils/constants.js';
+import { StandaloneConfig } from '../config.js';
+import { GENESIS_MINT_WALLET_SEED_ONE, GENESIS_MINT_WALLET_SEED_THREE } from '../utils/constants.js';
 
 const PRICE = 100n;
 const TRANSFER_AMOUNT = 25n;
@@ -53,7 +53,7 @@ const config = Object.assign(new StandaloneConfig(), {
 });
 const packageDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
-  '../../../packages/contract'
+  '../../../../packages/contract'
 );
 const sponsorshipZkPath = path.join(packageDir, 'src/managed/composite-sponsorship');
 const targetZkPath = path.join(packageDir, 'src/managed/composite-target');
@@ -258,7 +258,6 @@ const main = async () => {
         args: [expiry],
       });
       const targetTranscript = transcriptShape(targetCallData);
-      console.log('Target transcript partition:', JSON.stringify(targetTranscript, null, 2));
       assert(
         targetTranscript.rawOperations.includes('ckpt'),
         'Compiled target transcript is missing the checkpoint opcode'
@@ -478,7 +477,7 @@ const main = async () => {
     });
     throw error;
   } finally {
-    const resultDir = path.join(packageDir, 'verification-results');
+    const resultDir = path.join(packageDir, 'verification/results');
     await mkdir(resultDir, { recursive: true });
     await writeFile(
       path.join(resultDir, 'sponsorship-composite-verification.json'),

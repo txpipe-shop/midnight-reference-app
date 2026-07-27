@@ -647,9 +647,9 @@ fails for a protocol or SDK reason rather than an experiment defect.
 The isolated verification harness ran against node `0.22.5`, indexer `4.2.1`,
 proof server `8.1.0`, Compact compiler `0.31.1`, and network `undeployed`.
 Sanitized machine-readable evidence is retained in
-[`verification-results/sponsorship-verification.json`](verification-results/sponsorship-verification.json)
+[`verification/results/sponsorship-verification.json`](verification/results/sponsorship-verification.json)
 and
-[`verification-results/sponsorship-composite-verification.json`](verification-results/sponsorship-composite-verification.json).
+[`verification/results/sponsorship-composite-verification.json`](verification/results/sponsorship-composite-verification.json).
 
 | Check | Verdict      | Observed evidence                                                                                                                                                                                                                                                                      |
 | ----- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -745,6 +745,6 @@ count `2`, two guaranteed target executions, and one fallible target execution.
 Sanitized machine-readable evidence, including service health, contract
 addresses, transaction identifiers, fee estimates, scenario statuses, and
 post-state, is frozen at
-[`verification-results/sponsorship-production-verification.json`](verification-results/sponsorship-production-verification.json).
+[`verification/results/sponsorship-production-verification.json`](verification/results/sponsorship-production-verification.json).
 It contains no wallet seeds, secret keys, private call data, or complete
 serialized transactions.

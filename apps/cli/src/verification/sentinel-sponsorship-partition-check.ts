@@ -12,7 +12,7 @@ import { NodeZkConfigProvider } from '@midnight-sentinel/contract/providers';
 import {
   CompositeSponsorshipCompiledContract,
   CompositeSponsorshipContractConstructor,
-} from '@midnight-sentinel/contract/composite-sponsorship-verification';
+} from '@midnight-sentinel/contract/verification/composite-sponsorship';
 import { setNetworkId } from '@midnight-sentinel/wallet';
 
 setNetworkId('undeployed');

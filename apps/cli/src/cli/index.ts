@@ -1,10 +1,12 @@
 import { SentinelContract } from '@midnight-sentinel/api';
 import {
-  dustPublicKeyToBytes,
-  nativeNightSponsorshipConfig,
-  sponsorAndSubmit,
   sponsorshipAllowlistHash,
 } from '@midnight-sentinel/api/sponsorship';
+import {
+  createMidnightSponsorSponsorshipApi,
+  dustPublicKeyToBytes,
+  nativeNightSponsorshipConfig,
+} from '@midnight-sentinel/api/sponsorship/midnight';
 import { configureProviders } from '@midnight-sentinel/contract/providers';
 import {
   getBalancesAndAddresses,
@@ -127,9 +129,8 @@ export async function runCli(
             config,
             walletDetails.privateStateStoreName
           );
-          const result = await sponsorAndSubmit(
-            Uint8Array.from(Buffer.from(raw, 'hex')),
-            {
+          const sponsorshipApi = createMidnightSponsorSponsorshipApi({
+            policy: {
               sentinelAddress,
               sponsorId: dustPublicKeyToBytes(walletCtx.dustSecretKey.publicKey),
               policyHash: sponsorshipAllowlistHash(allowedTargets),
@@ -138,9 +139,12 @@ export async function runCli(
               maxTtlMs: 65 * 60 * 1_000,
               maxFee,
             },
-            providers,
-            walletCtx
-          );
+            sentinelProviders: providers,
+            sponsor: walletCtx,
+          });
+          const result = await sponsorshipApi.sponsorAndSubmit({
+            transaction: Uint8Array.from(Buffer.from(raw, 'hex')),
+          });
           console.log(
             JSON.stringify({
               txId: result.txId,

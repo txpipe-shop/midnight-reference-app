@@ -18,7 +18,7 @@ import {
   SponsorshipCompiledContract,
   sponsorshipLedger,
   type SponsorshipContractType,
-} from '@midnight-sentinel/contract/sponsorship-verification';
+} from '@midnight-sentinel/contract/verification/sponsorship';
 import {
   buildUnfundedWallet,
   buildWallet,
@@ -31,8 +31,8 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as Rx from 'rxjs';
-import { StandaloneConfig } from './config.js';
-import { GENESIS_MINT_WALLET_SEED_ONE, GENESIS_MINT_WALLET_SEED_THREE } from './utils/constants.js';
+import { StandaloneConfig } from '../config.js';
+import { GENESIS_MINT_WALLET_SEED_ONE, GENESIS_MINT_WALLET_SEED_THREE } from '../utils/constants.js';
 
 const PRICE = 100n;
 const FUNDING_AMOUNT = 1_000n;
@@ -45,7 +45,7 @@ const config = Object.assign(new StandaloneConfig(), {
 });
 const packageDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
-  '../../../packages/contract'
+  '../../../../packages/contract'
 );
 const zkPath = path.join(packageDir, 'src/managed/sponsorship');
 
@@ -422,7 +422,7 @@ const main = async () => {
       transactionIds: { funding: String(fundingTxId), purchase: String(txId) },
       checks,
     };
-    const reportDir = path.join(packageDir, 'verification-results');
+    const reportDir = path.join(packageDir, 'verification/results');
     await mkdir(reportDir, { recursive: true });
     await writeFile(
       path.join(reportDir, 'sponsorship-verification.json'),
