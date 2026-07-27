@@ -16,6 +16,9 @@ ${DIVIDER}
   [1] Get sponsorship state
   [2] (Owner) Pause sponsorship
   [3] (Owner) Resume sponsorship
-  [4] Exit
+  [4] (Operator) Verify and enroll signed request
+  [5] (Operator) Remove delegator
+  [6] (Owner) Rotate eligibility operator
+  [7] Exit
 ${DIVIDER}
 `;

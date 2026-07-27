@@ -179,7 +179,12 @@ const main = async () => {
     );
     const sentinel = await SentinelContract.deploy(
       deploySentinelProviders,
-      nativeNightSponsorshipConfig(sponsor, policyHash, PRICE)
+      nativeNightSponsorshipConfig(sponsor, policyHash, {
+        sponsorShare: 1n,
+        delegatorShare: 1n,
+        minimumRegisteredNight: 1n,
+        initialEligibilityOperator: new Uint8Array(32),
+      })
     );
     const sentinelAddress = sentinel.deployedContract!.deployTxData.public.contractAddress;
 
@@ -228,7 +233,21 @@ const main = async () => {
 
     const policy: SponsorshipPolicy = {
       sentinelAddress,
-      sponsorId: nativeNightSponsorshipConfig(sponsor, policyHash, PRICE).sponsorId,
+      sponsorId: nativeNightSponsorshipConfig(sponsor, policyHash, {
+        initialEligibilityOperator: new Uint8Array(32),
+      }).sponsorId,
+      sponsorDustAddress: '',
+      registrationProvider: {
+        async getStatus(nightRewardAddress) {
+          return {
+            nightRewardAddress,
+            dustAddress: '',
+            registered: true,
+            nightBalance: 1n,
+            finalizedBlock: 0n,
+          };
+        },
+      },
       policyHash,
       allowedTargets,
       minTtlMs: 0,
@@ -343,7 +362,6 @@ const main = async () => {
           )
       )
     );
-    assert.equal(sentinelState.sponsorshipRevenue, PRICE * 2n);
     assert.equal(sentinelState.sponsorshipReceipts.size(), 2n);
 
     Object.assign(report, {
@@ -357,7 +375,9 @@ const main = async () => {
       },
       scenarios: { success, fallibleFailure },
       postState: {
-        sponsorshipRevenue: sentinelState.sponsorshipRevenue.toString(),
+        sponsorshipRevenue: (
+          sentinelState.sponsorshipPurchases * sentinelState.sponsorshipFixedPrice
+        ).toString(),
         sponsorshipPurchases: sentinelState.sponsorshipPurchases.toString(),
         receiptCount: sentinelState.sponsorshipReceipts.size().toString(),
         targetGuaranteedExecutions: targetState.guaranteedExecutions.toString(),

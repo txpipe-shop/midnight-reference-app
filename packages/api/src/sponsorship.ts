@@ -2,6 +2,7 @@ import {
   Binding,
   ContractCall,
   ContractDeploy,
+  LedgerParameters,
   PreProof,
   Proof,
   SignatureEnabled,
@@ -18,10 +19,13 @@ import {
   CostModel as CompactCostModel,
   QueryContext as CompactQueryContext,
   type AlignedValue as CompactAlignedValue,
-  type ChargedState as CompactChargedState,
+  ChargedState as CompactChargedState,
   type Transcript as CompactTranscript,
 } from '@midnight-ntwrk/compact-runtime';
-import { createUnprovenCallTx } from '@midnight-ntwrk/midnight-js-contracts';
+import {
+  createUnprovenCallTx,
+  createUnprovenCallTxFromInitialStates,
+} from '@midnight-ntwrk/midnight-js-contracts';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import {
   ZKConfigProvider,
@@ -43,6 +47,10 @@ import {
   type WalletContext,
 } from '@midnight-sentinel/wallet';
 import { createHash } from 'node:crypto';
+import {
+  assertEligible,
+  type MidnightRegistrationProvider,
+} from './sponsorship/eligibility.js';
 
 const FIELD_ENCODING_TAG = 0x73;
 
@@ -57,13 +65,29 @@ export const dustPublicKeyToBytes = (value: bigint) =>
 export const nativeNightSponsorshipConfig = (
   sponsor: WalletContext,
   policyHash: Uint8Array,
-  fixedPrice = 100n
+  options: {
+    sponsorShare?: bigint;
+    delegatorShare?: bigint;
+    minimumRegisteredNight?: bigint;
+    initialEligibilityOperator: Uint8Array;
+  }
 ) => {
   if (policyHash.length !== 32) throw new Error('policyHash must be exactly 32 bytes');
   return {
     sponsorId: dustPublicKeyToBytes(sponsor.dustSecretKey.publicKey),
     acceptedColor: Uint8Array.from(Buffer.from(shieldedToken().raw, 'hex')),
-    fixedPrice,
+    sponsorRewardKey: {
+      bytes: Uint8Array.from(
+        Buffer.from(sponsor.shieldedSecretKeys.coinPublicKey, 'hex')
+      ),
+    },
+    sponsorRewardEncryptionKey: Uint8Array.from(
+      Buffer.from(sponsor.shieldedSecretKeys.encryptionPublicKey, 'hex')
+    ),
+    sponsorShare: options.sponsorShare ?? 1n,
+    delegatorShare: options.delegatorShare ?? 1n,
+    minimumRegisteredNight: options.minimumRegisteredNight ?? 1n,
+    initialEligibilityOperator: options.initialEligibilityOperator,
     policyHash,
   };
 };
@@ -115,7 +139,11 @@ export type SponsorshipPolicyCode =
   | 'CAMPAIGN_MISMATCH'
   | 'TARGET_ALREADY_SPONSORED'
   | 'RECEIPT_MISMATCH'
-  | 'STALE_CONTRACT_STATE';
+  | 'STALE_CONTRACT_STATE'
+  | 'NO_ELIGIBLE_DELEGATOR'
+  | 'DELEGATOR_STALE'
+  | 'REWARD_DELIVERY_FAILED'
+  | 'CAMPAIGN_VERSION_UNSUPPORTED';
 
 export class SponsorshipPolicyError extends Error {
   readonly code: SponsorshipPolicyCode;
@@ -155,6 +183,8 @@ export const sponsorshipAllowlistHash = (
 export interface SponsorPolicy {
   sentinelAddress: string;
   sponsorId: Uint8Array;
+  sponsorDustAddress: string;
+  registrationProvider: MidnightRegistrationProvider;
   policyHash: Uint8Array;
   allowedTargets: readonly SponsorshipTargetPolicy[];
   minTtlMs: number;
@@ -275,8 +305,11 @@ export const prepareSponsoredTransaction = async (
 ): Promise<PreparedSponsoredTransaction> => {
   const target = selectedTargetCall(options.targetCall);
   const targetEntryPoint = entryPointName(target.entryPoint);
-  if (targetEntryPoint === 'purchaseSponsorship') {
-    throw new Error('Target circuit ID collides with Sentinel purchaseSponsorship');
+  if (
+    targetEntryPoint === 'purchaseDelegatorReward' ||
+    targetEntryPoint === 'deliverSponsorReward'
+  ) {
+    throw new Error('Target circuit ID collides with Sentinel reward circuits');
   }
 
   const stateData = await options.sentinelProviders.publicDataProvider.queryZSwapAndContractState(
@@ -285,63 +318,112 @@ export const prepareSponsoredTransaction = async (
   if (!stateData) throw new Error('Sentinel contract state not found');
   const campaign = sentinelLedger(stateData[1].data);
   if (!campaign.sponsorshipEnabled) throw new Error('Sponsorship campaign is paused');
+  if (campaign.delegatorCount === 0n) throw new Error('NO_ELIGIBLE_DELEGATOR');
+  const selected = campaign.delegatorSlots.lookup(campaign.rewardCursor);
 
   const walletState = await syncedWalletState(options.beneficiary);
-  const paymentCoin = [...(walletState.shielded.state.state as ZswapLocalState).coins].find(
+  const paymentCoins = [...(walletState.shielded.state.state as ZswapLocalState).coins].filter(
     (coin) =>
       coin.type === bytesHex(campaign.sponsorshipAcceptedColor) &&
-      coin.value === campaign.sponsorshipFixedPrice
+      (coin.value === campaign.sponsorshipDelegatorShare ||
+        coin.value === campaign.sponsorshipSponsorShare)
   );
-  if (!paymentCoin) {
+  const delegatorCoin = paymentCoins.find(
+    (coin) => coin.value === campaign.sponsorshipDelegatorShare
+  );
+  const sponsorCoin = paymentCoins.find(
+    (coin) =>
+      coin.value === campaign.sponsorshipSponsorShare && coin !== delegatorCoin
+  );
+  if (!delegatorCoin || !sponsorCoin) {
     throw new Error(
-      `An exact ${campaign.sponsorshipFixedPrice} payment coin is required; split funds before composing`
+      `Exact ${campaign.sponsorshipDelegatorShare} and ${campaign.sponsorshipSponsorShare} NIGHT payment coins are required`
     );
   }
 
-  const encodedPayment = encodeQualifiedShieldedCoinInfo(paymentCoin);
-  const payment = {
-    nonce: encodedPayment.nonce,
-    color: encodedPayment.color,
-    value: campaign.sponsorshipFixedPrice,
+  const encodedDelegator = encodeQualifiedShieldedCoinInfo(delegatorCoin);
+  const encodedSponsor = encodeQualifiedShieldedCoinInfo(sponsorCoin);
+  const delegatorPayment = {
+    nonce: encodedDelegator.nonce,
+    color: encodedDelegator.color,
+    value: campaign.sponsorshipDelegatorShare,
+  };
+  const sponsorPayment = {
+    nonce: encodedSponsor.nonce,
+    color: encodedSponsor.color,
+    value: campaign.sponsorshipSponsorShare,
   };
   const purchaseId = options.purchaseId ?? randomPurchaseId();
   if (purchaseId.length !== 32) throw new Error('purchaseId must be exactly 32 bytes');
 
   const targetCommitment = target.communicationCommitment;
   const targetCommitmentField = communicationCommitmentToField(targetCommitment);
-  const purchaseCall = await createUnprovenCallTx(options.sentinelProviders, {
+  const delegatorCall = await createUnprovenCallTx(options.sentinelProviders, {
     compiledContract: CompactCompiledContract,
     contractAddress: options.sentinelAddress,
-    circuitId: 'purchaseSponsorship',
+    circuitId: 'purchaseDelegatorReward',
     privateStateId: sentinelContractPrivateStateKey,
-    args: [
-      purchaseId,
-      payment,
-      Buffer.from(target.address, 'hex'),
-      Buffer.from(entryPointHash(target.entryPoint), 'hex'),
-      targetCommitmentField,
-    ],
+    additionalCoinEncPublicKeyMappings: new Map([
+      [
+        bytesHex(selected.rewardKey.bytes),
+        bytesHex(selected.rewardEncryptionKey),
+      ],
+    ]),
+    args: [delegatorPayment],
   });
   if (
-    purchaseCall.public.partitionedTranscript[0] === undefined ||
-    purchaseCall.public.partitionedTranscript[1] !== undefined
+    delegatorCall.public.partitionedTranscript[0] === undefined ||
+    delegatorCall.public.partitionedTranscript[1] !== undefined
   ) {
-    const operations = purchaseCall.public.publicTranscript.map((operation) =>
-      typeof operation === 'string' ? operation : Object.keys(operation as object)[0]
-    );
-    throw new Error(
-      `Sentinel purchaseSponsorship must compile as guaranteed-only: ${JSON.stringify({
-        guaranteedPresent: purchaseCall.public.partitionedTranscript[0] !== undefined,
-        falliblePresent: purchaseCall.public.partitionedTranscript[1] !== undefined,
-        operations,
-      })}`
-    );
+    throw new Error('purchaseDelegatorReward must compile as guaranteed-only');
+  }
+
+  const postDelegatorState = CompactContractState.deserialize(stateData[1].serialize());
+  postDelegatorState.data = new CompactChargedState(
+    delegatorCall.public.nextContractState
+  );
+  const sponsorCall = await createUnprovenCallTxFromInitialStates(
+    options.sentinelProviders.zkConfigProvider,
+    {
+      compiledContract: CompactCompiledContract,
+      contractAddress: options.sentinelAddress,
+      circuitId: 'deliverSponsorReward',
+      args: [
+        purchaseId,
+        sponsorPayment,
+        Buffer.from(target.address, 'hex'),
+        Buffer.from(entryPointHash(target.entryPoint), 'hex'),
+        targetCommitmentField,
+      ],
+      coinPublicKey: options.beneficiary.shieldedSecretKeys.coinPublicKey,
+      initialContractState: postDelegatorState,
+      initialZswapChainState: stateData[0],
+      ledgerParameters: LedgerParameters.initialParameters(),
+      initialPrivateState: delegatorCall.private.nextPrivateState,
+      additionalCoinEncPublicKeyMappings: new Map([
+        [
+          bytesHex(campaign.sponsorshipSponsorRewardKey.bytes),
+          bytesHex(campaign.sponsorshipSponsorRewardEncryptionKey),
+        ],
+      ]),
+    },
+    options.beneficiary.shieldedSecretKeys.encryptionPublicKey
+  );
+  if (
+    sponsorCall.public.partitionedTranscript[0] !== undefined ||
+    sponsorCall.public.partitionedTranscript[1] === undefined
+  ) {
+    throw new Error('deliverSponsorReward must compile as fallible-only');
   }
 
   const providers = new Map<string, ZKConfigProvider<string>>([
     [targetEntryPoint, options.targetZkConfigProvider],
     [
-      'purchaseSponsorship',
+      'purchaseDelegatorReward',
+      options.sentinelProviders.zkConfigProvider as ZKConfigProvider<string>,
+    ],
+    [
+      'deliverSponsorReward',
       options.sentinelProviders.zkConfigProvider as ZKConfigProvider<string>,
     ],
   ]);
@@ -349,9 +431,35 @@ export const prepareSponsoredTransaction = async (
     options.proofServer,
     new MultiplexZkConfigProvider(providers)
   );
-  const merged = options.targetCall.private.unprovenTx.merge(
-    purchaseCall.private.unprovenTx
+  const sourceTransactions = [
+    delegatorCall.private.unprovenTx,
+    sponsorCall.private.unprovenTx,
+    options.targetCall.private.unprovenTx,
+  ];
+  const merged = sourceTransactions[0];
+  const primaryEntry = [...(merged.intents?.entries() ?? [])][0];
+  if (!primaryEntry) throw new Error('Delegator call has no intent');
+  const [segment, primaryIntent] = primaryEntry;
+  primaryIntent.actions = sourceTransactions.flatMap((tx) =>
+    [...(tx.intents?.values() ?? [])].flatMap((intent) => intent.actions)
   );
+  merged.intents = new Map([[segment, primaryIntent]]);
+  merged.guaranteedOffer = sourceTransactions
+    .map((tx) => tx.guaranteedOffer)
+    .filter((offer) => offer !== undefined)
+    .reduce((left, right) => left.merge(right));
+  const fallibleOffers = sourceTransactions.flatMap((tx) => [
+    ...(tx.fallibleOffer?.values() ?? []),
+  ]);
+  merged.fallibleOffer =
+    fallibleOffers.length === 0
+      ? undefined
+      : new Map([
+          [
+            segment,
+            fallibleOffers.reduce((left, right) => left.merge(right)),
+          ],
+        ]);
   const proven = await proofProvider.proveTx(merged);
   const recipe = await options.beneficiary.wallet.balanceUnboundTransaction(
     proven,
@@ -404,7 +512,7 @@ const simulatePurchase = (
       transcript,
       CompactCostModel.initialCostModel()
     );
-    return sentinelLedger(after.state);
+    return { state: after.state, ledger: sentinelLedger(after.state) };
   } catch (error) {
     throw new SponsorshipPolicyError(
       'STALE_CONTRACT_STATE',
@@ -464,7 +572,7 @@ const validateNoUnrelatedTransfers = (transaction: FinalizedTransaction, calls: 
         !claimedCommitments.has(transient.commitment)
     );
   if (
-    unclaimedInputs.length !== 1 ||
+    unclaimedInputs.length !== 2 ||
     unclaimedOutputs.length !== 0 ||
     unclaimedTransients.length !== 0
   ) {
@@ -523,35 +631,60 @@ export const inspectSponsorshipRequest = async (
     throw new SponsorshipPolicyError('UNEXPECTED_ACTION', 'Unexpected contract action');
   }
   const calls = contractCalls(transaction);
-  if (calls.length !== 2) {
+  const callIntents = intents.filter((intent) =>
+    intent.actions.some((action) => action instanceof ContractCall)
+  );
+  if (callIntents.length !== 1) {
     throw new SponsorshipPolicyError(
       'WRONG_CALL_COUNT',
-      `Expected exactly two contract calls; received ${calls.length}`
+      'All contract calls must be in one ordered intent'
+    );
+  }
+  if (calls.length !== 3) {
+    throw new SponsorshipPolicyError(
+      'WRONG_CALL_COUNT',
+      `Expected exactly three contract calls; received ${calls.length}`
     );
   }
 
-  const purchase = calls.find((call) => call.address === policy.sentinelAddress);
-  if (!purchase) {
+  const [delegatorReward, sponsorReward, target] = calls;
+  if (
+    delegatorReward.address !== policy.sentinelAddress ||
+    sponsorReward.address !== policy.sentinelAddress
+  ) {
     throw new SponsorshipPolicyError(
       'WRONG_SPONSORSHIP_CONTRACT',
       'Sentinel sponsorship call is missing'
     );
   }
-  if (entryPointName(purchase.entryPoint) !== 'purchaseSponsorship') {
+  if (
+    entryPointName(delegatorReward.entryPoint) !== 'purchaseDelegatorReward' ||
+    entryPointName(sponsorReward.entryPoint) !== 'deliverSponsorReward'
+  ) {
     throw new SponsorshipPolicyError(
       'WRONG_SPONSORSHIP_ENTRY_POINT',
-      'Sentinel call must use purchaseSponsorship'
+      'Sentinel reward calls are missing or reordered'
     );
   }
-  if (!purchase.guaranteedTranscript || purchase.fallibleTranscript) {
+  if (
+    !delegatorReward.guaranteedTranscript ||
+    delegatorReward.fallibleTranscript ||
+    sponsorReward.guaranteedTranscript ||
+    !sponsorReward.fallibleTranscript
+  ) {
     throw new SponsorshipPolicyError(
       'PURCHASE_NOT_GUARANTEED',
-      'purchaseSponsorship must contain only a guaranteed transcript'
+      'Reward calls do not have the required guaranteed/fallible partition'
     );
   }
 
-  const target = calls.find((call) => call !== purchase)!;
   const targetEntryPoint = entryPointName(target.entryPoint);
+  if (!target.fallibleTranscript) {
+    throw new SponsorshipPolicyError(
+      'PURCHASE_NOT_GUARANTEED',
+      'Target call must contain a fallible transcript'
+    );
+  }
   if (
     !policy.allowedTargets.some(
       (allowed) =>
@@ -603,15 +736,20 @@ export const inspectSponsorshipRequest = async (
       'Target interaction has already been sponsored'
     );
   }
-  const after = simulatePurchase(
+  const afterDelegator = simulatePurchase(
     policy.sentinelAddress,
     CompactContractState.deserialize(contractState.serialize()).data,
-    purchase.guaranteedTranscript as CompactTranscript<CompactAlignedValue>
+    delegatorReward.guaranteedTranscript as CompactTranscript<CompactAlignedValue>
   );
+  const afterSponsor = simulatePurchase(
+    policy.sentinelAddress,
+    afterDelegator.state,
+    sponsorReward.fallibleTranscript as CompactTranscript<CompactAlignedValue>
+  );
+  const after = afterSponsor.ledger;
   const addedReceipts = receiptDelta(before.sponsorshipReceipts, after.sponsorshipReceipts);
   if (
     addedReceipts.length !== 1 ||
-    after.sponsorshipRevenue !== before.sponsorshipRevenue + before.sponsorshipFixedPrice ||
     after.sponsorshipPurchases !== before.sponsorshipPurchases + 1n
   ) {
     throw new SponsorshipPolicyError(
@@ -652,7 +790,7 @@ export const inspectSponsorshipRequest = async (
   };
 };
 
-export const sponsorAndSubmit = async (
+const sponsorAndSubmitUnlocked = async (
   serialized: Uint8Array,
   policy: SponsorPolicy,
   providers: SentinelContractProviders,
@@ -673,6 +811,38 @@ export const sponsorAndSubmit = async (
     );
   }
   const before = await inspectSponsorshipRequest(serialized, policy, providers);
+  const current = await providers.publicDataProvider.queryZSwapAndContractState(
+    policy.sentinelAddress
+  );
+  if (!current) {
+    throw new SponsorshipPolicyError(
+      'CAMPAIGN_MISMATCH',
+      'Sentinel state was not found'
+    );
+  }
+  const campaign = sentinelLedger(current[1].data);
+  if (campaign.delegatorCount === 0n) {
+    throw new SponsorshipPolicyError(
+      'NO_ELIGIBLE_DELEGATOR',
+      'No eligible delegator is available'
+    );
+  }
+  const selected = campaign.delegatorSlots.lookup(campaign.rewardCursor);
+  const rewardAddress = Buffer.from(selected.nightRewardAddress)
+    .toString('utf8')
+    .replace(/\0+$/, '');
+  try {
+    assertEligible(
+      await policy.registrationProvider.getStatus(rewardAddress),
+      policy.sponsorDustAddress,
+      campaign.sponsorshipMinimumRegisteredNight
+    );
+  } catch (error) {
+    throw new SponsorshipPolicyError(
+      'DELEGATOR_STALE',
+      error instanceof Error ? error.message : String(error)
+    );
+  }
   const feeEstimate = await sponsor.wallet.estimateTransactionFee(
     before.transaction,
     sponsor.dustSecretKey,
@@ -726,4 +896,30 @@ export const sponsorAndSubmit = async (
     targetEntryPoint: after.targetEntryPoint,
     targetCommunicationCommitment: after.targetCommunicationCommitment,
   };
+};
+
+const submissionTails = new Map<string, Promise<void>>();
+
+export const sponsorAndSubmit = async (
+  serialized: Uint8Array,
+  policy: SponsorPolicy,
+  providers: SentinelContractProviders,
+  sponsor: WalletContext
+): Promise<SponsorshipSubmission> => {
+  const previous = submissionTails.get(policy.sentinelAddress) ?? Promise.resolve();
+  let release!: () => void;
+  const current = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const tail = previous.then(() => current);
+  submissionTails.set(policy.sentinelAddress, tail);
+  await previous;
+  try {
+    return await sponsorAndSubmitUnlocked(serialized, policy, providers, sponsor);
+  } finally {
+    release();
+    if (submissionTails.get(policy.sentinelAddress) === tail) {
+      submissionTails.delete(policy.sentinelAddress);
+    }
+  }
 };

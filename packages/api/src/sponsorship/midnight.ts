@@ -57,6 +57,10 @@ const normalizeError = (
 
 const preparationCode = (error: unknown): SponsorshipErrorCode => {
   const value = errorMessage(error);
+  if (value.includes('NO_ELIGIBLE_DELEGATOR')) return 'NO_ELIGIBLE_DELEGATOR';
+  if (value.includes('reward') && value.includes('delivery')) {
+    return 'REWARD_DELIVERY_FAILED';
+  }
   if (value.includes('payment coin')) return 'PAYMENT_COIN_UNAVAILABLE';
   if (value.includes('paused')) return 'CAMPAIGN_PAUSED';
   if (value.includes('state not found')) return 'CAMPAIGN_UNAVAILABLE';

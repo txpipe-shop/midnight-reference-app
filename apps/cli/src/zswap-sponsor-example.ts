@@ -105,7 +105,9 @@ const main = async () => {
   console.log('  Deploying Sentinel contract...');
   const contract = await SentinelContract.deploy(
     providers,
-    nativeNightSponsorshipConfig(ctxC, sponsorshipAllowlistHash([]))
+    nativeNightSponsorshipConfig(ctxC, sponsorshipAllowlistHash([]), {
+      initialEligibilityOperator: new Uint8Array(32),
+    })
   );
   console.log('  ✓ Contract deployed');
   await sleep(10_000);

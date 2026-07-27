@@ -21,7 +21,8 @@ async function handleCircuits(
   contract: SentinelContract,
   _walletDetails: { seed: string; privateStateStoreName: string },
   _walletCtx: WalletContext,
-  rli: Interface
+  rli: Interface,
+  config: Config
 ) {
   while (true) {
     const choice = await rli.question(circuitMenu);
@@ -44,6 +45,35 @@ async function handleCircuits(
         }
         break;
       case '4':
+        console.error(
+          'Midnight-only enrollment requires the unshielded NIGHT registration scanner; use the API after configuring that scanner.'
+        );
+        break;
+      case '5':
+        try {
+          const identity = (
+            await rli.question('Delegator identity (32-byte hex): ')
+          ).replace(/^0x/, '');
+          await contract.removeDelegator(
+            Uint8Array.from(Buffer.from(identity, 'hex'))
+          );
+        } catch (error) {
+          console.error('Removal failed:', error);
+        }
+        break;
+      case '6':
+        try {
+          const authority = (
+            await rli.question('New operator authority (32-byte hex): ')
+          ).replace(/^0x/, '');
+          await contract.rotateEligibilityOperator(
+            Uint8Array.from(Buffer.from(authority, 'hex'))
+          );
+        } catch (error) {
+          console.error('Rotation failed:', error);
+        }
+        break;
+      case '7':
         console.log('Exiting...');
         return;
       default:
@@ -71,9 +101,21 @@ export async function runCli(
           config,
           walletDetails.privateStateStoreName
         );
-        const fixedPrice = BigInt(
-          (await rli.question('Sponsorship price in shielded NIGHT [100]: ')) || '100'
+        const sponsorShare = BigInt(
+          (await rli.question('Sponsor NIGHT share [1]: ')) || '1'
         );
+        const delegatorShare = BigInt(
+          (await rli.question('Delegator NIGHT share [1]: ')) || '1'
+        );
+        const minimumRegisteredNight = BigInt(
+          (await rli.question('Minimum registered NIGHT [1]: ')) || '1'
+        );
+        const operatorHex = (
+          await rli.question('Eligibility operator authority key (32-byte hex): ')
+        ).trim().replace(/^0x/, '');
+        if (!/^[0-9a-fA-F]{64}$/.test(operatorHex)) {
+          throw new Error('Eligibility operator key must be 32-byte hex');
+        }
         const targetAddress = (
           await rli.question('Initial allowed target contract address: ')
         ).trim();
@@ -88,7 +130,14 @@ export async function runCli(
           nativeNightSponsorshipConfig(
             walletCtx,
             policyHash,
-            fixedPrice
+            {
+              sponsorShare,
+              delegatorShare,
+              minimumRegisteredNight,
+              initialEligibilityOperator: Uint8Array.from(
+                Buffer.from(operatorHex, 'hex')
+              ),
+            }
           )
         );
 
@@ -122,6 +171,9 @@ export async function runCli(
           const targetAddress = (await rli.question('Allowed target contract address: ')).trim();
           const targetEntryPoint = (await rli.question('Allowed target circuit: ')).trim();
           const maxFee = BigInt(await rli.question('Maximum DUST fee: '));
+          const sponsorDustAddress = (
+            await rli.question('Campaign sponsor DUST address: ')
+          ).trim();
           const raw = (await rli.question('Prepared transaction (hex): ')).trim();
           const allowedTargets = [{ address: targetAddress, entryPoint: targetEntryPoint }];
           const providers = await configureProviders(
@@ -133,6 +185,14 @@ export async function runCli(
             policy: {
               sentinelAddress,
               sponsorId: dustPublicKeyToBytes(walletCtx.dustSecretKey.publicKey),
+              sponsorDustAddress,
+              registrationProvider: {
+                async getStatus() {
+                  throw new Error(
+                    'Midnight registration scanner is not configured'
+                  );
+                },
+              },
               policyHash: sponsorshipAllowlistHash(allowedTargets),
               allowedTargets,
               minTtlMs: 30_000,
@@ -184,6 +244,8 @@ export async function runCli(
         continue;
     }
 
-    if (contract) await handleCircuits(contract, walletDetails, walletCtx, rli);
+    if (contract) {
+      await handleCircuits(contract, walletDetails, walletCtx, rli, config);
+    }
   }
 }

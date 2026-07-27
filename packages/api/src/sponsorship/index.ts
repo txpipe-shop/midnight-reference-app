@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import type { MidnightRegistrationProvider } from './eligibility.js';
 
 export type SponsorshipStage =
   | 'preparation'
@@ -29,6 +30,12 @@ export type SponsorshipErrorCode =
   | 'TARGET_ALREADY_SPONSORED'
   | 'RECEIPT_MISMATCH'
   | 'STALE_CONTRACT_STATE'
+  | 'NO_ELIGIBLE_DELEGATOR'
+  | 'DELEGATOR_STALE'
+  | 'REWARD_DELIVERY_FAILED'
+  | 'ENROLLMENT_INVALID'
+  | 'ENROLLMENT_REPLAYED'
+  | 'CAMPAIGN_VERSION_UNSUPPORTED'
   | 'PROOF_GENERATION_FAILED'
   | 'BENEFICIARY_BALANCE_FAILED'
   | 'SPONSOR_BALANCE_FAILED'
@@ -98,6 +105,8 @@ export const sponsorshipAllowlistHash = (
 export interface SponsorshipPolicy {
   sentinelAddress: string;
   sponsorId: Uint8Array;
+  sponsorDustAddress: string;
+  registrationProvider: MidnightRegistrationProvider;
   policyHash: Uint8Array;
   allowedTargets: readonly SponsorshipTargetPolicy[];
   minTtlMs: number;

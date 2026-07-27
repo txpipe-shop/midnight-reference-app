@@ -25,6 +25,11 @@
       "types": "./dist/sponsorship/midnight.d.ts",
       "import": "./dist/sponsorship/midnight.js",
       "require": "./dist/sponsorship/midnight.js"
+    },
+    "./sponsorship/eligibility": {
+      "types": "./dist/sponsorship/eligibility.d.ts",
+      "import": "./dist/sponsorship/eligibility.js",
+      "require": "./dist/sponsorship/eligibility.js"
     }
   },
   "scripts": {

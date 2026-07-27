@@ -3,6 +3,32 @@
 Status: critical composite-transaction validation pending
 Last updated: 2026-07-24
 
+## Fixed-price reward split follow-up (2026-07-27)
+
+**Verdict: STOP_AND_REDESIGN.**
+
+The retained experiment in `src/verification/reward-split.compact` successfully
+compiled with full ZK and its deterministic runtime check confirmed the exact
+`2 NIGHT` payment, chained `1 NIGHT` / `1 NIGHT` sends, public indexed queue,
+three-delegator rotation, removal compaction, operator rotation, purchase
+counter, and rewarded-delegator receipt.
+
+The live Midnight.js construction check then refuted the mandatory
+guaranteed-only requirement:
+
+- recipient outputs require coin-public-key to encryption-public-key mappings;
+  `ZswapCoinPublicKey` alone is insufficient for wallet-discoverable output
+  construction;
+- the SDK-supported `additionalCoinEncPublicKeyMappings` path resolves that
+  metadata requirement;
+- after resolving both recipients, `purchaseSponsorship` had no guaranteed
+  transcript and did have a fallible transcript.
+
+Because the complete split does not remain guaranteed-only, wallet discovery
+and later-spend submission were intentionally not attempted. Production
+`src/sentinel.compact` remains unchanged. Sanitized evidence is retained in
+`verification/results/reward-split-verification.json`.
+
 ## Goal
 
 Prove or refute the following narrow claim using the versions installed in
@@ -748,3 +774,25 @@ post-state, is frozen at
 [`verification/results/sponsorship-production-verification.json`](verification/results/sponsorship-production-verification.json).
 It contains no wallet seeds, secret keys, private call data, or complete
 serialized transactions.
+
+## Fixed-price reward split verdict — 2026-07-27
+
+The replacement two-circuit design passed the retained full-ZK devnet
+experiment. The composite is assembled as one ordered intent:
+
+1. guaranteed-only `purchaseDelegatorReward`;
+2. fallible-only `deliverSponsorReward`;
+3. the user's fallible interaction.
+
+The successful scenario returned `SucceedEntirely`; the deliberately expired
+user interaction returned `FailFallible`. Wallet state showed the sponsor
+increased by exactly `1 NIGHT` only for the successful transaction, while the
+delegator increased by exactly `2 NIGHT` across both outcomes. Deterministic
+runtime checks also confirmed `A, B, C, A` rotation, removal compaction,
+operator rotation, pause enforcement, and receipt metadata.
+
+The earlier single-circuit stop verdict is superseded. The production Sentinel
+contract now uses the verified two-circuit queue and reward model, removes
+mutable gross-revenue storage, and derives its fixed price from the two sealed
+shares. Machine-readable evidence is recorded in
+[`verification/results/reward-split-verification.json`](verification/results/reward-split-verification.json).

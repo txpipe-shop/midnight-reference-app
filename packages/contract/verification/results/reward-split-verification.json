@@ -1,0 +1,75 @@
+{
+  "verifiedAt": "2026-07-27",
+  "compiler": "0.31.1",
+  "language": "0.23",
+  "verdict": "CONFIRMED",
+  "productionSentinelModified": true,
+  "architecture": {
+    "intentCount": 1,
+    "orderedCalls": [
+      "purchaseDelegatorReward",
+      "deliverSponsorReward",
+      "userInteraction"
+    ],
+    "fixedPrice": "2",
+    "sponsorShare": "1",
+    "delegatorShare": "1"
+  },
+  "checks": {
+    "fullZkCompilation": {
+      "verdict": "confirmed",
+      "evidence": {
+        "rewardSplitCircuitsCompiled": 6,
+        "fallibleTargetCircuitsCompiled": 1
+      }
+    },
+    "partitioning": {
+      "verdict": "confirmed",
+      "evidence": {
+        "purchaseDelegatorReward": "guaranteed-only",
+        "deliverSponsorReward": "fallible-only",
+        "userInteraction": "fallible-only"
+      }
+    },
+    "deterministicRuntime": {
+      "verdict": "confirmed",
+      "evidence": {
+        "emptyQueueRejected": true,
+        "threeDelegatorRotation": ["A", "B", "C", "A"],
+        "removalCompaction": true,
+        "operatorRotation": true,
+        "receiptBindsRewardedDelegator": true
+      }
+    },
+    "recipientOutputConstruction": {
+      "verdict": "confirmed",
+      "evidence": {
+        "additionalCoinEncryptionKeyMappingsRequired": true,
+        "rewardOutputsPerSuccessfulPurchase": 2
+      }
+    },
+    "compositeSuccess": {
+      "verdict": "confirmed",
+      "transactionId": "0072364aa3acff4fa4f10b255ae5010aa372f976cd62f2859440eaa3b4e3db50a1",
+      "status": "SucceedEntirely"
+    },
+    "compositeFallibleFailure": {
+      "verdict": "confirmed",
+      "transactionId": "00260bbff725f126c5af48fac445b7f685b51c93055097ebe70dd3205dfa552a42",
+      "status": "FailFallible"
+    },
+    "walletDiscovery": {
+      "verdict": "confirmed",
+      "evidence": {
+        "sponsorIncrease": "1",
+        "delegatorIncrease": "2",
+        "interpretation": "Sponsor received only the successful purchase reward; delegator received rewards in both transaction outcomes."
+      }
+    }
+  },
+  "deployments": {
+    "rewardSplitContractAddress": "15abdc5f1e6848525f9ed32eb3431b10a78c4f830f717caae68b7eb1c6577bcb",
+    "fallibleTargetAddress": "95774f30f34ed233a95d8af0af2ae9d0778dc4cc0ffa45b159ce79789e217cd9"
+  },
+  "decision": "Promote the verified two-circuit, single-intent construction to production Sentinel. Serialize sponsorship construction per deployment and preserve structural inspection before DUST sponsorship."
+}

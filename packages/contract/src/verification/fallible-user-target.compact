@@ -1,0 +1,43 @@
+pragma language_version 0.23;
+
+import CompactStandardLibrary;
+
+export ledger userExecutions: Counter;
+export ledger padding00: Counter;
+export ledger padding01: Counter;
+export ledger padding02: Counter;
+export ledger padding03: Counter;
+export ledger padding04: Counter;
+export ledger padding05: Counter;
+export ledger padding06: Counter;
+export ledger padding07: Counter;
+export ledger padding08: Counter;
+export ledger padding09: Counter;
+export ledger padding10: Counter;
+export ledger padding11: Counter;
+export ledger padding12: Counter;
+export ledger padding13: Counter;
+export ledger padding14: Counter;
+export ledger padding15: Counter;
+
+export circuit interact(expiry: Uint<64>): [] {
+  kernel.checkpoint();
+  assert(kernel.blockTimeLessThan(disclose(expiry)), "User interaction expired");
+  userExecutions.increment(1);
+  padding00.increment(1);
+  padding01.increment(1);
+  padding02.increment(1);
+  padding03.increment(1);
+  padding04.increment(1);
+  padding05.increment(1);
+  padding06.increment(1);
+  padding07.increment(1);
+  padding08.increment(1);
+  padding09.increment(1);
+  padding10.increment(1);
+  padding11.increment(1);
+  padding12.increment(1);
+  padding13.increment(1);
+  padding14.increment(1);
+  padding15.increment(1);
+}

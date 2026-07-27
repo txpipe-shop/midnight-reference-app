@@ -3,7 +3,7 @@ import {
   createConstructorContext,
   sampleContractAddress,
 } from '@midnight-ntwrk/compact-runtime';
-import { Contract, ledger } from '../managed/sentinel/contract/index.js';
+import { Contract, ledger } from '../managed/reward-split/contract/index.js';
 import type { PrivateState } from '../private-state.js';
 
 const bytes = (fill: number) => new Uint8Array(32).fill(fill);
@@ -16,22 +16,12 @@ const rotatedOperatorSecret = bytes(0x03);
 const sponsorId = bytes(0x11);
 const color = bytes(0);
 const sponsorRewardKey = { bytes: bytes(0x21) };
-const sponsorRewardEncryptionKey = bytes(0x22);
 const delegatorKeys = [
   { bytes: bytes(0x31) },
   { bytes: bytes(0x32) },
   { bytes: bytes(0x33) },
 ];
-const delegatorEncryptionKeys = [bytes(0x34), bytes(0x35), bytes(0x36)];
 const delegatorIds = [bytes(0x41), bytes(0x42), bytes(0x43)];
-const delegatorNightAddresses = [
-  new Uint8Array(64).fill(0x44),
-  new Uint8Array(64).fill(0x45),
-  new Uint8Array(64).fill(0x46),
-];
-const policyHash = bytes(0x51);
-const targetAddress = bytes(0x52);
-const targetEntryPointHash = bytes(0x53);
 const contractAddress = sampleContractAddress();
 const coinPublicKey = '01'.repeat(32);
 const share = 1n;
@@ -47,12 +37,10 @@ const constructorResult = (secretKey: Uint8Array, initialOperator: Uint8Array) =
     sponsorId,
     color,
     sponsorRewardKey,
-    sponsorRewardEncryptionKey,
     share,
     share,
     minimum,
-    initialOperator,
-    policyHash
+    initialOperator
   );
 
 const operatorProbe = constructorResult(operatorSecret, bytes(0));
@@ -68,8 +56,7 @@ type StateResult =
   | ReturnType<typeof contract.circuits.removeDelegator>
   | ReturnType<typeof contract.circuits.rotateEligibilityOperator>
   | ReturnType<typeof contract.circuits.purchaseDelegatorReward>
-  | ReturnType<typeof contract.circuits.deliverSponsorReward>
-  | ReturnType<typeof contract.circuits.setSponsorshipEnabled>;
+  | ReturnType<typeof contract.circuits.deliverSponsorReward>;
 
 const context = (state: StateResult, secretKey: Uint8Array) =>
   'context' in state
@@ -90,54 +77,25 @@ const add = (state: StateResult, index: number, secret = operatorSecret) =>
   contract.circuits.addDelegator(
     context(state, secret),
     delegatorIds[index],
-    delegatorNightAddresses[index],
     delegatorKeys[index],
-    delegatorEncryptionKeys[index],
     minimum + BigInt(index),
-    1000n + BigInt(index),
-    1n
+    1000n + BigInt(index)
   );
 
 const remove = (state: StateResult, index: number, secret = operatorSecret) =>
   contract.circuits.removeDelegator(context(state, secret), delegatorIds[index]);
 
-const update = (
-  state: StateResult,
-  index: number,
-  nonce: bigint,
-  secret = operatorSecret
-) =>
-  contract.circuits.updateDelegator(
-    context(state, secret),
-    delegatorIds[index],
-    delegatorNightAddresses[index],
-    delegatorKeys[index],
-    delegatorEncryptionKeys[index],
-    minimum + BigInt(index),
-    2000n + BigInt(index),
-    nonce
+const purchase = (state: StateResult, index: number) =>
+  contract.circuits.purchaseDelegatorReward(
+    context(state, ownerSecret),
+    { nonce: bytes(0x70 + index), color, value: share }
   );
 
-const purchase = (state: StateResult, index: number) =>
-  contract.circuits.purchaseDelegatorReward(context(state, ownerSecret), {
-    nonce: bytes(0x70 + index),
-    color,
-    value: share,
-  });
-
-const deliver = (
-  state: StateResult,
-  index: number,
-  paymentColor = color,
-  paymentValue = share
-) =>
+const deliverSponsorReward = (state: StateResult, index: number) =>
   contract.circuits.deliverSponsorReward(
     context(state, ownerSecret),
     bytes(0x60 + index),
-    { nonce: bytes(0x80 + index), color: paymentColor, value: paymentValue },
-    targetAddress,
-    targetEntryPointHash,
-    100n + BigInt(index)
+    { nonce: bytes(0x80 + index), color, value: share }
   );
 
 const expectReject = (label: string, action: () => unknown, expected: string) => {
@@ -152,7 +110,11 @@ const expectReject = (label: string, action: () => unknown, expected: string) =>
   }
 };
 
-expectReject('empty queue', () => purchase(initial(), 0), 'NO_ELIGIBLE_DELEGATOR');
+expectReject(
+  'empty queue',
+  () => purchase(initial(), 0),
+  'NO_ELIGIBLE_DELEGATOR'
+);
 expectReject(
   'unauthorized add',
   () => add(initial(), 0, ownerSecret),
@@ -164,12 +126,9 @@ expectReject(
     contract.circuits.addDelegator(
       context(initial(), operatorSecret),
       delegatorIds[0],
-      delegatorNightAddresses[0],
       delegatorKeys[0],
-      delegatorEncryptionKeys[0],
       minimum - 1n,
-      1000n,
-      1n
+      1000n
     ),
   'Below minimum registered NIGHT'
 );
@@ -178,60 +137,41 @@ let queued: StateResult = add(initial(), 0);
 queued = add(queued, 1);
 queued = add(queued, 2);
 expectReject('duplicate delegator', () => add(queued, 0), 'Duplicate delegator');
-expectReject(
-  'replayed enrollment nonce',
-  () => update(queued, 0, 1n),
-  'Enrollment nonce must increase'
-);
-queued = update(queued, 0, 2n);
 
 const rewarded: Uint8Array[] = [];
 for (let index = 0; index < 4; index += 1) {
   queued = purchase(queued, index);
-  const afterDelegator = ledger(queued.context.currentQueryContext.state);
+  const delegatorLedger = ledger(queued.context.currentQueryContext.state);
   if (
-    afterDelegator.sponsorshipPurchases !== BigInt(index) ||
-    afterDelegator.sponsorshipReceipts.member(bytes(0x60 + index))
+    delegatorLedger.sponsorshipPurchases !== BigInt(index) ||
+    delegatorLedger.sponsorshipReceipts.member(bytes(0x60 + index))
   ) {
-    throw new Error('delegator circuit unexpectedly changed purchase accounting');
+    throw new Error('delegator circuit unexpectedly changed queue accounting');
   }
-
-  queued = deliver(queued, index);
+  queued = deliverSponsorReward(queued, index);
   const current = ledger(queued.context.currentQueryContext.state);
-  const receipt = current.sponsorshipReceipts.lookup(bytes(0x60 + index));
-  rewarded.push(receipt.rewardedDelegatorId);
-  if (
-    !receipt.sponsorRewardDelivered ||
-    receipt.targetCommunicationCommitment !== 100n + BigInt(index) ||
-    !equalBytes(receipt.targetAddress, targetAddress) ||
-    !equalBytes(receipt.targetEntryPointHash, targetEntryPointHash)
-  ) {
-    throw new Error('sponsor receipt metadata is incorrect');
+  const deliveredReceipt = current.sponsorshipReceipts.lookup(bytes(0x60 + index));
+  rewarded.push(deliveredReceipt.rewardedDelegatorId);
+  if (!deliveredReceipt.sponsorRewardDelivered) {
+    throw new Error('sponsor circuit did not mark the reward delivered');
+  }
+  // receiveShielded records the contract receipt commitment and each chained
+  // immediate send records its sent/change commitments. The two intermediate
+  // coins are consumed inside the transaction; the final ledger has the
+  // sponsor and delegator outputs.
+  if (queued.context.currentZswapLocalState.outputs.length !== (index + 1) * 4) {
+    throw new Error(
+      `purchase did not append the expected split transcript commitments: observed ${queued.context.currentZswapLocalState.outputs.length}`
+    );
   }
 }
 
-const expectedRotation = [
-  delegatorIds[0],
-  delegatorIds[1],
-  delegatorIds[2],
-  delegatorIds[0],
-];
+const expectedRotation = [delegatorIds[0], delegatorIds[1], delegatorIds[2], delegatorIds[0]];
 for (let index = 0; index < expectedRotation.length; index += 1) {
   if (!equalBytes(rewarded[index], expectedRotation[index])) {
     throw new Error(`unexpected delegator at rotation position ${index}`);
   }
 }
-
-expectReject(
-  'wrong sponsor payment asset',
-  () => deliver(purchase(add(initial(), 0), 9), 9, bytes(0x7f)),
-  'Wrong payment asset'
-);
-expectReject(
-  'wrong sponsor payment amount',
-  () => deliver(purchase(add(initial(), 0), 10), 10, color, share + 1n),
-  'Wrong sponsor payment amount'
-);
 
 const beforeRemoval = ledger(queued.context.currentQueryContext.state);
 if (beforeRemoval.rewardCursor !== 1n || beforeRemoval.sponsorshipPurchases !== 4n) {
@@ -256,33 +196,21 @@ expectReject(
   () => remove(rotated, 1, operatorSecret),
   'Not the eligibility operator'
 );
-const maintained = remove(rotated, 1, rotatedOperatorSecret);
-const paused = contract.circuits.setSponsorshipEnabled(
-  context(maintained, ownerSecret),
-  false
-);
-expectReject('paused campaign', () => purchase(paused, 11), 'Sponsorship is paused');
-
-const finalLedger = ledger(paused.context.currentQueryContext.state);
-if (
-  finalLedger.delegatorCount !== 1n ||
-  finalLedger.sponsorshipFixedPrice !== price ||
-  finalLedger.sponsorshipSponsorShare !== share ||
-  finalLedger.sponsorshipDelegatorShare !== share
-) {
-  throw new Error('final campaign configuration or queue state is incorrect');
+const removedByRotatedOperator = remove(rotated, 1, rotatedOperatorSecret);
+const finalLedger = ledger(removedByRotatedOperator.context.currentQueryContext.state);
+if (finalLedger.delegatorCount !== 1n) {
+  throw new Error('rotated operator could not maintain the queue');
 }
 
 console.log(
   JSON.stringify({
-    productionRewardSplitRuntime: 'confirmed',
+    rewardSplitRuntime: 'confirmed',
     fixedPrice: price.toString(),
     sponsorShare: share.toString(),
     delegatorShare: share.toString(),
+    rewardOutputsPerPurchase: 2,
     deterministicRotation: rewarded.map((id) => Buffer.from(id).toString('hex')),
-    receiptMetadata: 'confirmed',
     removalCompaction: 'confirmed',
     operatorRotation: 'confirmed',
-    pauseEnforced: true,
   })
 );

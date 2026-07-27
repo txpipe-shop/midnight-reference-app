@@ -133,7 +133,9 @@ const main = async () => {
 
   const contract = await SentinelContract.deploy(
     providers,
-    nativeNightSponsorshipConfig(admin, sponsorshipAllowlistHash([]))
+    nativeNightSponsorshipConfig(admin, sponsorshipAllowlistHash([]), {
+      initialEligibilityOperator: new Uint8Array(32),
+    })
   );
   console.log(
     '  ✓ Contract deployed at:',

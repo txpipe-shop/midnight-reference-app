@@ -2,53 +2,237 @@ pragma language_version 0.23;
 
 import CompactStandardLibrary;
 
+export struct DelegatorSlot {
+  nightIdentity: Bytes<32>;
+  nightRewardAddress: Bytes<64>;
+  rewardKey: ZswapCoinPublicKey;
+  rewardEncryptionKey: Bytes<32>;
+  verifiedRegisteredAmount: Uint<128>;
+  verificationBlock: Uint<64>;
+  enrollmentNonce: Uint<64>;
+}
+
 export struct SponsorshipReceipt {
   targetAddress: Bytes<32>;
   targetEntryPointHash: Bytes<32>;
   targetCommunicationCommitment: Field;
+  rewardedDelegatorId: Bytes<32>;
+  sponsorRewardDelivered: Boolean;
 }
 
-///////// LEDGER /////////
-export ledger owner: Bytes<32>;
-
+///////// IMMUTABLE CAMPAIGN CONFIGURATION /////////
 export sealed ledger sponsorshipSponsorId: Bytes<32>;
-
 export sealed ledger sponsorshipAcceptedColor: Bytes<32>;
-
 export sealed ledger sponsorshipFixedPrice: Uint<64>;
-
+export sealed ledger sponsorshipSponsorShare: Uint<64>;
+export sealed ledger sponsorshipDelegatorShare: Uint<64>;
+export sealed ledger sponsorshipSponsorRewardKey: ZswapCoinPublicKey;
+export sealed ledger sponsorshipSponsorRewardEncryptionKey: Bytes<32>;
+export sealed ledger sponsorshipMinimumRegisteredNight: Uint<128>;
 export sealed ledger sponsorshipPolicyHash: Bytes<32>;
 
+///////// ADMINISTRATION AND PUBLIC QUEUE /////////
+export ledger owner: Bytes<32>;
+export ledger eligibilityOperator: Bytes<32>;
 export ledger sponsorshipEnabled: Boolean;
+export ledger delegatorSlots: Map<Uint<64>, DelegatorSlot>;
+export ledger delegatorPositions: Map<Bytes<32>, Uint<64>>;
+export ledger delegatorCount: Uint<64>;
+export ledger rewardCursor: Uint<64>;
 
-export ledger sponsorshipRevenue: Uint<128>;
-
+///////// PURCHASE ACCOUNTING /////////
 export ledger sponsorshipPurchases: Counter;
-
 export ledger sponsorshipReceipts: Map<Bytes<32>, SponsorshipReceipt>;
 
 ///////// CONSTRUCTOR /////////
 constructor(
   sponsorId: Bytes<32>,
   acceptedColor: Bytes<32>,
-  fixedPrice: Uint<64>,
+  sponsorRewardKey: ZswapCoinPublicKey,
+  sponsorRewardEncryptionKey: Bytes<32>,
+  sponsorShare: Uint<64>,
+  delegatorShare: Uint<64>,
+  minimumRegisteredNight: Uint<128>,
+  initialEligibilityOperator: Bytes<32>,
   policyHash: Bytes<32>
 ) {
-  assert(fixedPrice > 0, "Sponsorship price must be positive");
+  assert(sponsorShare > 0, "Sponsor share must be positive");
+  assert(delegatorShare > 0, "Delegator share must be positive");
 
-  const sk = localSecretKey();
-  owner = disclose(publicKey(sk));
   sponsorshipSponsorId = disclose(sponsorId);
   sponsorshipAcceptedColor = disclose(acceptedColor);
-  sponsorshipFixedPrice = disclose(fixedPrice);
+  sponsorshipSponsorRewardKey = disclose(sponsorRewardKey);
+  sponsorshipSponsorRewardEncryptionKey =
+    disclose(sponsorRewardEncryptionKey);
+  sponsorshipSponsorShare = disclose(sponsorShare);
+  sponsorshipDelegatorShare = disclose(delegatorShare);
+  sponsorshipFixedPrice =
+    disclose((sponsorShare + delegatorShare) as Uint<64>);
+  sponsorshipMinimumRegisteredNight = disclose(minimumRegisteredNight);
   sponsorshipPolicyHash = disclose(policyHash);
+
+  owner = disclose(callerKey());
+  eligibilityOperator = disclose(initialEligibilityOperator);
   sponsorshipEnabled = disclose(true);
-  sponsorshipRevenue = disclose(0);
+  delegatorCount = disclose(0);
+  rewardCursor = disclose(0);
 }
 
-///////// EXPORTED CIRCUITS /////////
+///////// ELIGIBILITY OPERATOR CIRCUITS /////////
+export circuit addDelegator(
+  nightIdentity: Bytes<32>,
+  nightRewardAddress: Bytes<64>,
+  rewardKey: ZswapCoinPublicKey,
+  rewardEncryptionKey: Bytes<32>,
+  registeredAmount: Uint<128>,
+  verificationBlock: Uint<64>,
+  enrollmentNonce: Uint<64>
+): [] {
+  assert(isEligibilityOperator(), "Not the eligibility operator");
+  const publicIdentity = disclose(nightIdentity);
+  const publicNightRewardAddress = disclose(nightRewardAddress);
+  const publicRewardKey = disclose(rewardKey);
+  const publicRewardEncryptionKey = disclose(rewardEncryptionKey);
+  const publicAmount = disclose(registeredAmount);
+  const publicBlock = disclose(verificationBlock);
+  const publicNonce = disclose(enrollmentNonce);
+  assert(!delegatorPositions.member(publicIdentity), "Duplicate delegator");
+  assert(
+    publicAmount >= sponsorshipMinimumRegisteredNight,
+    "Below minimum registered NIGHT"
+  );
+  assert(delegatorCount < 16, "Delegator queue is full");
 
-export circuit purchaseSponsorship(
+  delegatorSlots.insert(
+    delegatorCount,
+    DelegatorSlot {
+      nightIdentity: publicIdentity,
+      nightRewardAddress: publicNightRewardAddress,
+      rewardKey: publicRewardKey,
+      rewardEncryptionKey: publicRewardEncryptionKey,
+      verifiedRegisteredAmount: publicAmount,
+      verificationBlock: publicBlock,
+      enrollmentNonce: publicNonce
+    }
+  );
+  delegatorPositions.insert(publicIdentity, delegatorCount);
+  delegatorCount = (delegatorCount + 1) as Uint<64>;
+}
+
+export circuit updateDelegator(
+  nightIdentity: Bytes<32>,
+  nightRewardAddress: Bytes<64>,
+  rewardKey: ZswapCoinPublicKey,
+  rewardEncryptionKey: Bytes<32>,
+  registeredAmount: Uint<128>,
+  verificationBlock: Uint<64>,
+  enrollmentNonce: Uint<64>
+): [] {
+  assert(isEligibilityOperator(), "Not the eligibility operator");
+  const publicIdentity = disclose(nightIdentity);
+  const publicNightRewardAddress = disclose(nightRewardAddress);
+  const publicRewardKey = disclose(rewardKey);
+  const publicRewardEncryptionKey = disclose(rewardEncryptionKey);
+  const publicAmount = disclose(registeredAmount);
+  const publicBlock = disclose(verificationBlock);
+  const publicNonce = disclose(enrollmentNonce);
+  assert(delegatorPositions.member(publicIdentity), "Unknown delegator");
+  assert(
+    publicAmount >= sponsorshipMinimumRegisteredNight,
+    "Below minimum registered NIGHT"
+  );
+
+  const position = delegatorPositions.lookup(publicIdentity);
+  const current = delegatorSlots.lookup(position);
+  assert(
+    publicNonce > current.enrollmentNonce,
+    "Enrollment nonce must increase"
+  );
+  delegatorSlots.insert(
+    position,
+    DelegatorSlot {
+      nightIdentity: publicIdentity,
+      nightRewardAddress: publicNightRewardAddress,
+      rewardKey: publicRewardKey,
+      rewardEncryptionKey: publicRewardEncryptionKey,
+      verifiedRegisteredAmount: publicAmount,
+      verificationBlock: publicBlock,
+      enrollmentNonce: publicNonce
+    }
+  );
+}
+
+export circuit removeDelegator(nightIdentity: Bytes<32>): [] {
+  assert(isEligibilityOperator(), "Not the eligibility operator");
+  const publicIdentity = disclose(nightIdentity);
+  assert(delegatorPositions.member(publicIdentity), "Unknown delegator");
+
+  const removedPosition = delegatorPositions.lookup(publicIdentity);
+  const newCount = (delegatorCount - 1) as Uint<64>;
+
+  for (const i of 0..15) {
+    if (i >= removedPosition && i < newCount) {
+      const shifted = delegatorSlots.lookup((i + 1) as Uint<64>);
+      delegatorSlots.insert(i as Uint<64>, shifted);
+      delegatorPositions.insert(shifted.nightIdentity, i as Uint<64>);
+    }
+  }
+
+  delegatorSlots.remove(newCount);
+  delegatorPositions.remove(publicIdentity);
+  delegatorCount = newCount;
+
+  if (newCount == 0) {
+    rewardCursor = 0;
+  } else {
+    if (removedPosition < rewardCursor) {
+      rewardCursor = (rewardCursor - 1) as Uint<64>;
+    } else {
+      if (rewardCursor >= newCount) {
+        rewardCursor = 0;
+      }
+    }
+  }
+}
+
+///////// PURCHASE CIRCUITS /////////
+
+// Call first in the transaction. This circuit is guaranteed-only: a valid
+// delegator receives their share and the round-robin cursor advances even if
+// a later fallible call fails.
+export circuit purchaseDelegatorReward(payment: ShieldedCoinInfo): [] {
+  const publicPayment = disclose(payment);
+  assert(sponsorshipEnabled, "Sponsorship is paused");
+  assert(delegatorCount > 0, "NO_ELIGIBLE_DELEGATOR");
+  assert(publicPayment.color == nativeToken(), "Wrong payment asset");
+  assert(
+    publicPayment.value == sponsorshipDelegatorShare,
+    "Wrong delegator payment amount"
+  );
+
+  const rewarded = delegatorSlots.lookup(rewardCursor);
+  receiveShielded(publicPayment);
+  const delegatorSend = sendImmediateShielded(
+    publicPayment,
+    left<ZswapCoinPublicKey, ContractAddress>(rewarded.rewardKey),
+    sponsorshipDelegatorShare as Uint<128>
+  );
+  assert(
+    !delegatorSend.change.is_some,
+    "DELEGATOR_REWARD_DELIVERY_FAILED"
+  );
+
+  rewardCursor =
+    rewardCursor + 1 == delegatorCount
+      ? 0
+      : (rewardCursor + 1) as Uint<64>;
+}
+
+// Call second, before the user's fallible calls. The retained full-ZK/devnet
+// experiment proves this whole circuit is fallible. Sponsor delivery, receipt,
+// and purchase count therefore roll back together if this call or later user
+// work fails.
+export circuit deliverSponsorReward(
   purchaseId: Bytes<32>,
   payment: ShieldedCoinInfo,
   targetAddress: Bytes<32>,
@@ -62,23 +246,55 @@ export circuit purchaseSponsorship(
   const publicTargetCommitment = disclose(targetCommunicationCommitment);
 
   assert(sponsorshipEnabled, "Sponsorship is paused");
-  assert(publicPayment.color == sponsorshipAcceptedColor, "Wrong sponsorship payment asset");
-  assert(publicPayment.value == sponsorshipFixedPrice, "Wrong sponsorship payment amount");
-  assert(!sponsorshipReceipts.member(publicPurchaseId), "Duplicate sponsorship purchase");
+  assert(delegatorCount > 0, "NO_ELIGIBLE_DELEGATOR");
+  assert(
+    !sponsorshipReceipts.member(publicPurchaseId),
+    "Duplicate sponsorship purchase"
+  );
+  assert(
+    publicPayment.color == sponsorshipAcceptedColor,
+    "Wrong payment asset"
+  );
+  assert(
+    publicPayment.value == sponsorshipSponsorShare,
+    "Wrong sponsor payment amount"
+  );
+
+  const rewardedPosition =
+    rewardCursor == 0
+      ? (delegatorCount - 1) as Uint<64>
+      : (rewardCursor - 1) as Uint<64>;
+  const rewarded = delegatorSlots.lookup(rewardedPosition);
 
   receiveShielded(publicPayment);
+  kernel.checkpoint();
 
-  sponsorshipRevenue =
-    (sponsorshipRevenue + (publicPayment.value as Uint<128>)) as Uint<128>;
+  const sponsorSend = sendImmediateShielded(
+    publicPayment,
+    left<ZswapCoinPublicKey, ContractAddress>(
+      sponsorshipSponsorRewardKey
+    ),
+    sponsorshipSponsorShare as Uint<128>
+  );
+  assert(!sponsorSend.change.is_some, "SPONSOR_REWARD_DELIVERY_FAILED");
+
   sponsorshipPurchases.increment(1);
   sponsorshipReceipts.insert(
     publicPurchaseId,
     SponsorshipReceipt {
       targetAddress: publicTargetAddress,
       targetEntryPointHash: publicEntryPointHash,
-      targetCommunicationCommitment: publicTargetCommitment
+      targetCommunicationCommitment: publicTargetCommitment,
+      rewardedDelegatorId: rewarded.nightIdentity,
+      sponsorRewardDelivered: true
     }
   );
+}
+
+///////// OWNER CIRCUITS /////////
+export circuit rotateEligibilityOperator(newOperator: Bytes<32>): [] {
+  assert(isOwner(), "Not the campaign owner");
+  eligibilityOperator = disclose(newOperator);
 }
 
 export circuit setSponsorshipEnabled(enabled: Boolean): [] {
@@ -86,16 +302,24 @@ export circuit setSponsorshipEnabled(enabled: Boolean): [] {
   sponsorshipEnabled = disclose(enabled);
 }
 
-///////// HELPER CIRCUITS /////////
-
+///////// HELPERS /////////
 circuit publicKey(sk: Bytes<32>): Bytes<32> {
-  return persistentHash<Vector<2, Bytes<32>>>([pad(32, "dust-sponsorship:pk:"), sk]);
+  return persistentHash<Vector<2, Bytes<32>>>([
+    pad(32, "dust-sponsorship:pk:"),
+    sk
+  ]);
+}
+
+circuit callerKey(): Bytes<32> {
+  return publicKey(localSecretKey());
 }
 
 circuit isOwner(): Boolean {
-  const sk = localSecretKey();
-  const pk = publicKey(sk);
-  return pk == owner;
+  return callerKey() == owner;
+}
+
+circuit isEligibilityOperator(): Boolean {
+  return callerKey() == eligibilityOperator;
 }
 
 ///////// WITNESSES /////////

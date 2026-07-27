@@ -19,7 +19,7 @@ import {
   type SentinelContractType,
 } from '@midnight-sentinel/contract';
 import { getNetworkId, WalletContext } from '@midnight-sentinel/wallet';
-import { map, type Observable } from 'rxjs';
+import { firstValueFrom, map, take, type Observable } from 'rxjs';
 
 export const toHex = (arr: Uint8Array) =>
   '0x' +
@@ -36,7 +36,12 @@ export interface Config {
 export interface SentinelSponsorshipConfig {
   sponsorId: Uint8Array;
   acceptedColor: Uint8Array;
-  fixedPrice: bigint;
+  sponsorRewardKey: { bytes: Uint8Array };
+  sponsorRewardEncryptionKey: Uint8Array;
+  sponsorShare: bigint;
+  delegatorShare: bigint;
+  minimumRegisteredNight: bigint;
+  initialEligibilityOperator: Uint8Array;
   policyHash: Uint8Array;
 }
 
@@ -45,9 +50,16 @@ export interface SentinelDerivedState {
   sponsorshipSponsorId: Uint8Array;
   sponsorshipAcceptedColor: Uint8Array;
   sponsorshipFixedPrice: bigint;
+  sponsorshipSponsorShare: bigint;
+  sponsorshipDelegatorShare: bigint;
+  sponsorshipMinimumRegisteredNight: bigint;
   sponsorshipPolicyHash: Uint8Array;
   sponsorshipEnabled: boolean;
-  sponsorshipRevenue: bigint;
+  eligibilityOperator: Uint8Array;
+  delegatorCount: bigint;
+  rewardCursor: bigint;
+  delegatorSlots: Ledger['delegatorSlots'];
+  delegatorPositions: Ledger['delegatorPositions'];
   sponsorshipPurchases: bigint;
   sponsorshipReceipts: Ledger['sponsorshipReceipts'];
 }
@@ -79,7 +91,12 @@ export class SentinelContract {
       args: [
         sponsorship.sponsorId,
         sponsorship.acceptedColor,
-        sponsorship.fixedPrice,
+        sponsorship.sponsorRewardKey,
+        sponsorship.sponsorRewardEncryptionKey,
+        sponsorship.sponsorShare,
+        sponsorship.delegatorShare,
+        sponsorship.minimumRegisteredNight,
+        sponsorship.initialEligibilityOperator,
         sponsorship.policyHash,
       ],
     });
@@ -95,9 +112,17 @@ export class SentinelContract {
             sponsorshipSponsorId: ledgerState.sponsorshipSponsorId,
             sponsorshipAcceptedColor: ledgerState.sponsorshipAcceptedColor,
             sponsorshipFixedPrice: ledgerState.sponsorshipFixedPrice,
+            sponsorshipSponsorShare: ledgerState.sponsorshipSponsorShare,
+            sponsorshipDelegatorShare: ledgerState.sponsorshipDelegatorShare,
+            sponsorshipMinimumRegisteredNight:
+              ledgerState.sponsorshipMinimumRegisteredNight,
             sponsorshipPolicyHash: ledgerState.sponsorshipPolicyHash,
             sponsorshipEnabled: ledgerState.sponsorshipEnabled,
-            sponsorshipRevenue: ledgerState.sponsorshipRevenue,
+            eligibilityOperator: ledgerState.eligibilityOperator,
+            delegatorCount: ledgerState.delegatorCount,
+            rewardCursor: ledgerState.rewardCursor,
+            delegatorSlots: ledgerState.delegatorSlots,
+            delegatorPositions: ledgerState.delegatorPositions,
             sponsorshipPurchases: ledgerState.sponsorshipPurchases,
             sponsorshipReceipts: ledgerState.sponsorshipReceipts,
           };
@@ -130,9 +155,17 @@ export class SentinelContract {
             sponsorshipSponsorId: ledgerState.sponsorshipSponsorId,
             sponsorshipAcceptedColor: ledgerState.sponsorshipAcceptedColor,
             sponsorshipFixedPrice: ledgerState.sponsorshipFixedPrice,
+            sponsorshipSponsorShare: ledgerState.sponsorshipSponsorShare,
+            sponsorshipDelegatorShare: ledgerState.sponsorshipDelegatorShare,
+            sponsorshipMinimumRegisteredNight:
+              ledgerState.sponsorshipMinimumRegisteredNight,
             sponsorshipPolicyHash: ledgerState.sponsorshipPolicyHash,
             sponsorshipEnabled: ledgerState.sponsorshipEnabled,
-            sponsorshipRevenue: ledgerState.sponsorshipRevenue,
+            eligibilityOperator: ledgerState.eligibilityOperator,
+            delegatorCount: ledgerState.delegatorCount,
+            rewardCursor: ledgerState.rewardCursor,
+            delegatorSlots: ledgerState.delegatorSlots,
+            delegatorPositions: ledgerState.delegatorPositions,
             sponsorshipPurchases: ledgerState.sponsorshipPurchases,
             sponsorshipReceipts: ledgerState.sponsorshipReceipts,
           };
@@ -174,6 +207,50 @@ export class SentinelContract {
       `[sponsorship] ${enabled ? 'Enabled' : 'Paused'} on tx: ${tx?.public.txHash}`
     );
     return tx;
+  }
+
+  async addDelegator(input: {
+    identity: Uint8Array;
+    nightRewardAddress: Uint8Array;
+    rewardKey: Uint8Array;
+    rewardEncryptionKey: Uint8Array;
+    registeredAmount: bigint;
+    verificationBlock: bigint;
+    enrollmentNonce: bigint;
+  }) {
+    if (!this.deployedContract) throw new Error('Sentinel contract is not joined');
+    return this.deployedContract.callTx.addDelegator(
+      input.identity,
+      input.nightRewardAddress,
+      { bytes: input.rewardKey },
+      input.rewardEncryptionKey,
+      input.registeredAmount,
+      input.verificationBlock,
+      input.enrollmentNonce
+    );
+  }
+
+  async updateDelegator(input: Parameters<SentinelContract['addDelegator']>[0]) {
+    if (!this.deployedContract) throw new Error('Sentinel contract is not joined');
+    return this.deployedContract.callTx.updateDelegator(
+      input.identity,
+      input.nightRewardAddress,
+      { bytes: input.rewardKey },
+      input.rewardEncryptionKey,
+      input.registeredAmount,
+      input.verificationBlock,
+      input.enrollmentNonce
+    );
+  }
+
+  async removeDelegator(identity: Uint8Array) {
+    if (!this.deployedContract) throw new Error('Sentinel contract is not joined');
+    return this.deployedContract.callTx.removeDelegator(identity);
+  }
+
+  async rotateEligibilityOperator(authority: Uint8Array) {
+    if (!this.deployedContract) throw new Error('Sentinel contract is not joined');
+    return this.deployedContract.callTx.rotateEligibilityOperator(authority);
   }
 
   async withdrawSponsorshipRevenue() {
@@ -244,9 +321,16 @@ export class SentinelContract {
       console.log('Owner: ', state.owner);
       console.log('Sponsorship enabled: ', state.sponsorshipEnabled);
       console.log('Sponsorship price: ', state.sponsorshipFixedPrice);
-      console.log('Sponsorship revenue: ', state.sponsorshipRevenue);
+      console.log(
+        'Derived sponsorship revenue: ',
+        state.sponsorshipPurchases * state.sponsorshipFixedPrice
+      );
       console.log('Sponsorship purchases: ', state.sponsorshipPurchases);
     });
+  }
+
+  readState(): Promise<SentinelDerivedState> {
+    return firstValueFrom(this.state$.pipe(take(1)));
   }
 
   private static async getPrivateState(
