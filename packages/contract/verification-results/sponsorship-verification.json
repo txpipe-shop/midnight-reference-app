@@ -1,0 +1,108 @@
+{
+  "startedAt": "2026-07-24T18:16:43.520Z",
+  "finishedAt": "2026-07-24T18:18:20.102Z",
+  "versions": {
+    "compiler": "0.31.1",
+    "language": "0.23.0",
+    "ledger": "8.0.3",
+    "midnightJs": "4.1.1",
+    "node": "0.22.5",
+    "indexer": "4.2.1",
+    "proofServer": "8.1.0",
+    "network": "undeployed"
+  },
+  "health": {
+    "node": true,
+    "indexer": true,
+    "proofServer": true
+  },
+  "contractAddress": "55864945c3cf316707ace03faade1b48ba633136092c2e4a46aa2bec026c7641",
+  "transactionIds": {
+    "funding": "00bba19100d112fad246df49491c87954aba831b6b5027538f6951a880881760bd",
+    "purchase": "00bcfee3846fbd326a0580d907b5d75fc3459c4bc924042ea2831de4e580e516ae"
+  },
+  "checks": {
+    "VP-01": {
+      "verdict": "confirmed",
+      "evidence": {
+        "fullZkArtifactsGenerated": true,
+        "deterministicRuntimeRevenueAfterTwoPurchases": "200",
+        "deterministicRuntimePurchasesAfterTwoPurchases": "2"
+      }
+    },
+    "VP-02": {
+      "verdict": "confirmed",
+      "evidence": {
+        "rejectedWithoutStateChange": [
+          "wrong sponsor",
+          "wrong asset",
+          "amount below price",
+          "amount above price",
+          "zero payment"
+        ]
+      }
+    },
+    "VP-03": {
+      "verdict": "confirmed",
+      "evidence": {
+        "guaranteedTranscript": true,
+        "fallibleTranscript": false
+      }
+    },
+    "VP-04": {
+      "verdict": "confirmed",
+      "evidence": {
+        "beneficiaryDustCoins": 0,
+        "beneficiaryDustBalance": "0",
+        "finalizedBytes": 20599
+      }
+    },
+    "VP-06": {
+      "verdict": "confirmed",
+      "evidence": {
+        "roundTrip": true,
+        "intents": 1,
+        "calls": 1,
+        "contractAddress": "55864945c3cf316707ace03faade1b48ba633136092c2e4a46aa2bec026c7641",
+        "entryPoint": "purchaseSponsorship",
+        "ttl": "2026-07-24T19:17:55.000Z",
+        "feeEstimate": "300000116978494"
+      }
+    },
+    "VP-05": {
+      "verdict": "confirmed",
+      "evidence": {
+        "sponsorAddedOnly": ["dust"],
+        "dustActionPresent": true
+      }
+    },
+    "VP-07": {
+      "verdict": "refuted",
+      "evidence": {
+        "contractAddressUnchanged": true,
+        "entryPointUnchanged": true,
+        "communicationCommitmentUnchanged": true,
+        "ttlMutationRejected": false,
+        "ttlMutationSubmissionAcceptedInPriorRun": true,
+        "actionMutationRejected": true
+      }
+    },
+    "VP-08": {
+      "verdict": "confirmed",
+      "evidence": {
+        "revenue": "100",
+        "purchases": "1",
+        "sponsorDustCoinsBefore": 5,
+        "sponsorDustCoinsAfter": 5,
+        "sponsorDustUtxoSetChanged": true
+      }
+    },
+    "VP-09": {
+      "verdict": "inconclusive",
+      "evidence": {
+        "unsponsoredSubmissionRejected": true,
+        "staleContractStateSubmission": "not executed independently"
+      }
+    }
+  }
+}

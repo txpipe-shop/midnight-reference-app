@@ -1,0 +1,57 @@
+{
+  "startedAt": "2026-07-24T22:28:47.085Z",
+  "versions": {
+    "compiler": "0.31.1",
+    "language": "0.23.0",
+    "ledger": "8.0.3",
+    "midnightJs": "4.1.1",
+    "node": "0.22.5",
+    "indexer": "4.2.1",
+    "proofServer": "8.1.0",
+    "network": "undeployed"
+  },
+  "health": {
+    "node": true,
+    "indexer": true,
+    "proofServer": true
+  },
+  "verdict": "confirmed",
+  "finishedAt": "2026-07-24T22:33:02.187Z",
+  "contractAddresses": {
+    "sponsorship": "5e66fcfc90a76c1b86768835be9dabebec502634a8bd96bed43e2ab7e0aca5b5",
+    "target": "1618f878d8eec83b53365320c110268fef2181898c3faee4c35875a3919efa44"
+  },
+  "transactionIds": {
+    "funding": "00ea8f8ab4c3412abc878ef92dc5027bed70efab307c41afedca29cac26b2fef0a",
+    "success": "007b068aa0cdd687394cd01a005443dfe122748d8c2641f9ee34ae90d20878123a",
+    "fallibleFailure": "00840600ce9e0da5e0ea4535d22d9514a80ac3faff220469c1a0ff53bdfa43d1ae"
+  },
+  "scenarios": {
+    "success": {
+      "txId": "007b068aa0cdd687394cd01a005443dfe122748d8c2641f9ee34ae90d20878123a",
+      "status": "SucceedEntirely",
+      "feeEstimate": "300000008022385",
+      "targetCommunicationCommitment": "73f1b7604328b50a967b732ab05cf6189b0d113be24dbc71be85a607a2b24ada19",
+      "purchaseCommunicationCommitment": "7328a196af465d3f6902d6903dde525c0d0c34aef377ba9ee1ca1876feb82d6521",
+      "intentsBeforeSponsorship": 2,
+      "intentsAfterSponsorship": 3
+    },
+    "fallibleFailure": {
+      "txId": "00840600ce9e0da5e0ea4535d22d9514a80ac3faff220469c1a0ff53bdfa43d1ae",
+      "status": "FailFallible",
+      "feeEstimate": "300000006247586",
+      "targetCommunicationCommitment": "73e0bcd3ff8a65081e14bfbdfe109927e3468e54055e95dd45f6075b010626463b",
+      "purchaseCommunicationCommitment": "73453e6cac05236b80236666670cf40393d57a5ab8b0e76c871395e512e676d83e",
+      "intentsBeforeSponsorship": 2,
+      "intentsAfterSponsorship": 3
+    }
+  },
+  "postState": {
+    "sponsorRevenue": "200",
+    "sponsorPurchases": "2",
+    "receiptCount": "2",
+    "targetGuaranteedExecutions": "2",
+    "targetFallibleExecutions": "1",
+    "recipientIncrease": "50"
+  }
+}

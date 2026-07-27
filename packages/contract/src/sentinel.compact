@@ -2,117 +2,88 @@ pragma language_version 0.23;
 
 import CompactStandardLibrary;
 
+export struct SponsorshipReceipt {
+  targetAddress: Bytes<32>;
+  targetEntryPointHash: Bytes<32>;
+  targetCommunicationCommitment: Field;
+}
+
 ///////// LEDGER /////////
 export ledger owner: Bytes<32>;
 
-export ledger delegators: Map<Bytes<32>, Uint<128>>;
+export sealed ledger sponsorshipSponsorId: Bytes<32>;
 
-export ledger shieldedVault: QualifiedShieldedCoinInfo;
+export sealed ledger sponsorshipAcceptedColor: Bytes<32>;
 
-export ledger rewardsVault: QualifiedShieldedCoinInfo;
+export sealed ledger sponsorshipFixedPrice: Uint<64>;
 
-export ledger hasShielded: Boolean;
+export sealed ledger sponsorshipPolicyHash: Bytes<32>;
 
-export ledger hasRewards: Boolean;
+export ledger sponsorshipEnabled: Boolean;
+
+export ledger sponsorshipRevenue: Uint<128>;
+
+export ledger sponsorshipPurchases: Counter;
+
+export ledger sponsorshipReceipts: Map<Bytes<32>, SponsorshipReceipt>;
 
 ///////// CONSTRUCTOR /////////
-constructor() {
+constructor(
+  sponsorId: Bytes<32>,
+  acceptedColor: Bytes<32>,
+  fixedPrice: Uint<64>,
+  policyHash: Bytes<32>
+) {
+  assert(fixedPrice > 0, "Sponsorship price must be positive");
+
   const sk = localSecretKey();
   owner = disclose(publicKey(sk));
-  hasShielded = disclose(false);
-  hasRewards = disclose(false);
+  sponsorshipSponsorId = disclose(sponsorId);
+  sponsorshipAcceptedColor = disclose(acceptedColor);
+  sponsorshipFixedPrice = disclose(fixedPrice);
+  sponsorshipPolicyHash = disclose(policyHash);
+  sponsorshipEnabled = disclose(true);
+  sponsorshipRevenue = disclose(0);
 }
 
 ///////// EXPORTED CIRCUITS /////////
 
-export circuit delegate(coin: ShieldedCoinInfo): [] {
-  assert(coin.value > 0, "Deposit amount must be positive");
+export circuit purchaseSponsorship(
+  purchaseId: Bytes<32>,
+  payment: ShieldedCoinInfo,
+  targetAddress: Bytes<32>,
+  targetEntryPointHash: Bytes<32>,
+  targetCommunicationCommitment: Field
+): [] {
+  const publicPurchaseId = disclose(purchaseId);
+  const publicPayment = disclose(payment);
+  const publicTargetAddress = disclose(targetAddress);
+  const publicEntryPointHash = disclose(targetEntryPointHash);
+  const publicTargetCommitment = disclose(targetCommunicationCommitment);
 
-  receiveShielded(disclose(coin));
+  assert(sponsorshipEnabled, "Sponsorship is paused");
+  assert(publicPayment.color == sponsorshipAcceptedColor, "Wrong sponsorship payment asset");
+  assert(publicPayment.value == sponsorshipFixedPrice, "Wrong sponsorship payment amount");
+  assert(!sponsorshipReceipts.member(publicPurchaseId), "Duplicate sponsorship purchase");
 
-  if (!hasShielded) {
-    shieldedVault.writeCoin(
-      disclose(coin),
-      right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
-      );
-    hasShielded = true;
-  } else {
-    shieldedVault.writeCoin(
-      mergeCoinImmediate(shieldedVault, disclose(coin)),
-      right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
-      );
-  }
+  receiveShielded(publicPayment);
 
-  delegators.insert(disclose(publicKey(localSecretKey())), disclose(coin.value));
+  sponsorshipRevenue =
+    (sponsorshipRevenue + (publicPayment.value as Uint<128>)) as Uint<128>;
+  sponsorshipPurchases.increment(1);
+  sponsorshipReceipts.insert(
+    publicPurchaseId,
+    SponsorshipReceipt {
+      targetAddress: publicTargetAddress,
+      targetEntryPointHash: publicEntryPointHash,
+      targetCommunicationCommitment: publicTargetCommitment
+    }
+  );
 }
 
-export circuit withdraw(): [] {
+export circuit setSponsorshipEnabled(enabled: Boolean): [] {
   assert(isOwner(), "You are not the owner of this contract.");
-  assert(shieldedVault.value > 0, "Nothing to withdraw.");
-
-  sendShielded(
-    shieldedVault,
-    left<ZswapCoinPublicKey, ContractAddress>(ownPublicKey()),
-    disclose(shieldedVault.value)
-    );
-
-  hasShielded = false;
-
-  shieldedVault =
-    QualifiedShieldedCoinInfo { nonce: pad(32, ""), color: pad(32, ""), value: 0, mt_index: 0 };
-}
-
-export circuit depositRewards(coin: ShieldedCoinInfo): [] {
-  assert(coin.value > 0, "Deposit amount must be positive");
-
-  receiveShielded(disclose(coin));
-
-  if (!hasRewards) {
-    rewardsVault.writeCoin(
-      disclose(coin),
-      right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
-      );
-    hasRewards = true;
-  } else {
-    rewardsVault.writeCoin(
-      mergeCoinImmediate(rewardsVault, disclose(coin)),
-      right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
-      );
-  }
-}
-
-export circuit redeemRewards(): [] {
-  assert(delegators.member(disclose(publicKey(localSecretKey()))),
-         "You must be a delegator to redeem rewards"
-         );
-  assert(hasRewards, "No tokens in vault");
-
-  const callerKey = ownPublicKey();
-  const vault = rewardsVault.read();
-  sendShielded(
-    vault,
-    left<ZswapCoinPublicKey, ContractAddress>(disclose(callerKey)),
-    disclose(vault.value)
-    );
-  hasRewards = false;
-  rewardsVault =
-    QualifiedShieldedCoinInfo { nonce: pad(32, ""), color: pad(32, ""), value: 0, mt_index: 0 };
-}
-
-///////// HELPER CIRCUIT TO MINT TOKENS TO PAY /////////
-
-export circuit mintDirectShielded(
-                 domainSep: Bytes<32>,
-                 mintValue: Uint<64>,
-                 mintNonce: Bytes<32>,
-                 publicKey: ZswapCoinPublicKey
-                 ): [] {
-  mintShieldedToken(
-    disclose(domainSep),
-    disclose(mintValue),
-    disclose(mintNonce),
-    left<ZswapCoinPublicKey, ContractAddress>(disclose(publicKey))
-    );
+  sponsorshipEnabled = disclose(enabled);
 }
 
 ///////// HELPER CIRCUITS /////////

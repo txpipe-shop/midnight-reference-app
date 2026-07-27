@@ -29,15 +29,15 @@ export function DeployView({
       <div className="space-y-2">
         <h2 className="text-2xl font-bold">Deploy Contract</h2>
         <p className="text-muted-foreground text-sm">
-          Provide the initial rules for your Sentinel contract.
+          Provide the immutable sponsorship campaign configuration.
         </p>
       </div>
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="rules">Rules (JSON)</Label>
+          <Label htmlFor="rules">Sponsorship config (JSON)</Label>
           <Textarea
             id="rules"
-            placeholder='[{"is_some": false, "value": []}]'
+            placeholder='{"sponsorId":"64 hex chars","acceptedColor":"64 hex chars","fixedPrice":"100","policyHash":"64 hex chars"}'
             className="font-mono min-h-[200px]"
             value={rulesJson}
             onChange={(e) => onRulesJsonChange(e.target.value)}
@@ -57,4 +57,3 @@ export function DeployView({
     </div>
   );
 }
-

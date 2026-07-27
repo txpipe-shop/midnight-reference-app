@@ -1,0 +1,47 @@
+pragma language_version 0.23;
+
+import CompactStandardLibrary;
+
+export ledger configuredSponsor: Bytes<32>;
+export ledger acceptedColor: Bytes<32>;
+export ledger fixedPrice: Uint<64>;
+export ledger sponsorRevenue: Map<Bytes<32>, Uint<128>>;
+export ledger sponsorPurchases: Map<Bytes<32>, Uint<64>>;
+
+constructor(
+  sponsorId: Bytes<32>,
+  paymentColor: Bytes<32>,
+  price: Uint<64>
+) {
+  assert(price > 0, "Price must be positive");
+  configuredSponsor = disclose(sponsorId);
+  acceptedColor = disclose(paymentColor);
+  fixedPrice = disclose(price);
+}
+
+export circuit purchaseSponsorship(
+  sponsorId: Bytes<32>,
+  payment: ShieldedCoinInfo
+): [] {
+  const publicSponsor = disclose(sponsorId);
+  const publicPayment = disclose(payment);
+
+  assert(publicSponsor == configuredSponsor, "Unknown sponsor");
+  assert(publicPayment.color == acceptedColor, "Wrong payment asset");
+  assert(publicPayment.value == fixedPrice, "Wrong payment amount");
+
+  receiveShielded(publicPayment);
+
+  const paid = publicPayment.value as Uint<128>;
+
+  if (sponsorRevenue.member(publicSponsor)) {
+    const previousRevenue = sponsorRevenue.lookup(publicSponsor);
+    sponsorRevenue.insert(publicSponsor, (previousRevenue + paid) as Uint<128>);
+
+    const previousPurchases = sponsorPurchases.lookup(publicSponsor);
+    sponsorPurchases.insert(publicSponsor, (previousPurchases + 1) as Uint<64>);
+  } else {
+    sponsorRevenue.insert(publicSponsor, paid);
+    sponsorPurchases.insert(publicSponsor, 1);
+  }
+}

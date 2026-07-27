@@ -6,7 +6,6 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { WalletSidebar } from "@/components/wallet-sidebar";
 import { useWallet } from "@/contexts/wallet";
-import { rulesSchema } from "@/lib/schemas";
 import { DeployView } from "@/views/Deploy";
 import { JoinView } from "@/views/Join";
 import { SelectView } from "@/views/Select";
@@ -14,9 +13,23 @@ import { SentinelContract, type SentinelDerivedState } from '@midnight-sentinel/
 import { initializeProviders } from '@midnight-sentinel/api/browser';
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 import { ContractView } from "./views/Contract";
 
 type ViewState = "select" | "deploy" | "join" | "contract";
+
+const hex32 = z.string().regex(/^(?:0x)?[0-9a-fA-F]{64}$/).transform((value) => {
+  const hex = value.startsWith("0x") ? value.slice(2) : value;
+  return Uint8Array.from({ length: 32 }, (_, index) =>
+    Number.parseInt(hex.slice(index * 2, index * 2 + 2), 16)
+  );
+});
+const sponsorshipConfigSchema = z.object({
+  sponsorId: hex32,
+  acceptedColor: hex32,
+  fixedPrice: z.union([z.string(), z.number()]).transform((value) => BigInt(value)),
+  policyHash: hex32,
+});
 
 function App() {
   const { wallet, error } = useWallet();
@@ -42,7 +55,7 @@ function App() {
     if (!deployRulesJson.trim()) return null;
     try {
       const parsed = JSON.parse(deployRulesJson);
-      return rulesSchema.safeParse(parsed);
+      return sponsorshipConfigSchema.safeParse(parsed);
     } catch {
       return null;
     }
@@ -61,7 +74,7 @@ function App() {
       const providers = await initializeProviders(wallet.api);
       const contract = await SentinelContract.deploy(
         providers,
-        { secretKey: new Uint8Array(32).fill(0) }
+        parsedRules.data
       );
       setActiveContract(contract);
       setView("contract");
@@ -88,8 +101,7 @@ function App() {
       const providers = await initializeProviders(wallet.api);
       const contract = await SentinelContract.join(
         providers,
-        joinAddress,
-        { secretKey: new Uint8Array(32).fill(0) }
+        joinAddress
       );
 
       setActiveContract(contract);

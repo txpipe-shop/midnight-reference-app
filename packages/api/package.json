@@ -15,6 +15,11 @@
       "types": "./dist/browser.d.ts",
       "import": "./dist/browser.js",
       "require": "./dist/browser.js"
+    },
+    "./sponsorship": {
+      "types": "./dist/sponsorship.d.ts",
+      "import": "./dist/sponsorship.js",
+      "require": "./dist/sponsorship.js"
     }
   },
   "scripts": {

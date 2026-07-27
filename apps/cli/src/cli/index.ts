@@ -1,4 +1,10 @@
 import { SentinelContract } from '@midnight-sentinel/api';
+import {
+  dustPublicKeyToBytes,
+  nativeNightSponsorshipConfig,
+  sponsorAndSubmit,
+  sponsorshipAllowlistHash,
+} from '@midnight-sentinel/api/sponsorship';
 import { configureProviders } from '@midnight-sentinel/contract/providers';
 import {
   getBalancesAndAddresses,
@@ -12,54 +18,30 @@ import { circuitMenu, contractMenu } from './menus.js';
 async function handleCircuits(
   contract: SentinelContract,
   _walletDetails: { seed: string; privateStateStoreName: string },
-  walletCtx: WalletContext,
+  _walletCtx: WalletContext,
   rli: Interface
 ) {
   while (true) {
     const choice = await rli.question(circuitMenu);
     switch (choice) {
       case '1':
-        try {
-          const key = walletCtx.shieldedSecretKeys.coinPublicKey;
-          const amount = await rli.question('Enter the amount you would like to delegate: ');
-          await contract.delegate(key, BigInt(amount));
-        } catch (e) {
-          console.log('Error delegating: ', e);
-        }
+        await contract.getCurrentState();
         break;
       case '2':
         try {
-          await contract.redeemRewards();
+          await contract.setSponsorshipEnabled(false);
         } catch (e) {
-          console.log('Error redeeming rewards: ', e);
+          console.log('Error pausing sponsorship: ', e);
         }
-        return;
+        break;
       case '3':
         try {
-          await contract.withdraw();
+          await contract.setSponsorshipEnabled(true);
         } catch (e) {
-          console.log('Error wthdrawing: ', e);
+          console.log('Error resuming sponsorship: ', e);
         }
         break;
       case '4':
-        try {
-          const amount = await rli.question(
-            'Enter the amount you would like to deposit as rewards: '
-          );
-          // TODO: wire up to wallet
-          await contract.depositRewards(
-            BigInt(amount),
-            new Uint8Array(32).fill(0),
-            new Uint8Array(32).fill(0)
-          );
-        } catch (e) {
-          console.log('Error depositing rewards: ', e);
-        }
-        return;
-      case '5':
-        await contract.getCurrentState();
-        break;
-      case '6':
         console.log('Exiting...');
         return;
       default:
@@ -87,7 +69,26 @@ export async function runCli(
           config,
           walletDetails.privateStateStoreName
         );
-        contract = await SentinelContract.deploy(providers);
+        const fixedPrice = BigInt(
+          (await rli.question('Sponsorship price in shielded NIGHT [100]: ')) || '100'
+        );
+        const targetAddress = (
+          await rli.question('Initial allowed target contract address: ')
+        ).trim();
+        const targetEntryPoint = (
+          await rli.question('Initial allowed target circuit: ')
+        ).trim();
+        const policyHash = sponsorshipAllowlistHash([
+          { address: targetAddress, entryPoint: targetEntryPoint },
+        ]);
+        contract = await SentinelContract.deploy(
+          providers,
+          nativeNightSponsorshipConfig(
+            walletCtx,
+            policyHash,
+            fixedPrice
+          )
+        );
 
         console.log(
           `[Contract Address]: ${contract.deployedContract?.deployTxData.public.contractAddress}`
@@ -113,8 +114,42 @@ export async function runCli(
         break;
       case '3':
         try {
-          const raw = await rli.question('Enter the raw transaction recipe: ');
-          await SentinelContract.zswapSponsor(walletCtx, raw);
+          const sentinelAddress = (
+            await rli.question('Sentinel sponsorship contract address: ')
+          ).trim();
+          const targetAddress = (await rli.question('Allowed target contract address: ')).trim();
+          const targetEntryPoint = (await rli.question('Allowed target circuit: ')).trim();
+          const maxFee = BigInt(await rli.question('Maximum DUST fee: '));
+          const raw = (await rli.question('Prepared transaction (hex): ')).trim();
+          const allowedTargets = [{ address: targetAddress, entryPoint: targetEntryPoint }];
+          const providers = await configureProviders(
+            walletCtx,
+            config,
+            walletDetails.privateStateStoreName
+          );
+          const result = await sponsorAndSubmit(
+            Uint8Array.from(Buffer.from(raw, 'hex')),
+            {
+              sentinelAddress,
+              sponsorId: dustPublicKeyToBytes(walletCtx.dustSecretKey.publicKey),
+              policyHash: sponsorshipAllowlistHash(allowedTargets),
+              allowedTargets,
+              minTtlMs: 30_000,
+              maxTtlMs: 65 * 60 * 1_000,
+              maxFee,
+            },
+            providers,
+            walletCtx
+          );
+          console.log(
+            JSON.stringify({
+              txId: result.txId,
+              status: result.status,
+              feeEstimate: result.feeEstimate.toString(),
+              targetAddress: result.targetAddress,
+              targetEntryPoint: result.targetEntryPoint,
+            })
+          );
         } catch (e) {
           console.log('Error sponsoring DUST: ', e);
         }

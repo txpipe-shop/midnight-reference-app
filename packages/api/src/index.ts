@@ -1,17 +1,11 @@
 import {
-  decodeQualifiedShieldedCoinInfo,
-  QualifiedShieldedCoinInfo,
   Transaction,
   SignatureEnabled,
   Proof,
   Binding,
 } from '@midnight-ntwrk/ledger-v8';
 import { MidnightBech32m, ShieldedAddress } from '@midnight-ntwrk/wallet-sdk-address-format';
-import {
-  deployContract,
-  findDeployedContract,
-  withContractScopedTransaction,
-} from '@midnight-ntwrk/midnight-js-contracts';
+import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import {
   CompactCompiledContract,
   createPrivateState,
@@ -25,7 +19,6 @@ import {
   type SentinelContractType,
 } from '@midnight-sentinel/contract';
 import { getNetworkId, WalletContext } from '@midnight-sentinel/wallet';
-import { fromHex } from '@midnight-ntwrk/compact-runtime';
 import { map, type Observable } from 'rxjs';
 
 export const toHex = (arr: Uint8Array) =>
@@ -40,13 +33,23 @@ export interface Config {
   proofServer: string;
 }
 
+export interface SentinelSponsorshipConfig {
+  sponsorId: Uint8Array;
+  acceptedColor: Uint8Array;
+  fixedPrice: bigint;
+  policyHash: Uint8Array;
+}
+
 export interface SentinelDerivedState {
   owner: string;
-  delegators: Ledger['delegators'];
-  shieldedVault: QualifiedShieldedCoinInfo;
-  rewardsVault: QualifiedShieldedCoinInfo;
-  hasShielded: boolean;
-  hasRewards: boolean;
+  sponsorshipSponsorId: Uint8Array;
+  sponsorshipAcceptedColor: Uint8Array;
+  sponsorshipFixedPrice: bigint;
+  sponsorshipPolicyHash: Uint8Array;
+  sponsorshipEnabled: boolean;
+  sponsorshipRevenue: bigint;
+  sponsorshipPurchases: bigint;
+  sponsorshipReceipts: Ledger['sponsorshipReceipts'];
 }
 
 export class SentinelContract {
@@ -64,12 +67,21 @@ export class SentinelContract {
     this.state$ = state$;
   }
 
-  static async deploy(providers: SentinelContractProviders): Promise<SentinelContract> {
+  static async deploy(
+    providers: SentinelContractProviders,
+    sponsorship: SentinelSponsorshipConfig
+  ): Promise<SentinelContract> {
     console.log('[deploy] Starting contract deployment...');
     const deployedContract = await deployContract<SentinelContractType>(providers, {
       compiledContract: CompactCompiledContract,
       privateStateId: sentinelContractPrivateStateKey,
       initialPrivateState: await this.getPrivateState(providers, ''),
+      args: [
+        sponsorship.sponsorId,
+        sponsorship.acceptedColor,
+        sponsorship.fixedPrice,
+        sponsorship.policyHash,
+      ],
     });
 
     const contractAddress = deployedContract.deployTxData.public.contractAddress;
@@ -80,11 +92,14 @@ export class SentinelContract {
           const ledgerState = ledger(contractState.data);
           return {
             owner: toHex(ledgerState.owner),
-            delegators: ledgerState.delegators,
-            shieldedVault: decodeQualifiedShieldedCoinInfo(ledgerState.shieldedVault),
-            rewardsVault: decodeQualifiedShieldedCoinInfo(ledgerState.rewardsVault),
-            hasShielded: ledgerState.hasShielded,
-            hasRewards: ledgerState.hasRewards,
+            sponsorshipSponsorId: ledgerState.sponsorshipSponsorId,
+            sponsorshipAcceptedColor: ledgerState.sponsorshipAcceptedColor,
+            sponsorshipFixedPrice: ledgerState.sponsorshipFixedPrice,
+            sponsorshipPolicyHash: ledgerState.sponsorshipPolicyHash,
+            sponsorshipEnabled: ledgerState.sponsorshipEnabled,
+            sponsorshipRevenue: ledgerState.sponsorshipRevenue,
+            sponsorshipPurchases: ledgerState.sponsorshipPurchases,
+            sponsorshipReceipts: ledgerState.sponsorshipReceipts,
           };
         })
       );
@@ -112,11 +127,14 @@ export class SentinelContract {
           const ledgerState = ledger(contractState.data);
           return {
             owner: toHex(ledgerState.owner),
-            delegators: ledgerState.delegators,
-            shieldedVault: decodeQualifiedShieldedCoinInfo(ledgerState.shieldedVault),
-            rewardsVault: decodeQualifiedShieldedCoinInfo(ledgerState.rewardsVault),
-            hasShielded: ledgerState.hasShielded,
-            hasRewards: ledgerState.hasRewards,
+            sponsorshipSponsorId: ledgerState.sponsorshipSponsorId,
+            sponsorshipAcceptedColor: ledgerState.sponsorshipAcceptedColor,
+            sponsorshipFixedPrice: ledgerState.sponsorshipFixedPrice,
+            sponsorshipPolicyHash: ledgerState.sponsorshipPolicyHash,
+            sponsorshipEnabled: ledgerState.sponsorshipEnabled,
+            sponsorshipRevenue: ledgerState.sponsorshipRevenue,
+            sponsorshipPurchases: ledgerState.sponsorshipPurchases,
+            sponsorshipReceipts: ledgerState.sponsorshipReceipts,
           };
         })
       );
@@ -126,22 +144,13 @@ export class SentinelContract {
   }
 
   async delegate(key: string, value: bigint) {
-    console.log('[delegate] Building delegate transaction...');
-    const tx = await this.deployedContract?.callTx.delegate({
-      nonce: new Uint8Array(32).fill(0),
-      color: new Uint8Array(32).fill(0),
-      value,
-    });
-    console.log(`[delegate] Sent ${value} NIGHTs on tx: ${tx?.public.txHash}`);
+    void key;
+    void value;
+    throw new Error('Delegation was removed from the sponsorship-only Sentinel');
   }
 
   async withdraw() {
-    console.log('[withdraw] Building withdraw transaction...');
-    const tx = await this.deployedContract?.callTx.withdraw();
-
-    console.log(
-      `[withdraw] Withdrew ${tx?.private.newCoins[0].value} NIGHTs on tx: ${tx?.public.txHash}`
-    );
+    throw new Error('Legacy delegation withdrawal was removed');
   }
 
   async depositRewards(
@@ -149,19 +158,28 @@ export class SentinelContract {
     nonce: Uint8Array<ArrayBufferLike>,
     color: Uint8Array<ArrayBufferLike>
   ) {
-    console.log('[depositRewards] Building deposit transaction...');
-    const tx = await this.deployedContract?.callTx.depositRewards({
-      nonce,
-      color,
-      value,
-    });
-    console.log(`[depositRewards] Deposited ${value} rewards on tx: ${tx?.public.txHash}`);
+    void value;
+    void nonce;
+    void color;
+    throw new Error('Legacy rewards were removed');
   }
 
   async redeemRewards() {
-    console.log('[redeemRewards] Building redeem transaction...');
-    const tx = await this.deployedContract?.callTx.redeemRewards();
-    console.log(`[redeemRewards] Redeemed rewards on tx: ${tx?.public.txHash}`);
+    throw new Error('Legacy rewards were removed');
+  }
+
+  async setSponsorshipEnabled(enabled: boolean) {
+    const tx = await this.deployedContract?.callTx.setSponsorshipEnabled(enabled);
+    console.log(
+      `[sponsorship] ${enabled ? 'Enabled' : 'Paused'} on tx: ${tx?.public.txHash}`
+    );
+    return tx;
+  }
+
+  async withdrawSponsorshipRevenue() {
+    throw new Error(
+      'Sponsorship treasury recovery is deferred; v1 payments are a contract sink'
+    );
   }
 
   static async startZswap(ctx: WalletContext, color: string, amount: string, addr: string) {
@@ -224,15 +242,10 @@ export class SentinelContract {
       subscription?.unsubscribe();
 
       console.log('Owner: ', state.owner);
-      console.log('Shielded vault: ', state.shieldedVault);
-      console.log('Rewards vault: ', state.rewardsVault);
-      if (state.delegators.isEmpty()) {
-        console.log('No delegators found');
-        return;
-      }
-      for (const item of state.delegators) {
-        console.log(`Public Key: ${toHex(item[0])}, Amount delegated: ${item[1].valueOf()}`);
-      }
+      console.log('Sponsorship enabled: ', state.sponsorshipEnabled);
+      console.log('Sponsorship price: ', state.sponsorshipFixedPrice);
+      console.log('Sponsorship revenue: ', state.sponsorshipRevenue);
+      console.log('Sponsorship purchases: ', state.sponsorshipPurchases);
     });
   }
 
@@ -248,27 +261,9 @@ export class SentinelContract {
   }
 
   async mintFreeToken(recipientCoinPubKeyHex: string, recipientEncPubKeyHex: string) {
-    const domainSep = new Uint8Array(32).fill(1);
-    const mintNonce = crypto.getRandomValues(new Uint8Array(32));
-    const amount = 1000n;
-
-    const additionalMappings = new Map<string, string>([
-      [recipientCoinPubKeyHex, recipientEncPubKeyHex],
-    ]);
-
-    return await withContractScopedTransaction(
-      this.providers,
-      async (txCtx) => {
-        await this.deployedContract?.callTx.mintDirectShielded(
-          txCtx,
-          domainSep,
-          amount,
-          mintNonce,
-          { bytes: fromHex(recipientCoinPubKeyHex) }
-        );
-      },
-      { additionalCoinEncPublicKeyMappings: additionalMappings }
-    );
+    void recipientCoinPubKeyHex;
+    void recipientEncPubKeyHex;
+    throw new Error('Legacy test-token minting was removed');
   }
 }
 
