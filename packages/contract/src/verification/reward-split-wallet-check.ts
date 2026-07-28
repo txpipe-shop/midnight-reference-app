@@ -1,6 +1,6 @@
 // The runner reuses the wallet package's pinned ledger runtime without adding
 // a second copy to this package.
-// @ts-ignore the direct Node entry point has no adjacent declaration file.
+// @ts-expect-error the direct Node entry point has no adjacent declaration file.
 import {
   Binding,
   ContractCallPrototype,
@@ -15,7 +15,6 @@ import {
   encodeQualifiedShieldedCoinInfo,
   shieldedToken,
   type ZswapLocalState,
-  // @ts-ignore the direct Node entry point has no adjacent declaration file.
 } from '../../../wallet/node_modules/@midnight-ntwrk/ledger-v8/midnight_ledger_wasm_fs.js';
 import {
   ContractState,
@@ -139,9 +138,7 @@ const singleIntentTransaction = (
   let guaranteedOffer:
     | NonNullable<CallData['private']['unprovenTx']['guaranteedOffer']>
     | undefined;
-  let fallibleOffer:
-    | NonNullable<CallData['private']['unprovenTx']['guaranteedOffer']>
-    | undefined;
+  let fallibleOffer: NonNullable<CallData['private']['unprovenTx']['guaranteedOffer']> | undefined;
 
   for (const { circuitId, contractAddress, initialContractState, callData } of calls) {
     const ledgerState = LedgerContractState.deserialize(initialContractState.serialize());
@@ -173,12 +170,7 @@ const singleIntentTransaction = (
     }
   }
 
-  return Transaction.fromParts(
-    'undeployed',
-    guaranteedOffer,
-    fallibleOffer,
-    intent
-  );
+  return Transaction.fromParts('undeployed', guaranteedOffer, fallibleOffer, intent);
 };
 
 const main = async () => {
@@ -197,14 +189,16 @@ const main = async () => {
     const beneficiaryBefore = await synced(beneficiary);
     const sponsorBalanceBefore = sponsorBefore.shielded.balances[shieldedToken().raw] ?? 0n;
     const delegatorBalanceBefore = delegatorBefore.shielded.balances[shieldedToken().raw] ?? 0n;
-    const beneficiaryBalanceBefore =
-      beneficiaryBefore.shielded.balances[shieldedToken().raw] ?? 0n;
+    const beneficiaryBalanceBefore = beneficiaryBefore.shielded.balances[shieldedToken().raw] ?? 0n;
 
     const runtime = new RewardSplitContractConstructor({
       localSecretKey: ({ privateState }) => [privateState, privateState.secretKey],
     });
     const probe = runtime.initialState(
-      createConstructorContext(createPrivateState(OWNER_SECRET), deployer.shieldedSecretKeys.coinPublicKey),
+      createConstructorContext(
+        createPrivateState(OWNER_SECRET),
+        deployer.shieldedSecretKeys.coinPublicKey
+      ),
       bytes(0x11),
       Buffer.from(shieldedToken().raw, 'hex'),
       coinKey(dustSponsor),
@@ -215,20 +209,23 @@ const main = async () => {
     );
     const operatorKey = rewardSplitLedger(probe.currentContractState.data).owner;
     const deployerProviders = await providersFor(deployer, 'reward-split-wallet-deployer');
-    const deployed = await deployContract<RewardSplitContractType>(deployerProviders as never, {
-      compiledContract: RewardSplitCompiledContract,
-      privateStateId: PRIVATE_STATE_ID,
-      initialPrivateState: createPrivateState(OWNER_SECRET),
-      args: [
-        bytes(0x11),
-        Buffer.from(shieldedToken().raw, 'hex'),
-        coinKey(dustSponsor),
-        SHARE,
-        SHARE,
-        1n,
-        operatorKey,
-      ],
-    } as never);
+    const deployed = await deployContract<RewardSplitContractType>(
+      deployerProviders as never,
+      {
+        compiledContract: RewardSplitCompiledContract,
+        privateStateId: PRIVATE_STATE_ID,
+        initialPrivateState: createPrivateState(OWNER_SECRET),
+        args: [
+          bytes(0x11),
+          Buffer.from(shieldedToken().raw, 'hex'),
+          coinKey(dustSponsor),
+          SHARE,
+          SHARE,
+          1n,
+          operatorKey,
+        ],
+      } as never
+    );
     const contractAddress = deployed.deployTxData.public.contractAddress;
     const targetDeployProviders = await providersFor(
       deployer,
@@ -241,12 +238,7 @@ const main = async () => {
     );
     const targetAddress = targetDeployment.deployTxData.public.contractAddress;
 
-    await deployed.callTx.addDelegator(
-      bytes(0x41),
-      coinKey(delegator),
-      1n,
-      1n
-    );
+    await deployed.callTx.addDelegator(bytes(0x41), coinKey(delegator), 1n, 1n);
 
     const funding = await deployer.wallet.transferTransaction(
       [
@@ -274,10 +266,7 @@ const main = async () => {
     );
     void beneficiaryState;
 
-    const beneficiaryProviders = await providersFor(
-      beneficiary,
-      'reward-split-wallet-beneficiary'
-    );
+    const beneficiaryProviders = await providersFor(beneficiary, 'reward-split-wallet-beneficiary');
     const beneficiaryTargetProviders = await providersFor(
       beneficiary,
       'reward-split-target-beneficiary',
@@ -327,9 +316,7 @@ const main = async () => {
       );
 
       const chainAndState =
-        await beneficiaryProviders.publicDataProvider.queryZSwapAndContractState(
-          contractAddress
-        );
+        await beneficiaryProviders.publicDataProvider.queryZSwapAndContractState(contractAddress);
       assert(chainAndState, 'reward contract state not found');
       const runtimeStep = runtime.circuits.purchaseDelegatorReward(
         createCircuitContext(
@@ -349,10 +336,7 @@ const main = async () => {
           compiledContract: RewardSplitCompiledContract,
           contractAddress,
           circuitId: 'deliverSponsorReward',
-          args: [
-            purchaseId,
-            { nonce: sponsorCoin.nonce, color: sponsorCoin.color, value: SHARE },
-          ],
+          args: [purchaseId, { nonce: sponsorCoin.nonce, color: sponsorCoin.color, value: SHARE }],
           coinPublicKey: beneficiary.shieldedSecretKeys.coinPublicKey,
           initialContractState: postDelegatorState,
           initialZswapChainState: chainAndState[0] as unknown as ZswapChainState,
@@ -410,8 +394,7 @@ const main = async () => {
         },
         { ttl: TTL(), tokenKindsToBalance: ['shielded', 'unshielded'] }
       );
-      const sign = (payload: Uint8Array) =>
-        beneficiary.unshieldedKeystore.signData(payload);
+      const sign = (payload: Uint8Array) => beneficiary.unshieldedKeystore.signData(payload);
       signTransactionIntents(recipe.baseTransaction, sign, 'proof');
       if (recipe.balancingTransaction) {
         signTransactionIntents(recipe.balancingTransaction, sign, 'pre-proof');
@@ -451,11 +434,7 @@ const main = async () => {
       BigInt(Math.floor(Date.now() / 1000) + 600),
       'SucceedEntirely'
     );
-    await waitBalance(
-      'successful sponsor reward',
-      dustSponsor,
-      sponsorBalanceBefore + SHARE
-    );
+    await waitBalance('successful sponsor reward', dustSponsor, sponsorBalanceBefore + SHARE);
     const failure = await runScenario(
       2,
       BigInt(Math.floor(Date.now() / 1000) + 20),
@@ -468,11 +447,9 @@ const main = async () => {
     );
     const sponsorAfter = await synced(dustSponsor);
     const sponsorIncrease =
-      (sponsorAfter.shielded.balances[shieldedToken().raw] ?? 0n) -
-      sponsorBalanceBefore;
+      (sponsorAfter.shielded.balances[shieldedToken().raw] ?? 0n) - sponsorBalanceBefore;
     const delegatorIncrease =
-      (delegatorAfter.shielded.balances[shieldedToken().raw] ?? 0n) -
-      delegatorBalanceBefore;
+      (delegatorAfter.shielded.balances[shieldedToken().raw] ?? 0n) - delegatorBalanceBefore;
     assert.equal(sponsorIncrease, SHARE);
     assert.equal(delegatorIncrease, SHARE * 2n);
 

@@ -54,11 +54,7 @@ export class SponsorshipError extends Error {
   readonly stage: SponsorshipStage;
   readonly retryable: boolean;
 
-  constructor(
-    code: SponsorshipErrorCode,
-    message: string,
-    options: SponsorshipErrorOptions
-  ) {
+  constructor(code: SponsorshipErrorCode, message: string, options: SponsorshipErrorOptions) {
     super(message, { cause: options.cause });
     this.name = 'SponsorshipError';
     this.code = code;
@@ -92,8 +88,7 @@ export const sponsorshipAllowlistHash = (
     }))
     .sort(
       (left, right) =>
-        left.address.localeCompare(right.address) ||
-        left.entryPoint.localeCompare(right.entryPoint)
+        left.address.localeCompare(right.address) || left.entryPoint.localeCompare(right.entryPoint)
     );
   return Uint8Array.from(
     createHash('sha256')

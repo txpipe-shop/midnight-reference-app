@@ -3,10 +3,7 @@ import {
   compositeTargetLedger,
   type CompositeTargetContractType,
 } from '@midnight-sentinel/contract/verification/composite-sponsorship';
-import {
-  CompactCompiledContract,
-  ledger as sentinelLedger,
-} from '@midnight-sentinel/contract';
+import { ledger as sentinelLedger } from '@midnight-sentinel/contract';
 import { configureProviders as configureRepositoryProviders } from '@midnight-sentinel/contract/providers';
 import { SentinelContract } from '@midnight-sentinel/api';
 import {
@@ -19,11 +16,7 @@ import {
   createMidnightSponsorshipTarget,
   nativeNightSponsorshipConfig,
 } from '@midnight-sentinel/api/sponsorship/midnight';
-import {
-  buildUnfundedWallet,
-  buildWallet,
-  type WalletContext,
-} from '@midnight-sentinel/wallet';
+import { buildUnfundedWallet, buildWallet, type WalletContext } from '@midnight-sentinel/wallet';
 import {
   ContractCall,
   PreProof,
@@ -209,9 +202,7 @@ const main = async () => {
     const funding = await deployer.wallet.finalizeRecipe(fundingRecipe);
     const fundingTxId = await deployer.wallet.submitTransaction(funding);
     await waitUntil('beneficiary funding', beneficiary, (state) =>
-      (state.shielded.balances[shieldedToken().raw] ?? 0n) >= PRICE * 3n
-        ? state
-        : false
+      (state.shielded.balances[shieldedToken().raw] ?? 0n) >= PRICE * 3n ? state : false
     );
 
     const targetProviders = await configure(
@@ -254,13 +245,12 @@ const main = async () => {
       maxTtlMs: 65 * 60_000,
       maxFee: 1_000_000_000_000_000_000n,
     };
-    const beneficiarySponsorshipApi =
-      createMidnightBeneficiarySponsorshipApi({
-        sentinelAddress,
-        sentinelProviders: beneficiarySentinelProviders,
-        beneficiary,
-        proofServer: config.proofServer,
-      });
+    const beneficiarySponsorshipApi = createMidnightBeneficiarySponsorshipApi({
+      sentinelAddress,
+      sentinelProviders: beneficiarySentinelProviders,
+      beneficiary,
+      proofServer: config.proofServer,
+    });
     const sponsorSponsorshipApi = createMidnightSponsorSponsorshipApi({
       policy,
       sentinelProviders: sponsorSentinelProviders,
@@ -287,9 +277,7 @@ const main = async () => {
       });
       const targetCalls = [...(targetCall.private.unprovenTx.intents?.values() ?? [])]
         .flatMap((intent) => intent.actions)
-        .filter(
-          (action): action is ContractCall<PreProof> => action instanceof ContractCall
-        );
+        .filter((action): action is ContractCall<PreProof> => action instanceof ContractCall);
       assert.equal(targetCalls.length, 1);
       assert(targetCall.public.partitionedTranscript[0]);
       assert(targetCall.public.partitionedTranscript[1]);
@@ -330,11 +318,7 @@ const main = async () => {
       'SucceedEntirely'
     );
     const fallibleExpiry = BigInt(Math.floor(Date.now() / 1000) + 90);
-    const fallibleFailure = await runScenario(
-      bytes32(0x72),
-      fallibleExpiry,
-      'FailFallible'
-    );
+    const fallibleFailure = await runScenario(bytes32(0x72), fallibleExpiry, 'FailFallible');
 
     const sentinelState = await withTimeout(
       'production Sentinel state',
@@ -355,9 +339,7 @@ const main = async () => {
           .pipe(
             Rx.map((state) => compositeTargetLedger(state.data)),
             Rx.filter(
-              (state) =>
-                state.guaranteedExecutions === 2n &&
-                state.fallibleExecutions === 1n
+              (state) => state.guaranteedExecutions === 2n && state.fallibleExecutions === 1n
             )
           )
       )
@@ -394,10 +376,7 @@ const main = async () => {
   } finally {
     const reportPath =
       process.env.SPONSORSHIP_VERIFICATION_REPORT ??
-      path.join(
-        packageDir,
-        'verification/results/sponsorship-production-verification.json'
-      );
+      path.join(packageDir, 'verification/results/sponsorship-production-verification.json');
     await mkdir(path.dirname(reportPath), { recursive: true });
     await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`);
     console.log(`Production sponsorship verification: ${String(report.verdict).toUpperCase()}`);

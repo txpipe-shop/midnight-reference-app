@@ -1,9 +1,4 @@
-import {
-  Transaction,
-  SignatureEnabled,
-  Proof,
-  Binding,
-} from '@midnight-ntwrk/ledger-v8';
+import { Transaction, SignatureEnabled, Proof, Binding } from '@midnight-ntwrk/ledger-v8';
 import { MidnightBech32m, ShieldedAddress } from '@midnight-ntwrk/wallet-sdk-address-format';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import {
@@ -182,9 +177,7 @@ export class SentinelContract {
 
   async setSponsorshipEnabled(enabled: boolean) {
     const tx = await this.deployedContract?.callTx.setSponsorshipEnabled(enabled);
-    console.log(
-      `[sponsorship] ${enabled ? 'Enabled' : 'Paused'} on tx: ${tx?.public.txHash}`
-    );
+    console.log(`[sponsorship] ${enabled ? 'Enabled' : 'Paused'} on tx: ${tx?.public.txHash}`);
     return tx;
   }
 
@@ -233,9 +226,7 @@ export class SentinelContract {
   }
 
   async withdrawSponsorshipRevenue() {
-    throw new Error(
-      'Sponsorship treasury recovery is deferred; v1 payments are a contract sink'
-    );
+    throw new Error('Sponsorship treasury recovery is deferred; v1 payments are a contract sink');
   }
 
   static async startZswap(ctx: WalletContext, color: string, amount: string, addr: string) {

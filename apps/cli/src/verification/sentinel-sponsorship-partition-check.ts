@@ -7,11 +7,7 @@ import {
 } from '@midnight-ntwrk/compact-runtime';
 import { LedgerParameters, ZswapChainState } from '@midnight-ntwrk/ledger-v8';
 import { createUnprovenCallTxFromInitialStates } from '@midnight-ntwrk/midnight-js-contracts';
-import {
-  CompactCompiledContract,
-  Contract,
-  ledger,
-} from '@midnight-sentinel/contract';
+import { CompactCompiledContract, Contract, ledger } from '@midnight-sentinel/contract';
 import { NodeZkConfigProvider } from '@midnight-sentinel/contract/providers';
 import { setNetworkId } from '@midnight-sentinel/wallet';
 
@@ -51,12 +47,7 @@ const initial = runtime.initialState(
   bytes(5)
 );
 const queued = runtime.circuits.addDelegator(
-  createCircuitContext(
-    contractAddress,
-    coinPublicKey,
-    initial.currentContractState,
-    privateState
-  ),
+  createCircuitContext(contractAddress, coinPublicKey, initial.currentContractState, privateState),
   bytes(6),
   bytes(7, 64),
   { bytes: bytes(8) },
@@ -66,8 +57,7 @@ const queued = runtime.circuits.addDelegator(
   1n
 );
 const provider = new NodeZkConfigProvider(
-  new URL('../../../packages/contract/src/managed/sentinel', import.meta.url)
-    .pathname
+  new URL('../../../packages/contract/src/managed/sentinel', import.meta.url).pathname
 );
 const queuedState = ContractState.deserialize(initial.currentContractState.serialize());
 queuedState.data = queued.context.currentQueryContext.state;
@@ -92,22 +82,14 @@ const delegator = await createUnprovenCallTxFromInitialStates(
   },
   encryptionPublicKey
 );
-const post = ContractState.deserialize(
-  queuedState.serialize()
-);
+const post = ContractState.deserialize(queuedState.serialize());
 post.data = new ChargedState(delegator.public.nextContractState);
 const sponsor = await createUnprovenCallTxFromInitialStates(
   provider,
   {
     ...common,
     circuitId: 'deliverSponsorReward',
-    args: [
-      bytes(11),
-      { nonce: bytes(12), color: bytes(0), value: 1n },
-      bytes(13),
-      bytes(14),
-      15n,
-    ],
+    args: [bytes(11), { nonce: bytes(12), color: bytes(0), value: 1n }, bytes(13), bytes(14), 15n],
     initialContractState: post,
     additionalCoinEncPublicKeyMappings: new Map([
       [Buffer.from(bytes(3)).toString('hex'), Buffer.from(bytes(4)).toString('hex')],

@@ -39,18 +39,11 @@ import {
   sentinelContractPrivateStateKey,
   type Ledger,
   type SentinelContractProviders,
-  type SentinelContractType,
   type SponsorshipReceipt,
 } from '@midnight-sentinel/contract';
-import {
-  signTransactionIntents,
-  type WalletContext,
-} from '@midnight-sentinel/wallet';
+import { signTransactionIntents, type WalletContext } from '@midnight-sentinel/wallet';
 import { createHash } from 'node:crypto';
-import {
-  assertEligible,
-  type MidnightRegistrationProvider,
-} from './sponsorship/eligibility.js';
+import { assertEligible, type MidnightRegistrationProvider } from './sponsorship/eligibility.js';
 
 const FIELD_ENCODING_TAG = 0x73;
 
@@ -77,9 +70,7 @@ export const nativeNightSponsorshipConfig = (
     sponsorId: dustPublicKeyToBytes(sponsor.dustSecretKey.publicKey),
     acceptedColor: Uint8Array.from(Buffer.from(shieldedToken().raw, 'hex')),
     sponsorRewardKey: {
-      bytes: Uint8Array.from(
-        Buffer.from(sponsor.shieldedSecretKeys.coinPublicKey, 'hex')
-      ),
+      bytes: Uint8Array.from(Buffer.from(sponsor.shieldedSecretKeys.coinPublicKey, 'hex')),
     },
     sponsorRewardEncryptionKey: Uint8Array.from(
       Buffer.from(sponsor.shieldedSecretKeys.encryptionPublicKey, 'hex')
@@ -170,8 +161,7 @@ export const sponsorshipAllowlistHash = (
     }))
     .sort(
       (left, right) =>
-        left.address.localeCompare(right.address) ||
-        left.entryPoint.localeCompare(right.entryPoint)
+        left.address.localeCompare(right.address) || left.entryPoint.localeCompare(right.entryPoint)
     );
   return Uint8Array.from(
     createHash('sha256')
@@ -266,7 +256,10 @@ class MultiplexZkConfigProvider extends ZKConfigProvider<string> {
   }
 }
 
-const contractCalls = <P extends PreProof | Proof, B extends Binding | import('@midnight-ntwrk/ledger-v8').PreBinding>(
+const contractCalls = <
+  P extends PreProof | Proof,
+  B extends Binding | import('@midnight-ntwrk/ledger-v8').PreBinding,
+>(
   transaction: Transaction<SignatureEnabled, P, B>
 ) =>
   [...(transaction.intents?.values() ?? [])].flatMap((intent) =>
@@ -332,8 +325,7 @@ export const prepareSponsoredTransaction = async (
     (coin) => coin.value === campaign.sponsorshipDelegatorShare
   );
   const sponsorCoin = paymentCoins.find(
-    (coin) =>
-      coin.value === campaign.sponsorshipSponsorShare && coin !== delegatorCoin
+    (coin) => coin.value === campaign.sponsorshipSponsorShare && coin !== delegatorCoin
   );
   if (!delegatorCoin || !sponsorCoin) {
     throw new Error(
@@ -364,10 +356,7 @@ export const prepareSponsoredTransaction = async (
     circuitId: 'purchaseDelegatorReward',
     privateStateId: sentinelContractPrivateStateKey,
     additionalCoinEncPublicKeyMappings: new Map([
-      [
-        bytesHex(selected.rewardKey.bytes),
-        bytesHex(selected.rewardEncryptionKey),
-      ],
+      [bytesHex(selected.rewardKey.bytes), bytesHex(selected.rewardEncryptionKey)],
     ]),
     args: [delegatorPayment],
   });
@@ -379,9 +368,7 @@ export const prepareSponsoredTransaction = async (
   }
 
   const postDelegatorState = CompactContractState.deserialize(stateData[1].serialize());
-  postDelegatorState.data = new CompactChargedState(
-    delegatorCall.public.nextContractState
-  );
+  postDelegatorState.data = new CompactChargedState(delegatorCall.public.nextContractState);
   const sponsorCall = await createUnprovenCallTxFromInitialStates(
     options.sentinelProviders.zkConfigProvider,
     {
@@ -454,12 +441,7 @@ export const prepareSponsoredTransaction = async (
   merged.fallibleOffer =
     fallibleOffers.length === 0
       ? undefined
-      : new Map([
-          [
-            segment,
-            fallibleOffers.reduce((left, right) => left.merge(right)),
-          ],
-        ]);
+      : new Map([[segment, fallibleOffers.reduce((left, right) => left.merge(right))]]);
   const proven = await proofProvider.proveTx(merged);
   const recipe = await options.beneficiary.wallet.balanceUnboundTransaction(
     proven,
@@ -472,8 +454,7 @@ export const prepareSponsoredTransaction = async (
       tokenKindsToBalance: ['shielded', 'unshielded'],
     }
   );
-  const sign = (payload: Uint8Array) =>
-    options.beneficiary.unshieldedKeystore.signData(payload);
+  const sign = (payload: Uint8Array) => options.beneficiary.unshieldedKeystore.signData(payload);
   signTransactionIntents(recipe.baseTransaction, sign, 'proof');
   if (recipe.balancingTransaction) {
     signTransactionIntents(recipe.balancingTransaction, sign, 'pre-proof');
@@ -508,10 +489,7 @@ const simulatePurchase = (
 ) => {
   try {
     const context = new CompactQueryContext(state, sentinelAddress);
-    const after = context.runTranscript(
-      transcript,
-      CompactCostModel.initialCostModel()
-    );
+    const after = context.runTranscript(transcript, CompactCostModel.initialCostModel());
     return { state: after.state, ledger: sentinelLedger(after.state) };
   } catch (error) {
     throw new SponsorshipPolicyError(
@@ -539,7 +517,10 @@ const validateTtl = (transaction: FinalizedTransaction, policy: SponsorPolicy, n
   }
 };
 
-const validateNoUnrelatedTransfers = (transaction: FinalizedTransaction, calls: ContractCall<Proof>[]) => {
+const validateNoUnrelatedTransfers = (
+  transaction: FinalizedTransaction,
+  calls: ContractCall<Proof>[]
+) => {
   const claimedNullifiers = new Set(
     calls.flatMap((call) => [
       ...(call.guaranteedTranscript?.effects.claimedNullifiers ?? []),
@@ -568,8 +549,7 @@ const validateNoUnrelatedTransfers = (transaction: FinalizedTransaction, calls: 
     .flatMap((offer) => offer.transients)
     .filter(
       (transient) =>
-        !claimedNullifiers.has(transient.nullifier) &&
-        !claimedCommitments.has(transient.commitment)
+        !claimedNullifiers.has(transient.nullifier) && !claimedCommitments.has(transient.commitment)
     );
   if (
     unclaimedInputs.length !== 2 ||
@@ -578,17 +558,18 @@ const validateNoUnrelatedTransfers = (transaction: FinalizedTransaction, calls: 
   ) {
     throw new SponsorshipPolicyError(
       'UNRELATED_TRANSFER',
-      `Transaction contains shielded movements beyond the exact sponsorship payment and claimed call effects: ${JSON.stringify({
-        externalInputs: unclaimedInputs.length,
-        externalOutputs: unclaimedOutputs.length,
-        externalTransients: unclaimedTransients.length,
-      })}`
+      `Transaction contains shielded movements beyond the exact sponsorship payment and claimed call effects: ${JSON.stringify(
+        {
+          externalInputs: unclaimedInputs.length,
+          externalOutputs: unclaimedOutputs.length,
+          externalTransients: unclaimedTransients.length,
+        }
+      )}`
     );
   }
   const hasUnshielded = [...(transaction.intents?.values() ?? [])].some(
     (intent) =>
-      intent.guaranteedUnshieldedOffer !== undefined ||
-      intent.fallibleUnshieldedOffer !== undefined
+      intent.guaranteedUnshieldedOffer !== undefined || intent.fallibleUnshieldedOffer !== undefined
   );
   if (hasUnshielded) {
     throw new SponsorshipPolicyError(
@@ -687,8 +668,7 @@ export const inspectSponsorshipRequest = async (
   }
   if (
     !policy.allowedTargets.some(
-      (allowed) =>
-        allowed.address === target.address && allowed.entryPoint === targetEntryPoint
+      (allowed) => allowed.address === target.address && allowed.entryPoint === targetEntryPoint
     )
   ) {
     throw new SponsorshipPolicyError('UNAPPROVED_TARGET', 'Target call is not approved');
@@ -722,13 +702,10 @@ export const inspectSponsorshipRequest = async (
       'On-chain campaign does not match sponsor policy'
     );
   }
-  const targetCommitmentField = communicationCommitmentToField(
-    target.communicationCommitment
-  );
+  const targetCommitmentField = communicationCommitmentToField(target.communicationCommitment);
   if (
     [...before.sponsorshipReceipts].some(
-      ([, existing]) =>
-        existing.targetCommunicationCommitment === targetCommitmentField
+      ([, existing]) => existing.targetCommunicationCommitment === targetCommitmentField
     )
   ) {
     throw new SponsorshipPolicyError(
@@ -815,17 +792,11 @@ const sponsorAndSubmitUnlocked = async (
     policy.sentinelAddress
   );
   if (!current) {
-    throw new SponsorshipPolicyError(
-      'CAMPAIGN_MISMATCH',
-      'Sentinel state was not found'
-    );
+    throw new SponsorshipPolicyError('CAMPAIGN_MISMATCH', 'Sentinel state was not found');
   }
   const campaign = sentinelLedger(current[1].data);
   if (campaign.delegatorCount === 0n) {
-    throw new SponsorshipPolicyError(
-      'NO_ELIGIBLE_DELEGATOR',
-      'No eligible delegator is available'
-    );
+    throw new SponsorshipPolicyError('NO_ELIGIBLE_DELEGATOR', 'No eligible delegator is available');
   }
   const selected = campaign.delegatorSlots.lookup(campaign.rewardCursor);
   const rewardAddress = Buffer.from(selected.nightRewardAddress)
@@ -867,12 +838,10 @@ const sponsorAndSubmitUnlocked = async (
     }
   );
   const sponsored = await sponsor.wallet.finalizeRecipe(recipe);
-  const after = await inspectSponsorshipRequest(
-    sponsored.serialize(),
-    policy,
-    providers,
-    { expectDust: true, feeEstimate }
-  );
+  const after = await inspectSponsorshipRequest(sponsored.serialize(), policy, providers, {
+    expectDust: true,
+    feeEstimate,
+  });
   if (
     before.targetAddress !== after.targetAddress ||
     before.targetEntryPoint !== after.targetEntryPoint ||

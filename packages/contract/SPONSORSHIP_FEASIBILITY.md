@@ -368,7 +368,7 @@ documentation.
    general signature-verification function, so authenticated dynamic off-chain
    quotes require a separate design.
 10. The initial implementation may disclose payment token and amount where
-   required by Compact token operations and ledger effects.
+    required by Compact token operations and ledger effects.
 
 ### Unverified implementation assumptions
 
@@ -389,26 +389,26 @@ documentation.
 
 These checks should be planned and executed independently.
 
-| ID | Verification | Success criterion |
-|---|---|---|
-| PV-01 | Build a minimal guaranteed-only purchase circuit | Contract compiles without a checkpoint or fallible transcript |
-| PV-02 | User prepares the purchase without DUST | User can prove/finalize while balancing only payment assets |
-| PV-03 | Sponsor adds DUST to the finalized contract transaction | Sponsor balances only DUST and submits successfully |
-| PV-04 | Successful atomic settlement | Payment, receipt, and fee payment appear in one successful transaction |
-| PV-05 | Missing DUST failure | Transaction is rejected and payment/receipt are not committed |
-| PV-06 | Invalid payment failure | Transaction is rejected and sponsor DUST is not consumed |
-| PV-07 | Stale contract state failure | Guaranteed state conflict rejects without consuming payment or DUST |
-| PV-08 | Sponsor transaction inspection | Sponsor can enforce contract, entry point, TTL, and fee-limit policy |
-| PV-09 | Tampering resistance | Sponsor cannot alter payment token, amount, recipient, or call |
-| PV-10 | Excessive-fee defense | Sponsor refuses requests above a configured maximum |
-| PV-11 | TTL behavior | Expired handoffs fail safely without committed effects |
-| PV-12 | Concurrent purchases | Independent purchases do not cause unacceptable conflicts or lost throughput |
-| PV-13 | Privacy inspection | Document exactly which payment, offer, and receipt fields are public |
-| PV-14 | SDK/version compatibility | Results are reproduced with the versions pinned by this repository |
-| PV-15 | Sponsor-ID inspection | Sponsor can verify the finalized call names its registered public ID before adding DUST |
-| PV-16 | Per-sponsor attribution | Successful purchase credits only the pool selected by `sponsorId` |
-| PV-17 | Attribution rejection | Sponsor refuses a valid purchase that names a different sponsor |
-| PV-18 | Revenue reconstruction | Aggregate sponsor revenue and purchase count agree with recorded purchase receipts |
+| ID    | Verification                                            | Success criterion                                                                       |
+| ----- | ------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| PV-01 | Build a minimal guaranteed-only purchase circuit        | Contract compiles without a checkpoint or fallible transcript                           |
+| PV-02 | User prepares the purchase without DUST                 | User can prove/finalize while balancing only payment assets                             |
+| PV-03 | Sponsor adds DUST to the finalized contract transaction | Sponsor balances only DUST and submits successfully                                     |
+| PV-04 | Successful atomic settlement                            | Payment, receipt, and fee payment appear in one successful transaction                  |
+| PV-05 | Missing DUST failure                                    | Transaction is rejected and payment/receipt are not committed                           |
+| PV-06 | Invalid payment failure                                 | Transaction is rejected and sponsor DUST is not consumed                                |
+| PV-07 | Stale contract state failure                            | Guaranteed state conflict rejects without consuming payment or DUST                     |
+| PV-08 | Sponsor transaction inspection                          | Sponsor can enforce contract, entry point, TTL, and fee-limit policy                    |
+| PV-09 | Tampering resistance                                    | Sponsor cannot alter payment token, amount, recipient, or call                          |
+| PV-10 | Excessive-fee defense                                   | Sponsor refuses requests above a configured maximum                                     |
+| PV-11 | TTL behavior                                            | Expired handoffs fail safely without committed effects                                  |
+| PV-12 | Concurrent purchases                                    | Independent purchases do not cause unacceptable conflicts or lost throughput            |
+| PV-13 | Privacy inspection                                      | Document exactly which payment, offer, and receipt fields are public                    |
+| PV-14 | SDK/version compatibility                               | Results are reproduced with the versions pinned by this repository                      |
+| PV-15 | Sponsor-ID inspection                                   | Sponsor can verify the finalized call names its registered public ID before adding DUST |
+| PV-16 | Per-sponsor attribution                                 | Successful purchase credits only the pool selected by `sponsorId`                       |
+| PV-17 | Attribution rejection                                   | Sponsor refuses a valid purchase that names a different sponsor                         |
+| PV-18 | Revenue reconstruction                                  | Aggregate sponsor revenue and purchase count agree with recorded purchase receipts      |
 
 ## Deferred design decisions
 

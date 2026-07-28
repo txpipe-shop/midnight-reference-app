@@ -677,18 +677,18 @@ Sanitized machine-readable evidence is retained in
 and
 [`verification/results/sponsorship-composite-verification.json`](verification/results/sponsorship-composite-verification.json).
 
-| Check | Verdict      | Observed evidence                                                                                                                                                                                                                                                                      |
-| ----- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| VP-01 | Confirmed    | Full-ZK artifacts generated; deterministic execution produced revenue `200` and purchase count `2` after two exact payments.                                                                                                                                                           |
-| VP-02 | Confirmed    | Wrong sponsor, asset, low amount, high amount, and zero payment rejected without state updates.                                                                                                                                                                                        |
-| VP-03 | Confirmed    | One guaranteed transcript was present and the fallible transcript was absent.                                                                                                                                                                                                          |
-| VP-04 | Confirmed    | The beneficiary finalized a 20,599-byte transaction with zero DUST balance and no DUST coin records.                                                                                                                                                                                   |
-| VP-05 | Confirmed    | The sponsor added a second intent containing only DUST balancing; no shielded or unshielded sponsor payment input was requested.                                                                                                                                                       |
-| VP-06 | Confirmed    | Round-trip serialization, one original intent/call, contract address, entry point, transcripts, TTL, and fee estimate were independently inspected.                                                                                                                                    |
-| VP-07 | Refuted      | Action mutation was rejected and normal sponsorship preserved the call and communication commitment, but TTL mutation remained serializable and was accepted in a prior live run. TTL must be treated as sponsor-controlled/revalidated after balancing rather than beneficiary-bound. |
-| VP-08 | Confirmed    | One accepted transaction set revenue to `100`, purchases to `1`, consumed the beneficiary payment, and committed the sponsor's DUST fee action in the same transaction.                                                                                                                |
-| VP-09 | Confirmed    | Ledger specification and source inspection establish that failure of the guaranteed segment returns `FailEntirely`; tentative payment, contract, and DUST changes are not committed, and the transaction is not included in the ledger.                                                |
-| VP-10 | Confirmed    | Two composite transactions combined a separate target contract call, a guaranteed `purchaseSponsorship` receipt, and an independent shielded transfer. The beneficiary finalized with zero DUST; the sponsor added a third intent containing only DUST. The success case returned `SucceedEntirely`; the expired target case returned `FailFallible` while preserving guaranteed sponsorship accounting and the independent transfer. Target state ended at `2` guaranteed executions and `1` fallible execution; sponsorship state ended at revenue `200`, purchases `2`, and receipts `2`. |
+| Check | Verdict   | Observed evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ----- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| VP-01 | Confirmed | Full-ZK artifacts generated; deterministic execution produced revenue `200` and purchase count `2` after two exact payments.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| VP-02 | Confirmed | Wrong sponsor, asset, low amount, high amount, and zero payment rejected without state updates.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| VP-03 | Confirmed | One guaranteed transcript was present and the fallible transcript was absent.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| VP-04 | Confirmed | The beneficiary finalized a 20,599-byte transaction with zero DUST balance and no DUST coin records.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| VP-05 | Confirmed | The sponsor added a second intent containing only DUST balancing; no shielded or unshielded sponsor payment input was requested.                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| VP-06 | Confirmed | Round-trip serialization, one original intent/call, contract address, entry point, transcripts, TTL, and fee estimate were independently inspected.                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| VP-07 | Refuted   | Action mutation was rejected and normal sponsorship preserved the call and communication commitment, but TTL mutation remained serializable and was accepted in a prior live run. TTL must be treated as sponsor-controlled/revalidated after balancing rather than beneficiary-bound.                                                                                                                                                                                                                                                                                                       |
+| VP-08 | Confirmed | One accepted transaction set revenue to `100`, purchases to `1`, consumed the beneficiary payment, and committed the sponsor's DUST fee action in the same transaction.                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| VP-09 | Confirmed | Ledger specification and source inspection establish that failure of the guaranteed segment returns `FailEntirely`; tentative payment, contract, and DUST changes are not committed, and the transaction is not included in the ledger.                                                                                                                                                                                                                                                                                                                                                      |
+| VP-10 | Confirmed | Two composite transactions combined a separate target contract call, a guaranteed `purchaseSponsorship` receipt, and an independent shielded transfer. The beneficiary finalized with zero DUST; the sponsor added a third intent containing only DUST. The success case returned `SucceedEntirely`; the expired target case returned `FailFallible` while preserving guaranteed sponsorship accounting and the independent transfer. Target state ended at `2` guaranteed executions and `1` fallible execution; sponsorship state ended at revenue `200`, purchases `2`, and receipts `2`. |
 
 ### Decision
 
@@ -719,19 +719,19 @@ The confirmed VP-01–VP-10 assumptions have now been applied to the production
 Sentinel contract and API without deleting the retained verification
 contracts, generated artifacts, runners, or reports.
 
-| Item | Status | Evidence |
-| --- | --- | --- |
-| Immutable single-sponsor campaign | Implemented | Sentinel constructor seals sponsor DUST public key, payment color, exact price, and allowlist policy hash. |
-| Guaranteed receipt purchase | Implemented | `purchaseSponsorship` has no checkpoint and records the target address, entry-point hash, and communication commitment. |
-| Replay prevention | Implemented | Duplicate purchase IDs are rejected on-chain; duplicate target communication commitments are rejected by sponsor inspection against public receipts. |
-| Treasury lifecycle | Deferred | Payments are a v1 contract sink. Devnet diagnostics showed that coin aggregation/withdrawal moved the whole purchase outside the guaranteed budget. |
-| Generic two-call composer | Implemented | API accepts a prepared unproven target call, merges it with Sentinel, proves it, and balances only shielded/unshielded assets. |
-| Independent sponsor inspection | Implemented | Structural, allowlist, campaign, transfer, TTL, fee, transcript-replay, receipt-delta, and post-DUST binding checks. |
-| DUST-only sponsor path | Implemented | Sponsor balances only `['dust']`, re-inspects, submits, and awaits indexed transaction data. |
-| Operator CLI | Implemented | Deployment configuration, policy-bound sponsor submission, and pause/resume. |
-| Existing UI compatibility | Confirmed | TypeScript and the Vite production bundle complete with the new constructor/state shape; no sponsorship workflow was added. |
-| Deterministic production runtime check | Confirmed | Exact payment credited `100`, one receipt recorded, duplicates rejected, and pause enforced. |
-| Fresh production-path devnet run | Confirmed | The complete production preparation, inspection, DUST-only balancing, reinspection, submission, and indexed-state verification finished with verdict `CONFIRMED`. |
+| Item                                   | Status      | Evidence                                                                                                                                                          |
+| -------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Immutable single-sponsor campaign      | Implemented | Sentinel constructor seals sponsor DUST public key, payment color, exact price, and allowlist policy hash.                                                        |
+| Guaranteed receipt purchase            | Implemented | `purchaseSponsorship` has no checkpoint and records the target address, entry-point hash, and communication commitment.                                           |
+| Replay prevention                      | Implemented | Duplicate purchase IDs are rejected on-chain; duplicate target communication commitments are rejected by sponsor inspection against public receipts.              |
+| Treasury lifecycle                     | Deferred    | Payments are a v1 contract sink. Devnet diagnostics showed that coin aggregation/withdrawal moved the whole purchase outside the guaranteed budget.               |
+| Generic two-call composer              | Implemented | API accepts a prepared unproven target call, merges it with Sentinel, proves it, and balances only shielded/unshielded assets.                                    |
+| Independent sponsor inspection         | Implemented | Structural, allowlist, campaign, transfer, TTL, fee, transcript-replay, receipt-delta, and post-DUST binding checks.                                              |
+| DUST-only sponsor path                 | Implemented | Sponsor balances only `['dust']`, re-inspects, submits, and awaits indexed transaction data.                                                                      |
+| Operator CLI                           | Implemented | Deployment configuration, policy-bound sponsor submission, and pause/resume.                                                                                      |
+| Existing UI compatibility              | Confirmed   | TypeScript and the Vite production bundle complete with the new constructor/state shape; no sponsorship workflow was added.                                       |
+| Deterministic production runtime check | Confirmed   | Exact payment credited `100`, one receipt recorded, duplicates rejected, and pause enforced.                                                                      |
+| Fresh production-path devnet run       | Confirmed   | The complete production preparation, inspection, DUST-only balancing, reinspection, submission, and indexed-state verification finished with verdict `CONFIRMED`. |
 
 Implementation details and commands are documented in
 [`SPONSORSHIP_IMPLEMENTATION.md`](SPONSORSHIP_IMPLEMENTATION.md).
@@ -750,16 +750,16 @@ pnpm --dir packages/contract verify:sponsorship:production
 
 The verified stack was:
 
-| Component | Version |
-| --- | --- |
-| Compact compiler | `0.31.1` |
-| Compact language | `0.23.0` |
-| Ledger | `8.0.3` |
-| Midnight.js | `4.1.1` |
-| Node | `0.22.5` |
-| Indexer | `4.2.1` |
-| Proof server | `8.1.0` |
-| Network | `undeployed` |
+| Component        | Version      |
+| ---------------- | ------------ |
+| Compact compiler | `0.31.1`     |
+| Compact language | `0.23.0`     |
+| Ledger           | `8.0.3`      |
+| Midnight.js      | `4.1.1`      |
+| Node             | `0.22.5`     |
+| Indexer          | `4.2.1`      |
+| Proof server     | `8.1.0`      |
+| Network          | `undeployed` |
 
 The run started at `2026-07-27T17:09:31.611Z` and completed at
 `2026-07-27T17:13:14.650Z`. Its successful composite transaction returned

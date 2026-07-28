@@ -16,11 +16,7 @@ const rotatedOperatorSecret = bytes(0x03);
 const sponsorId = bytes(0x11);
 const color = bytes(0);
 const sponsorRewardKey = { bytes: bytes(0x21) };
-const delegatorKeys = [
-  { bytes: bytes(0x31) },
-  { bytes: bytes(0x32) },
-  { bytes: bytes(0x33) },
-];
+const delegatorKeys = [{ bytes: bytes(0x31) }, { bytes: bytes(0x32) }, { bytes: bytes(0x33) }];
 const delegatorIds = [bytes(0x41), bytes(0x42), bytes(0x43)];
 const contractAddress = sampleContractAddress();
 const coinPublicKey = '01'.repeat(32);
@@ -66,12 +62,9 @@ const context = (state: StateResult, secretKey: Uint8Array) =>
         state.context.currentQueryContext.state,
         { secretKey }
       )
-    : createCircuitContext(
-        contractAddress,
-        coinPublicKey,
-        state.currentContractState,
-        { secretKey }
-      );
+    : createCircuitContext(contractAddress, coinPublicKey, state.currentContractState, {
+        secretKey,
+      });
 
 const add = (state: StateResult, index: number, secret = operatorSecret) =>
   contract.circuits.addDelegator(
@@ -86,17 +79,18 @@ const remove = (state: StateResult, index: number, secret = operatorSecret) =>
   contract.circuits.removeDelegator(context(state, secret), delegatorIds[index]);
 
 const purchase = (state: StateResult, index: number) =>
-  contract.circuits.purchaseDelegatorReward(
-    context(state, ownerSecret),
-    { nonce: bytes(0x70 + index), color, value: share }
-  );
+  contract.circuits.purchaseDelegatorReward(context(state, ownerSecret), {
+    nonce: bytes(0x70 + index),
+    color,
+    value: share,
+  });
 
 const deliverSponsorReward = (state: StateResult, index: number) =>
-  contract.circuits.deliverSponsorReward(
-    context(state, ownerSecret),
-    bytes(0x60 + index),
-    { nonce: bytes(0x80 + index), color, value: share }
-  );
+  contract.circuits.deliverSponsorReward(context(state, ownerSecret), bytes(0x60 + index), {
+    nonce: bytes(0x80 + index),
+    color,
+    value: share,
+  });
 
 const expectReject = (label: string, action: () => unknown, expected: string) => {
   try {
@@ -110,11 +104,7 @@ const expectReject = (label: string, action: () => unknown, expected: string) =>
   }
 };
 
-expectReject(
-  'empty queue',
-  () => purchase(initial(), 0),
-  'NO_ELIGIBLE_DELEGATOR'
-);
+expectReject('empty queue', () => purchase(initial(), 0), 'NO_ELIGIBLE_DELEGATOR');
 expectReject(
   'unauthorized add',
   () => add(initial(), 0, ownerSecret),

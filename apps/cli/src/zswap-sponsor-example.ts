@@ -15,9 +15,7 @@
  */
 
 import { SentinelContract } from '@midnight-sentinel/api';
-import {
-  sponsorshipAllowlistHash,
-} from '@midnight-sentinel/api/sponsorship';
+import { sponsorshipAllowlistHash } from '@midnight-sentinel/api/sponsorship';
 import { nativeNightSponsorshipConfig } from '@midnight-sentinel/api/sponsorship/midnight';
 import { configureProviders } from '@midnight-sentinel/contract/providers';
 import {

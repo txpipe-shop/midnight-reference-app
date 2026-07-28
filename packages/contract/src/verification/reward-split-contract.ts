@@ -9,11 +9,7 @@ import {
   type ZKIR,
 } from '@midnight-ntwrk/midnight-js-types';
 import type { PrivateState } from '../private-state.js';
-import {
-  Contract,
-  type Ledger,
-  type Witnesses,
-} from '../managed/reward-split/contract/index.js';
+import { Contract, type Ledger, type Witnesses } from '../managed/reward-split/contract/index.js';
 
 const rewardSplitWitnesses: Witnesses<PrivateState> = {
   localSecretKey: ({
@@ -49,10 +45,7 @@ class RewardSplitCompositeZkConfigProvider extends ZKConfigProvider<string> {
   }
 
   private provider(circuitId: string) {
-    if (
-      circuitId === 'purchaseDelegatorReward' ||
-      circuitId === 'deliverSponsorReward'
-    ) {
+    if (circuitId === 'purchaseDelegatorReward' || circuitId === 'deliverSponsorReward') {
       return this.rewardSplit;
     }
     if (circuitId === 'interact') return this.target;

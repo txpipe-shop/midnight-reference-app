@@ -33,8 +33,7 @@ interface MidnightTargetCallData {
 }
 
 const targetCalls = new WeakMap<SponsorshipTargetCall, MidnightTargetCallData>();
-const errorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
+const errorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 const normalizeError = (
   error: unknown,
@@ -82,11 +81,7 @@ const normalizeSponsorError = (error: unknown) => {
   if (value.includes('submit') || value.includes('node')) {
     return normalizeError(error, 'submission', 'SUBMISSION_FAILED');
   }
-  if (
-    value.includes('indexer') ||
-    value.includes('watch') ||
-    value.includes('confirm')
-  ) {
+  if (value.includes('indexer') || value.includes('watch') || value.includes('confirm')) {
     return normalizeError(error, 'confirmation', 'CONFIRMATION_FAILED');
   }
   return normalizeError(error, 'balancing', 'SPONSOR_BALANCE_FAILED');
@@ -102,10 +97,7 @@ export const createMidnightSponsorshipTarget = (
 ): SponsorshipTargetCall => {
   const calls = [...(input.targetCall.private.unprovenTx.intents?.values() ?? [])]
     .flatMap((intent) => intent.actions)
-    .filter(
-      (action): action is ContractCall<PreProof> =>
-        action instanceof ContractCall
-    );
+    .filter((action): action is ContractCall<PreProof> => action instanceof ContractCall);
   if (calls.length !== 1) {
     throw new SponsorshipError(
       'TARGET_CALL_INVALID',
@@ -163,8 +155,7 @@ export const createMidnightBeneficiarySponsorshipApi = (
         purchaseId: prepared.purchaseId,
         targetAddress: prepared.targetAddress,
         targetEntryPoint: prepared.targetEntryPoint,
-        targetCommunicationCommitment:
-          prepared.targetCommunicationCommitment,
+        targetCommunicationCommitment: prepared.targetCommunicationCommitment,
       };
     } catch (error) {
       const code = preparationCode(error);
@@ -195,10 +186,8 @@ export const createMidnightSponsorSponsorshipApi = (
           purchaseId: inspection.purchaseId,
           targetAddress: inspection.targetAddress,
           targetEntryPoint: inspection.targetEntryPoint,
-          targetCommunicationCommitment:
-            inspection.targetCommunicationCommitment,
-          targetHasFallibleTranscript:
-            inspection.targetHasFallibleTranscript,
+          targetCommunicationCommitment: inspection.targetCommunicationCommitment,
+          targetHasFallibleTranscript: inspection.targetHasFallibleTranscript,
           hasDust: false,
           feeEstimate: inspection.feeEstimate,
         };

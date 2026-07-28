@@ -38,7 +38,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as Rx from 'rxjs';
 import { StandaloneConfig } from '../config.js';
-import { GENESIS_MINT_WALLET_SEED_ONE, GENESIS_MINT_WALLET_SEED_THREE } from '../utils/constants.js';
+import {
+  GENESIS_MINT_WALLET_SEED_ONE,
+  GENESIS_MINT_WALLET_SEED_THREE,
+} from '../utils/constants.js';
 
 const PRICE = 100n;
 const TRANSFER_AMOUNT = 25n;
@@ -115,8 +118,6 @@ const shieldedAddress = (ctx: WalletContext) =>
 const bytes32 = (byte: number) => new Uint8Array(32).fill(byte);
 const bigintBytes = (value: bigint) =>
   Uint8Array.from(Buffer.from(value.toString(16).padStart(64, '0'), 'hex'));
-const hex = (value: Uint8Array | string) =>
-  typeof value === 'string' ? value : Buffer.from(value).toString('hex');
 const callsOf = (tx: Transaction<SignatureEnabled, Proof, Binding>) =>
   [...(tx.intents?.values() ?? [])].flatMap((intent) =>
     intent.actions.filter((action): action is ContractCall<Proof> => action instanceof ContractCall)
@@ -268,9 +269,7 @@ const main = async () => {
       );
       const targetPreCalls = [...(targetCallData.private.unprovenTx.intents?.values() ?? [])]
         .flatMap((intent) => intent.actions)
-        .filter(
-          (action): action is ContractCall<PreProof> => action instanceof ContractCall
-        );
+        .filter((action): action is ContractCall<PreProof> => action instanceof ContractCall);
       assert.equal(targetPreCalls.length, 1);
       const targetCommitment = targetPreCalls[0].communicationCommitment;
       const targetCommitmentBytes = Buffer.from(targetCommitment, 'hex');
@@ -483,12 +482,8 @@ const main = async () => {
       path.join(resultDir, 'sponsorship-composite-verification.json'),
       `${JSON.stringify(report, null, 2)}\n`
     );
-    console.log(
-      `Composite sponsorship verification: ${String(report.verdict).toUpperCase()}`
-    );
-    console.log(
-      `Report: ${path.join(resultDir, 'sponsorship-composite-verification.json')}`
-    );
+    console.log(`Composite sponsorship verification: ${String(report.verdict).toUpperCase()}`);
+    console.log(`Report: ${path.join(resultDir, 'sponsorship-composite-verification.json')}`);
     if (report.verdict === 'confirmed') {
       const postState = report.postState as Record<string, string>;
       console.log(

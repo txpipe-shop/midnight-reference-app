@@ -1,6 +1,10 @@
 // Reuse the wallet package's pinned ledger runtime.
-// @ts-ignore the direct Node entry point has no adjacent declaration file.
-import { LedgerParameters, ZswapChainState, ZswapSecretKeys } from '../../../wallet/node_modules/@midnight-ntwrk/ledger-v8/midnight_ledger_wasm_fs.js';
+// @ts-expect-error the direct Node entry point has no adjacent declaration file.
+import {
+  LedgerParameters,
+  ZswapChainState,
+  ZswapSecretKeys,
+} from '../../../wallet/node_modules/@midnight-ntwrk/ledger-v8/midnight_ledger_wasm_fs.js';
 import { Roles } from '../../../wallet/node_modules/@midnight-ntwrk/wallet-sdk-hd/dist/index.js';
 import { deriveKeysFromSeed } from '../../../wallet/dist/utils/index.js';
 import {
@@ -80,9 +84,7 @@ queuedContractState.data = queued.context.currentQueryContext.state;
 
 const delegatorPayment = { nonce: bytes(0x71), color: bytes(0), value: 1n };
 const delegatorCall = await createUnprovenCallTxFromInitialStates(
-  new NodeZkConfigProvider(
-    new URL('../managed/reward-split', import.meta.url).pathname
-  ),
+  new NodeZkConfigProvider(new URL('../managed/reward-split', import.meta.url).pathname),
   {
     compiledContract: RewardSplitCompiledContract,
     contractAddress,
@@ -113,36 +115,25 @@ const staged = contract.circuits.purchaseDelegatorReward(
 const stagedContractState = queuedContractState;
 stagedContractState.data = staged.context.currentQueryContext.state;
 const sponsorCall = await createUnprovenCallTxFromInitialStates(
-  new NodeZkConfigProvider(
-    new URL('../managed/reward-split', import.meta.url).pathname
-  ),
+  new NodeZkConfigProvider(new URL('../managed/reward-split', import.meta.url).pathname),
   {
     compiledContract: RewardSplitCompiledContract,
     contractAddress,
     circuitId: 'deliverSponsorReward',
-    args: [
-      bytes(0x61),
-      { nonce: bytes(0x72), color: bytes(0), value: 1n },
-    ],
+    args: [bytes(0x61), { nonce: bytes(0x72), color: bytes(0), value: 1n }],
     coinPublicKey: beneficiaryCoinKey,
     initialContractState: stagedContractState,
     initialZswapChainState: new ZswapChainState(),
     ledgerParameters: LedgerParameters.initialParameters(),
     initialPrivateState: privateState,
-    additionalCoinEncPublicKeyMappings: new Map([
-      [sponsorCoinKey, sponsorEncryptionKey],
-    ]),
+    additionalCoinEncPublicKeyMappings: new Map([[sponsorCoinKey, sponsorEncryptionKey]]),
   },
   beneficiaryEncryptionKey
 );
 const target = new FallibleUserTargetConstructor({});
-const targetInitial = target.initialState(
-  createConstructorContext(undefined, beneficiaryCoinKey)
-);
+const targetInitial = target.initialState(createConstructorContext(undefined, beneficiaryCoinKey));
 const targetCall = await createUnprovenCallTxFromInitialStates(
-  new NodeZkConfigProvider(
-    new URL('../managed/fallible-user-target', import.meta.url).pathname
-  ),
+  new NodeZkConfigProvider(new URL('../managed/fallible-user-target', import.meta.url).pathname),
   {
     compiledContract: FallibleUserTargetCompiledContract,
     contractAddress: targetAddress,
@@ -161,10 +152,7 @@ const merged = delegatorCall.private.unprovenTx
   .merge(targetCall.private.unprovenTx);
 const mergedCallCount = [...(merged.intents?.values() ?? [])].reduce(
   (count, intent) =>
-    count +
-    intent.actions.filter(
-      (action) => action.constructor.name === 'ContractCall'
-    ).length,
+    count + intent.actions.filter((action) => action.constructor.name === 'ContractCall').length,
   0
 );
 

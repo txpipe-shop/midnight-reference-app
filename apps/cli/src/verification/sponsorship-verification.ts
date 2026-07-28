@@ -32,7 +32,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as Rx from 'rxjs';
 import { StandaloneConfig } from '../config.js';
-import { GENESIS_MINT_WALLET_SEED_ONE, GENESIS_MINT_WALLET_SEED_THREE } from '../utils/constants.js';
+import {
+  GENESIS_MINT_WALLET_SEED_ONE,
+  GENESIS_MINT_WALLET_SEED_THREE,
+} from '../utils/constants.js';
 
 const PRICE = 100n;
 const FUNDING_AMOUNT = 1_000n;
@@ -99,9 +102,6 @@ const bigintBytes = (value: bigint) => {
   const hex = value.toString(16).padStart(64, '0');
   return Uint8Array.from(Buffer.from(hex, 'hex'));
 };
-
-const hex = (value: Uint8Array | string) =>
-  typeof value === 'string' ? value : Buffer.from(value).toString('hex');
 
 const inspect = (
   tx: Transaction<SignatureEnabled, Proof, Binding>,
