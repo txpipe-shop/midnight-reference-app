@@ -20,8 +20,9 @@ The service loads this file automatically. Start it with:
 pnpm --filter @midnight-sentinel/sponsor-service dev
 ```
 
-The setup requires the full-ZK Sentinel and composite-target artifacts in
-`packages/contract/dist/managed`. The resulting `.env` is local-devnet
+The setup command builds full-ZK Sentinel artifacts from `packages/contract`
+and the composite target fixture from
+`packages/protocol-verification`. The resulting `.env` is local-devnet
 configuration and must not be reused for a public network. It will not replace
 an existing environment unless you explicitly append `-- --force`.
 

@@ -2,7 +2,7 @@ import {
   CompositeTargetCompiledContract,
   compositeTargetLedger,
   type CompositeTargetContractType,
-} from '@midnight-sentinel/contract/verification/composite-sponsorship';
+} from '../composite-sponsorship/composite-sponsorship-contract.js';
 import { ledger as sentinelLedger } from '@midnight-sentinel/contract';
 import { configureProviders as configureRepositoryProviders } from '@midnight-sentinel/contract/providers';
 import { SentinelContract } from '@midnight-sentinel/api';
@@ -27,29 +27,25 @@ import { createUnprovenCallTx, deployContract } from '@midnight-ntwrk/midnight-j
 import assert from 'node:assert/strict';
 import { mkdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import * as Rx from 'rxjs';
-import { StandaloneConfig } from '../config.js';
+import { packagePath, standaloneConfig } from '../../common/config.js';
 import {
   GENESIS_MINT_WALLET_SEED_ONE,
   GENESIS_MINT_WALLET_SEED_THREE,
-} from '../utils/constants.js';
+} from '../../common/constants.js';
 
 const PRICE = 100n;
 const TIMEOUT_MS = 360_000;
 const BENEFICIARY_SEED = '42'.repeat(32);
 const TTL = () => new Date(Date.now() + 30 * 60_000);
-const config = Object.assign(new StandaloneConfig(), {
+const config = {
+  ...standaloneConfig,
   indexer: 'http://127.0.0.1:8088/api/v4/graphql',
   indexerWS: 'ws://127.0.0.1:8088/api/v4/graphql/ws',
   proofServer: 'http://127.0.0.1:6300',
-});
-const packageDir = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  '../../../../packages/contract'
-);
-const sentinelZkPath = path.join(packageDir, 'src/managed/sentinel');
-const targetZkPath = path.join(packageDir, 'src/managed/composite-target');
+};
+const sentinelZkPath = packagePath('../contract/src/managed/sentinel');
+const targetZkPath = packagePath('src/managed/composite-target');
 
 const withTimeout = async <T>(label: string, promise: Promise<T>): Promise<T> => {
   let timer: NodeJS.Timeout | undefined;
@@ -119,7 +115,7 @@ const requireFullZkArtifacts = async () => {
     }
     if (size === 0) {
       throw new Error(
-        `Missing full-ZK artifact ${artifact}; run "pnpm --dir packages/contract verify:sponsorship:production" from the repository root`
+        `Missing full-ZK artifact ${artifact}; run "pnpm verify:protocol:devnet:production" from the repository root`
       );
     }
   }
@@ -376,7 +372,7 @@ const main = async () => {
   } finally {
     const reportPath =
       process.env.SPONSORSHIP_VERIFICATION_REPORT ??
-      path.join(packageDir, 'verification/results/sponsorship-production-verification.json');
+      packagePath('src/experiments/production-sentinel/result.json');
     await mkdir(path.dirname(reportPath), { recursive: true });
     await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`);
     console.log(`Production sponsorship verification: ${String(report.verdict).toUpperCase()}`);

@@ -17,8 +17,8 @@ The production Sentinel contract now owns:
 - sponsor-side replay protection preventing the same target communication
   commitment from being accepted twice.
 
-The experiment contracts and TypeScript runners under `src/verification` and
-`apps/cli/src/verification` remain retained as reproducibility evidence.
+The experiment contracts, TypeScript runners, and sanitized evidence are
+retained in the private `packages/protocol-verification` workspace.
 Generated scratch compiler directories are deliberately not retained.
 
 ## Transaction architecture
@@ -105,7 +105,7 @@ From `packages/contract`:
 ```text
 compact compile +0.31.1 --skip-zk src/sentinel.compact ./src/managed/sentinel
 node --import ../../apps/cli/node_modules/tsx/dist/loader.mjs \
-  src/verification/sentinel-sponsorship-runtime-check.ts
+  packages/protocol-verification/src/experiments/production-sentinel/sentinel-sponsorship-runtime-check.ts
 ../../node_modules/.bin/tsc --noEmit -p tsconfig.build.json
 ../../node_modules/.bin/tsc --noEmit -p ../api/tsconfig.json
 ../../node_modules/.bin/tsc --noEmit -p ../../apps/cli/tsconfig.build.json
@@ -119,4 +119,5 @@ The retained composite devnet harness remains the evidence for combining two
 custom calls, preserving the target's guaranteed/fallible partition, adding
 only DUST, `SucceedEntirely`, and `FailFallible`. A fresh devnet run of the new
 production API path completed with verdict `CONFIRMED`; its sanitized evidence
-is retained under `verification/results`.
+is retained alongside each experiment under
+`packages/protocol-verification/src/experiments`.

@@ -3,8 +3,8 @@ import {
   createConstructorContext,
   sampleContractAddress,
 } from '@midnight-ntwrk/compact-runtime';
-import { Contract, ledger } from '../managed/reward-split/contract/index.js';
-import type { PrivateState } from '../private-state.js';
+import type { PrivateState } from '@midnight-sentinel/contract';
+import { Contract, ledger } from '../../managed/reward-split/contract/index.js';
 
 const bytes = (fill: number) => new Uint8Array(32).fill(fill);
 const equalBytes = (a: Uint8Array, b: Uint8Array) =>

@@ -7,7 +7,8 @@ Last updated: 2026-07-24
 
 **Verdict: STOP_AND_REDESIGN.**
 
-The retained experiment in `src/verification/reward-split.compact` successfully
+The retained experiment in
+`../src/experiments/reward-split/reward-split.compact` successfully
 compiled with full ZK and its deterministic runtime check confirmed the exact
 `2 NIGHT` payment, chained `1 NIGHT` / `1 NIGHT` sends, public indexed queue,
 three-delegator rotation, removal compaction, operator rotation, purchase
@@ -27,7 +28,7 @@ guaranteed-only requirement:
 Because the complete split does not remain guaranteed-only, wallet discovery
 and later-spend submission were intentionally not attempted. Production
 `src/sentinel.compact` remains unchanged. Sanitized evidence is retained in
-`verification/results/reward-split-verification.json`.
+`../src/experiments/reward-split/result.json`.
 
 ## Goal
 
@@ -673,9 +674,9 @@ fails for a protocol or SDK reason rather than an experiment defect.
 The isolated verification harness ran against node `0.22.5`, indexer `4.2.1`,
 proof server `8.1.0`, Compact compiler `0.31.1`, and network `undeployed`.
 Sanitized machine-readable evidence is retained in
-[`verification/results/sponsorship-verification.json`](verification/results/sponsorship-verification.json)
+[`../src/experiments/sponsorship/result.json`](../src/experiments/sponsorship/result.json)
 and
-[`verification/results/sponsorship-composite-verification.json`](verification/results/sponsorship-composite-verification.json).
+[`../src/experiments/composite-sponsorship/result.json`](../src/experiments/composite-sponsorship/result.json).
 
 | Check | Verdict   | Observed evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | ----- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -745,7 +746,7 @@ three service health probes passing.
 Run the complete verification from the repository root with:
 
 ```bash
-pnpm --dir packages/contract verify:sponsorship:production
+pnpm verify:protocol:devnet:production
 ```
 
 The verified stack was:
@@ -771,7 +772,7 @@ count `2`, two guaranteed target executions, and one fallible target execution.
 Sanitized machine-readable evidence, including service health, contract
 addresses, transaction identifiers, fee estimates, scenario statuses, and
 post-state, is frozen at
-[`verification/results/sponsorship-production-verification.json`](verification/results/sponsorship-production-verification.json).
+[`../src/experiments/production-sentinel/result.json`](../src/experiments/production-sentinel/result.json).
 It contains no wallet seeds, secret keys, private call data, or complete
 serialized transactions.
 
@@ -795,4 +796,4 @@ The earlier single-circuit stop verdict is superseded. The production Sentinel
 contract now uses the verified two-circuit queue and reward model, removes
 mutable gross-revenue storage, and derives its fixed price from the two sealed
 shares. Machine-readable evidence is recorded in
-[`verification/results/reward-split-verification.json`](verification/results/reward-split-verification.json).
+[`../src/experiments/reward-split/result.json`](../src/experiments/reward-split/result.json).

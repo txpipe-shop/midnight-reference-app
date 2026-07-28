@@ -7,10 +7,10 @@
     "check": "tsc --project tsconfig.build.json --noEmit",
     "dev": "tsx src/index.ts",
     "operator:bootstrap": "tsx src/operator-bootstrap.ts",
-    "setup:devnet": "tsx src/setup-devnet.ts",
+    "setup:devnet": "pnpm --dir ../../packages/contract build && pnpm --dir ../../packages/protocol-verification build:sponsor-fixtures && pnpm --dir ../../packages/api build && tsx src/setup-devnet.ts",
     "start": "node dist/index.js",
     "test": "tsx --test test/*.test.ts",
-    "test:e2e:devnet": "pnpm --dir ../../packages/contract build:sponsor-service-e2e && pnpm --dir ../../packages/api build && tsx src/verification/devnet-e2e.ts",
+    "test:e2e:devnet": "pnpm --dir ../../packages/contract build && pnpm --dir ../../packages/protocol-verification build:sponsor-fixtures && pnpm --dir ../../packages/api build && tsx src/verification/devnet-e2e.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint ."
@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "@midnight-sentinel/protocol-verification": "workspace:*",
     "@types/ws": "^8.18.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"

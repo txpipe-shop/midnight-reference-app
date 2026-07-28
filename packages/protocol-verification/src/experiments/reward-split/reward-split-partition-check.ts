@@ -1,12 +1,12 @@
 // Reuse the wallet package's pinned ledger runtime.
-// @ts-expect-error the direct Node entry point has no adjacent declaration file.
 import {
   LedgerParameters,
   ZswapChainState,
   ZswapSecretKeys,
-} from '../../../wallet/node_modules/@midnight-ntwrk/ledger-v8/midnight_ledger_wasm_fs.js';
-import { Roles } from '../../../wallet/node_modules/@midnight-ntwrk/wallet-sdk-hd/dist/index.js';
-import { deriveKeysFromSeed } from '../../../wallet/dist/utils/index.js';
+  // @ts-expect-error the direct Node entry point has no adjacent declaration file.
+} from '../../../../wallet/node_modules/@midnight-ntwrk/ledger-v8/midnight_ledger_wasm_fs.js';
+import { Roles } from '../../../../wallet/node_modules/@midnight-ntwrk/wallet-sdk-hd/dist/index.js';
+import { deriveKeysFromSeed } from '../../../../wallet/dist/utils/index.js';
 import {
   createCircuitContext,
   createConstructorContext,
@@ -14,8 +14,8 @@ import {
 } from '@midnight-ntwrk/compact-runtime';
 import { createUnprovenCallTxFromInitialStates } from '@midnight-ntwrk/midnight-js-contracts';
 import { setNetworkId } from '@midnight-sentinel/wallet';
-import { NodeZkConfigProvider } from '../providers.js';
-import { createPrivateState } from '../private-state.js';
+import { createPrivateState } from '@midnight-sentinel/contract';
+import { NodeZkConfigProvider } from '@midnight-sentinel/contract/providers';
 import {
   RewardSplitCompiledContract,
   RewardSplitContractConstructor,
@@ -84,7 +84,7 @@ queuedContractState.data = queued.context.currentQueryContext.state;
 
 const delegatorPayment = { nonce: bytes(0x71), color: bytes(0), value: 1n };
 const delegatorCall = await createUnprovenCallTxFromInitialStates(
-  new NodeZkConfigProvider(new URL('../managed/reward-split', import.meta.url).pathname),
+  new NodeZkConfigProvider(new URL('../../managed/reward-split', import.meta.url).pathname),
   {
     compiledContract: RewardSplitCompiledContract,
     contractAddress,
@@ -115,7 +115,7 @@ const staged = contract.circuits.purchaseDelegatorReward(
 const stagedContractState = queuedContractState;
 stagedContractState.data = staged.context.currentQueryContext.state;
 const sponsorCall = await createUnprovenCallTxFromInitialStates(
-  new NodeZkConfigProvider(new URL('../managed/reward-split', import.meta.url).pathname),
+  new NodeZkConfigProvider(new URL('../../managed/reward-split', import.meta.url).pathname),
   {
     compiledContract: RewardSplitCompiledContract,
     contractAddress,
@@ -133,7 +133,7 @@ const sponsorCall = await createUnprovenCallTxFromInitialStates(
 const target = new FallibleUserTargetConstructor({});
 const targetInitial = target.initialState(createConstructorContext(undefined, beneficiaryCoinKey));
 const targetCall = await createUnprovenCallTxFromInitialStates(
-  new NodeZkConfigProvider(new URL('../managed/fallible-user-target', import.meta.url).pathname),
+  new NodeZkConfigProvider(new URL('../../managed/fallible-user-target', import.meta.url).pathname),
   {
     compiledContract: FallibleUserTargetCompiledContract,
     contractAddress: targetAddress,

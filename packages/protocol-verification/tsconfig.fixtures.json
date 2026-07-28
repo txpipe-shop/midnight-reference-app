@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.build.json",
+  "include": [
+    "src/experiments/composite-sponsorship/composite-sponsorship-contract.ts",
+    "src/managed/composite-sponsorship/**/*.ts",
+    "src/managed/composite-target/**/*.ts"
+  ]
+}

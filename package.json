@@ -8,7 +8,13 @@
     "format": "prettier --write \"**/*.{ts,js,json,md,yaml,yml}\"",
     "format:check": "prettier --check \"**/*.{ts,js,json,md,yaml,yml}\"",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "verify:protocol:local": "pnpm --filter @midnight-sentinel/protocol-verification verify:local",
+    "verify:protocol:reward-split": "pnpm --filter @midnight-sentinel/protocol-verification verify:reward-split",
+    "verify:protocol:devnet:sponsorship": "pnpm --filter @midnight-sentinel/protocol-verification verify:devnet:sponsorship",
+    "verify:protocol:devnet:composite": "pnpm --filter @midnight-sentinel/protocol-verification verify:devnet:composite",
+    "verify:protocol:devnet:production": "pnpm --filter @midnight-sentinel/protocol-verification verify:devnet:production",
+    "verify:protocol:all": "pnpm verify:protocol:local && pnpm verify:protocol:reward-split && pnpm verify:protocol:devnet:sponsorship && pnpm verify:protocol:devnet:composite && pnpm verify:protocol:devnet:production"
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",

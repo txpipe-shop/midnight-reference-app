@@ -15,41 +15,11 @@
       "types": "./dist/providers.d.ts",
       "import": "./dist/providers.js",
       "require": "./dist/providers.js"
-    },
-    "./verification/sponsorship": {
-      "types": "./dist/verification/sponsorship-contract.d.ts",
-      "import": "./dist/verification/sponsorship-contract.js",
-      "require": "./dist/verification/sponsorship-contract.js"
-    },
-    "./verification/composite-sponsorship": {
-      "types": "./dist/verification/composite-sponsorship-contract.d.ts",
-      "import": "./dist/verification/composite-sponsorship-contract.js",
-      "require": "./dist/verification/composite-sponsorship-contract.js"
-    },
-    "./verification/reward-split": {
-      "types": "./dist/verification/reward-split-contract.d.ts",
-      "import": "./dist/verification/reward-split-contract.js",
-      "require": "./dist/verification/reward-split-contract.js"
     }
   },
   "scripts": {
     "compact": "compact compile +0.31.1 src/sentinel.compact ./src/managed/sentinel",
     "compact:no-zk": "compact compile +0.31.1 --skip-zk src/sentinel.compact ./src/managed/sentinel",
-    "compact:sponsorship": "compact compile +0.31.1 src/verification/sponsorship.compact ./src/managed/sponsorship",
-    "compact:sponsorship:no-zk": "compact compile +0.31.1 --skip-zk src/verification/sponsorship.compact ./src/managed/sponsorship",
-    "compact:reward-split": "compact compile +0.31.1 src/verification/reward-split.compact ./src/managed/reward-split && compact compile +0.31.1 src/verification/fallible-user-target.compact ./src/managed/fallible-user-target",
-    "compact:reward-split:no-zk": "compact compile +0.31.1 --skip-zk src/verification/reward-split.compact ./src/managed/reward-split && compact compile +0.31.1 --skip-zk src/verification/fallible-user-target.compact ./src/managed/fallible-user-target",
-    "compact:sponsorship:composite": "compact compile +0.31.1 src/verification/composite-sponsorship.compact ./src/managed/composite-sponsorship && compact compile +0.31.1 src/verification/composite-target.compact ./src/managed/composite-target",
-    "compact:sponsorship:composite:no-zk": "compact compile +0.31.1 --skip-zk src/verification/composite-sponsorship.compact ./src/managed/composite-sponsorship && compact compile +0.31.1 --skip-zk src/verification/composite-target.compact ./src/managed/composite-target",
-    "verify:sponsorship:runtime": "pnpm compact:sponsorship:no-zk && node --import ../../apps/cli/node_modules/tsx/dist/loader.mjs src/verification/sponsorship-runtime-check.ts",
-    "verify:reward-split:runtime": "pnpm compact:reward-split:no-zk && node --import ../../apps/cli/node_modules/tsx/dist/loader.mjs src/verification/reward-split-runtime-check.ts",
-    "verify:reward-split:partition": "pnpm compact:reward-split:no-zk && node --import ../../apps/cli/node_modules/tsx/dist/loader.mjs src/verification/reward-split-partition-check.ts",
-    "verify:reward-split:composite": "pnpm compact:reward-split && node --import ../../apps/cli/node_modules/tsx/dist/loader.mjs src/verification/reward-split-wallet-check.ts",
-    "verify:sponsorship:production:runtime": "pnpm compact:no-zk && node --import ../../apps/cli/node_modules/tsx/dist/loader.mjs src/verification/sentinel-sponsorship-runtime-check.ts",
-    "verify:sponsorship": "pnpm compact:sponsorship && tsc --project tsconfig.build.json && cp -R src/managed/sponsorship dist/managed/ && pnpm --dir ../wallet build && pnpm --dir ../../apps/cli verify:sponsorship",
-    "verify:sponsorship:composite": "pnpm compact:sponsorship:composite && tsc --project tsconfig.build.json && cp -R src/managed/composite-sponsorship src/managed/composite-target dist/managed/ && pnpm --dir ../wallet build && pnpm --dir ../../apps/cli verify:sponsorship:composite",
-    "verify:sponsorship:production": "pnpm compact && pnpm compact:sponsorship:composite && tsc --project tsconfig.build.json && mkdir -p dist/managed/sentinel dist/managed/composite-target && cp -Rf src/managed/sentinel/. dist/managed/sentinel/ && cp -Rf src/managed/composite-target/. dist/managed/composite-target/ && pnpm --dir ../api build && pnpm --dir ../wallet build && pnpm --dir ../../apps/cli verify:sponsorship:production",
-    "build:sponsor-service-e2e": "pnpm compact && pnpm compact:sponsorship:composite && tsc --project tsconfig.build.json && mkdir -p dist/managed/sentinel dist/managed/composite-target && cp -Rf src/managed/sentinel/. dist/managed/sentinel/ && cp -Rf src/managed/composite-target/. dist/managed/composite-target/",
     "clean": "rm -rf dist .turbo src/managed node_modules",
     "clear": "rm -rf dist src/managed",
     "check": "pnpm compact:no-zk && mkdir -p dist/managed/sentinel && tsc --project ./tsconfig.build.json && cp -Rf ./src/managed/sentinel/. ./dist/managed/sentinel/ && cp ./src/sentinel.compact ./dist",

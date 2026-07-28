@@ -3,7 +3,7 @@ import {
   createConstructorContext,
   sampleContractAddress,
 } from '@midnight-ntwrk/compact-runtime';
-import { Contract, ledger } from '../managed/sponsorship/contract/index.js';
+import { Contract, ledger } from '../../managed/sponsorship/contract/index.js';
 
 const bytes = (fill: number) => new Uint8Array(32).fill(fill);
 const sponsor = bytes(0x11);

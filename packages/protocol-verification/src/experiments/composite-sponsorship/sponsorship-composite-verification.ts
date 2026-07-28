@@ -24,7 +24,7 @@ import {
   compositeTargetLedger,
   type CompositeSponsorshipContractType,
   type CompositeTargetContractType,
-} from '@midnight-sentinel/contract/verification/composite-sponsorship';
+} from './composite-sponsorship-contract.js';
 import { configureProviders as configureRepositoryProviders } from '@midnight-sentinel/contract/providers';
 import {
   buildUnfundedWallet,
@@ -35,13 +35,12 @@ import {
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import * as Rx from 'rxjs';
-import { StandaloneConfig } from '../config.js';
+import { packagePath, standaloneConfig } from '../../common/config.js';
 import {
   GENESIS_MINT_WALLET_SEED_ONE,
   GENESIS_MINT_WALLET_SEED_THREE,
-} from '../utils/constants.js';
+} from '../../common/constants.js';
 
 const PRICE = 100n;
 const TRANSFER_AMOUNT = 25n;
@@ -50,16 +49,13 @@ const TIMEOUT_MS = 300_000;
 const BENEFICIARY_SEED = '42'.repeat(32);
 const RECIPIENT_SEED = '43'.repeat(32);
 const TTL = () => new Date(Date.now() + 30 * 60_000);
-const config = Object.assign(new StandaloneConfig(), {
+const config = {
+  ...standaloneConfig,
   indexer: 'http://127.0.0.1:8088/api/v4/graphql',
   indexerWS: 'ws://127.0.0.1:8088/api/v4/graphql/ws',
-});
-const packageDir = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  '../../../../packages/contract'
-);
-const sponsorshipZkPath = path.join(packageDir, 'src/managed/composite-sponsorship');
-const targetZkPath = path.join(packageDir, 'src/managed/composite-target');
+};
+const sponsorshipZkPath = packagePath('src/managed/composite-sponsorship');
+const targetZkPath = packagePath('src/managed/composite-target');
 
 const withTimeout = async <T>(label: string, promise: Promise<T>): Promise<T> => {
   let timer: NodeJS.Timeout | undefined;
@@ -476,14 +472,11 @@ const main = async () => {
     });
     throw error;
   } finally {
-    const resultDir = path.join(packageDir, 'verification/results');
+    const resultDir = packagePath('src/experiments/composite-sponsorship');
     await mkdir(resultDir, { recursive: true });
-    await writeFile(
-      path.join(resultDir, 'sponsorship-composite-verification.json'),
-      `${JSON.stringify(report, null, 2)}\n`
-    );
+    await writeFile(path.join(resultDir, 'result.json'), `${JSON.stringify(report, null, 2)}\n`);
     console.log(`Composite sponsorship verification: ${String(report.verdict).toUpperCase()}`);
-    console.log(`Report: ${path.join(resultDir, 'sponsorship-composite-verification.json')}`);
+    console.log(`Report: ${path.join(resultDir, 'result.json')}`);
     if (report.verdict === 'confirmed') {
       const postState = report.postState as Record<string, string>;
       console.log(

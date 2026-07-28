@@ -3,8 +3,12 @@ import {
   createConstructorContext,
   sampleContractAddress,
 } from '@midnight-ntwrk/compact-runtime';
-import { Contract, ledger } from '../managed/sentinel/contract/index.js';
-import { deriveSentinelAuthority, type PrivateState } from '../private-state.js';
+import {
+  Contract,
+  deriveSentinelAuthority,
+  ledger,
+  type PrivateState,
+} from '@midnight-sentinel/contract';
 
 const bytes = (fill: number) => new Uint8Array(32).fill(fill);
 const equalBytes = (a: Uint8Array, b: Uint8Array) =>

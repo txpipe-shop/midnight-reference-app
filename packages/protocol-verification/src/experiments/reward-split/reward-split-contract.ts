@@ -8,8 +8,12 @@ import {
   type VerifierKey,
   type ZKIR,
 } from '@midnight-ntwrk/midnight-js-types';
-import type { PrivateState } from '../private-state.js';
-import { Contract, type Ledger, type Witnesses } from '../managed/reward-split/contract/index.js';
+import type { PrivateState } from '@midnight-sentinel/contract';
+import {
+  Contract,
+  type Ledger,
+  type Witnesses,
+} from '../../managed/reward-split/contract/index.js';
 
 const rewardSplitWitnesses: Witnesses<PrivateState> = {
   localSecretKey: ({
@@ -30,7 +34,7 @@ export const RewardSplitCompiledContract = CompiledContract.make<
   CompiledContract.withWitnesses(rewardSplitWitnesses),
   CompiledContract.withCompiledFileAssets(
     /* @vite-ignore */
-    new URL('../managed/reward-split', import.meta.url).pathname
+    new URL('../../managed/reward-split', import.meta.url).pathname
   )
 );
 
@@ -78,4 +82,4 @@ export const rewardSplitCompositeProofProvider = (
 export {
   ledger as rewardSplitLedger,
   type Ledger as RewardSplitLedger,
-} from '../managed/reward-split/contract/index.js';
+} from '../../managed/reward-split/contract/index.js';

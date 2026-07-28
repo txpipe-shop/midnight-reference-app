@@ -18,7 +18,7 @@ import {
   SponsorshipCompiledContract,
   sponsorshipLedger,
   type SponsorshipContractType,
-} from '@midnight-sentinel/contract/verification/sponsorship';
+} from './sponsorship-contract.js';
 import {
   buildUnfundedWallet,
   buildWallet,
@@ -29,28 +29,24 @@ import { configureProviders as configureRepositoryProviders } from '@midnight-se
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import * as Rx from 'rxjs';
-import { StandaloneConfig } from '../config.js';
+import { packagePath, standaloneConfig } from '../../common/config.js';
 import {
   GENESIS_MINT_WALLET_SEED_ONE,
   GENESIS_MINT_WALLET_SEED_THREE,
-} from '../utils/constants.js';
+} from '../../common/constants.js';
 
 const PRICE = 100n;
 const FUNDING_AMOUNT = 1_000n;
 const VERIFICATION_BENEFICIARY_SEED = '42'.repeat(32);
 const TIMEOUT_MS = 120_000;
 const TTL = () => new Date(Date.now() + 30 * 60_000);
-const config = Object.assign(new StandaloneConfig(), {
+const config = {
+  ...standaloneConfig,
   indexer: 'http://127.0.0.1:8088/api/v4/graphql',
   indexerWS: 'ws://127.0.0.1:8088/api/v4/graphql/ws',
-});
-const packageDir = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  '../../../../packages/contract'
-);
-const zkPath = path.join(packageDir, 'src/managed/sponsorship');
+};
+const zkPath = packagePath('src/managed/sponsorship');
 
 type Verdict = 'confirmed' | 'refuted' | 'inconclusive';
 type Check = { verdict: Verdict; evidence: Record<string, unknown> };
@@ -422,12 +418,9 @@ const main = async () => {
       transactionIds: { funding: String(fundingTxId), purchase: String(txId) },
       checks,
     };
-    const reportDir = path.join(packageDir, 'verification/results');
+    const reportDir = packagePath('src/experiments/sponsorship');
     await mkdir(reportDir, { recursive: true });
-    await writeFile(
-      path.join(reportDir, 'sponsorship-verification.json'),
-      JSON.stringify(report, null, 2)
-    );
+    await writeFile(path.join(reportDir, 'result.json'), JSON.stringify(report, null, 2));
     console.log(JSON.stringify(report, null, 2));
   } finally {
     await Promise.allSettled(wallets.map((ctx) => ctx.wallet.stop()));

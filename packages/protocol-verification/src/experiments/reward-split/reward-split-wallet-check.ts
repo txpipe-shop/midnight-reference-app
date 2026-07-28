@@ -1,6 +1,5 @@
 // The runner reuses the wallet package's pinned ledger runtime without adding
 // a second copy to this package.
-// @ts-expect-error the direct Node entry point has no adjacent declaration file.
 import {
   Binding,
   ContractCallPrototype,
@@ -15,7 +14,8 @@ import {
   encodeQualifiedShieldedCoinInfo,
   shieldedToken,
   type ZswapLocalState,
-} from '../../../wallet/node_modules/@midnight-ntwrk/ledger-v8/midnight_ledger_wasm_fs.js';
+  // @ts-expect-error the direct Node entry point has no adjacent declaration file.
+} from '../../../../wallet/node_modules/@midnight-ntwrk/ledger-v8/midnight_ledger_wasm_fs.js';
 import {
   ContractState,
   createCircuitContext,
@@ -30,15 +30,15 @@ import {
   ShieldedAddress,
   ShieldedCoinPublicKey,
   ShieldedEncryptionPublicKey,
-} from '../../../wallet/node_modules/@midnight-ntwrk/wallet-sdk-address-format/dist/index.js';
+} from '../../../../wallet/node_modules/@midnight-ntwrk/wallet-sdk-address-format/dist/index.js';
 import {
   buildUnfundedWallet,
   buildWallet,
   signTransactionIntents,
   type WalletContext,
 } from '@midnight-sentinel/wallet';
-import { configureProviders } from '../providers.js';
-import { createPrivateState } from '../private-state.js';
+import { createPrivateState } from '@midnight-sentinel/contract';
+import { configureProviders } from '@midnight-sentinel/contract/providers';
 import {
   RewardSplitCompiledContract,
   RewardSplitContractConstructor,
@@ -68,8 +68,8 @@ const PRIVATE_STATE_ID = 'rewardSplitVerificationPrivateState';
 // BalanceCheckOverspend (custom error 138). Proof generation is already
 // complete when this TTL is created, so two minutes is ample for finalization.
 const TTL = () => new Date(Date.now() + 2 * 60_000);
-const zkPath = new URL('../managed/reward-split', import.meta.url).pathname;
-const targetZkPath = new URL('../managed/fallible-user-target', import.meta.url).pathname;
+const zkPath = new URL('../../managed/reward-split', import.meta.url).pathname;
+const targetZkPath = new URL('../../managed/fallible-user-target', import.meta.url).pathname;
 const config = {
   privateStateStoreName: PRIVATE_STATE_ID,
   logDir: '/tmp/reward-split-wallet-check',

@@ -11,7 +11,7 @@ import { configureProviders } from '@midnight-sentinel/contract/providers';
 import {
   CompositeTargetCompiledContract,
   type CompositeTargetContractType,
-} from '@midnight-sentinel/contract/verification/composite-sponsorship';
+} from '@midnight-sentinel/protocol-verification/composite-sponsorship';
 import {
   buildWallet,
   getBalancesAndAddresses,
@@ -28,7 +28,7 @@ const repositoryDirectory = path.resolve(packageDirectory, '../..');
 const sentinelZkPath = path.join(repositoryDirectory, 'packages/contract/dist/managed/sentinel');
 const targetZkPath = path.join(
   repositoryDirectory,
-  'packages/contract/dist/managed/composite-target'
+  'packages/protocol-verification/dist/managed/composite-target'
 );
 const envPath = path.join(packageDirectory, '.env');
 const replaceEnvironment = process.argv.includes('--force');
