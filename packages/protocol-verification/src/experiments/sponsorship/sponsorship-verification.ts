@@ -10,11 +10,6 @@ import {
 } from '@midnight-ntwrk/ledger-v8';
 import { createUnprovenCallTx, deployContract } from '@midnight-ntwrk/midnight-js-contracts';
 import {
-  ShieldedAddress,
-  ShieldedCoinPublicKey,
-  ShieldedEncryptionPublicKey,
-} from '@midnight-ntwrk/wallet-sdk-address-format';
-import {
   SponsorshipCompiledContract,
   sponsorshipLedger,
   type SponsorshipContractType,
@@ -25,16 +20,23 @@ import {
   signTransactionIntents,
   type WalletContext,
 } from '@midnight-sentinel/wallet';
-import { configureProviders as configureRepositoryProviders } from '@midnight-sentinel/contract/providers';
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
-import path from 'node:path';
 import * as Rx from 'rxjs';
 import { packagePath, standaloneConfig } from '../../common/config.js';
 import {
   GENESIS_MINT_WALLET_SEED_ONE,
   GENESIS_MINT_WALLET_SEED_THREE,
 } from '../../common/constants.js';
+import {
+  bigintToBytes32,
+  providersFor,
+  shieldedAddressOf,
+  stopWallets,
+  withTimeout,
+  waitForWalletState,
+  waitForWalletSync,
+  writeJsonReport,
+} from '../../common/experiment-harness.js';
 
 const PRICE = 100n;
 const FUNDING_AMOUNT = 1_000n;
@@ -51,53 +53,6 @@ const zkPath = packagePath('src/managed/sponsorship');
 type Verdict = 'confirmed' | 'refuted' | 'inconclusive';
 type Check = { verdict: Verdict; evidence: Record<string, unknown> };
 const checks: Record<string, Check> = {};
-
-const withTimeout = async <T>(label: string, promise: Promise<T>): Promise<T> => {
-  let timer: NodeJS.Timeout | undefined;
-  try {
-    return await Promise.race([
-      promise,
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new Error(`${label} timed out`)), TIMEOUT_MS);
-      }),
-    ]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-};
-
-const syncedState = (ctx: WalletContext) =>
-  withTimeout(
-    'wallet sync',
-    Rx.firstValueFrom(ctx.wallet.state().pipe(Rx.filter((state) => state.isSynced)))
-  );
-
-const waitUntil = <T>(
-  label: string,
-  ctx: WalletContext,
-  predicate: (state: Awaited<ReturnType<typeof syncedState>>) => T | false
-) =>
-  withTimeout(
-    label,
-    Rx.firstValueFrom(
-      ctx.wallet.state().pipe(
-        Rx.filter((state) => state.isSynced),
-        Rx.map(predicate),
-        Rx.filter((value): value is T => value !== false)
-      )
-    )
-  );
-
-const shieldedAddress = (ctx: WalletContext) =>
-  new ShieldedAddress(
-    ShieldedCoinPublicKey.fromHexString(ctx.shieldedSecretKeys.coinPublicKey),
-    ShieldedEncryptionPublicKey.fromHexString(ctx.shieldedSecretKeys.encryptionPublicKey)
-  );
-
-const bigintBytes = (value: bigint) => {
-  const hex = value.toString(16).padStart(64, '0');
-  return Uint8Array.from(Buffer.from(hex, 'hex'));
-};
 
 const inspect = (
   tx: Transaction<SignatureEnabled, Proof, Binding>,
@@ -125,10 +80,6 @@ const inspect = (
     ttl: intent.ttl,
     hasDust: [...intents.values()].some((candidate) => candidate.dustActions !== undefined),
   };
-};
-
-const configureProviders = async (ctx: WalletContext, store: string) => {
-  return configureRepositoryProviders<SponsorshipContractType>(ctx, config, store, zkPath);
 };
 
 const main = async () => {
@@ -162,11 +113,13 @@ const main = async () => {
     ]);
     wallets.push(deployer, sponsor, beneficiary);
 
-    const sponsorId = bigintBytes(sponsor.dustSecretKey.publicKey);
+    const sponsorId = bigintToBytes32(sponsor.dustSecretKey.publicKey);
     const paymentColor = Buffer.from(shieldedToken().raw, 'hex');
-    const deployerProviders = await configureProviders(
+    const deployerProviders = await providersFor<SponsorshipContractType>(
       deployer,
-      'sponsorship-verification-deployer'
+      config,
+      'sponsorship-verification-deployer',
+      zkPath
     );
     const deployed = await deployContract<SponsorshipContractType>(deployerProviders, {
       compiledContract: SponsorshipCompiledContract,
@@ -182,7 +135,7 @@ const main = async () => {
             {
               type: shieldedToken().raw,
               amount: FUNDING_AMOUNT,
-              receiverAddress: shieldedAddress(beneficiary),
+              receiverAddress: shieldedAddressOf(beneficiary),
             },
           ],
         },
@@ -195,11 +148,11 @@ const main = async () => {
     );
     const fundTx = await deployer.wallet.finalizeRecipe(fundRecipe);
     const fundingTxId = await deployer.wallet.submitTransaction(fundTx);
-    await waitUntil('beneficiary shielded funding', beneficiary, (state) =>
+    await waitForWalletState('beneficiary shielded funding', TIMEOUT_MS, beneficiary, (state) =>
       (state.shielded.balances[shieldedToken().raw] ?? 0n) >= PRICE ? state : false
     );
 
-    const beneficiaryBefore = await syncedState(beneficiary);
+    const beneficiaryBefore = await waitForWalletSync(beneficiary, TIMEOUT_MS);
     assert.equal(beneficiaryBefore.dust.balance(new Date()), 0n);
     const paymentCoin = [...(beneficiaryBefore.shielded.state.state as ZswapLocalState).coins].find(
       (coin) => coin.type === shieldedToken().raw && coin.value >= PRICE
@@ -208,9 +161,11 @@ const main = async () => {
     const qualified = encodeQualifiedShieldedCoinInfo(paymentCoin);
     const payment = { nonce: qualified.nonce, color: qualified.color, value: PRICE };
 
-    const beneficiaryProviders = await configureProviders(
+    const beneficiaryProviders = await providersFor<SponsorshipContractType>(
       beneficiary,
-      'sponsorship-verification-beneficiary'
+      config,
+      'sponsorship-verification-beneficiary',
+      zkPath
     );
     const unsubmitted = await createUnprovenCallTx(beneficiaryProviders, {
       compiledContract: SponsorshipCompiledContract,
@@ -320,7 +275,7 @@ const main = async () => {
     }
     assert(unsponsoredRejected, 'unsponsored transaction was unexpectedly accepted');
 
-    const sponsorBefore = await syncedState(sponsor);
+    const sponsorBefore = await waitForWalletSync(sponsor, TIMEOUT_MS);
     const dustBefore = sponsorBefore.dust.availableCoins.map(
       (coin) => `${String(coin.nonce)}:${coin.seq}`
     );
@@ -360,6 +315,7 @@ const main = async () => {
     const txId = await sponsor.wallet.submitTransaction(sponsoredFinal);
     const postState = await withTimeout(
       'contract state update',
+      TIMEOUT_MS,
       Rx.firstValueFrom(
         beneficiaryProviders.publicDataProvider
           .contractStateObservable(contractAddress, { type: 'latest' })
@@ -373,12 +329,17 @@ const main = async () => {
           )
       )
     );
-    const sponsorPost = await waitUntil('sponsor DUST update', sponsor, (state) => {
-      const ids = state.dust.availableCoins.map((coin) => `${String(coin.nonce)}:${coin.seq}`);
-      return ids.some((id) => !dustBefore.includes(id)) || ids.length !== dustBefore.length
-        ? state
-        : false;
-    });
+    const sponsorPost = await waitForWalletState(
+      'sponsor DUST update',
+      TIMEOUT_MS,
+      sponsor,
+      (state) => {
+        const ids = state.dust.availableCoins.map((coin) => `${String(coin.nonce)}:${coin.seq}`);
+        return ids.some((id) => !dustBefore.includes(id)) || ids.length !== dustBefore.length
+          ? state
+          : false;
+      }
+    );
     checks['VP-08'] = {
       verdict: 'confirmed',
       evidence: {
@@ -415,12 +376,10 @@ const main = async () => {
       transactionIds: { funding: String(fundingTxId), purchase: String(txId) },
       checks,
     };
-    const reportDir = packagePath('src/experiments/sponsorship');
-    await mkdir(reportDir, { recursive: true });
-    await writeFile(path.join(reportDir, 'result.json'), JSON.stringify(report, null, 2));
+    await writeJsonReport(packagePath('src/experiments/sponsorship/result.json'), report);
     console.log(JSON.stringify(report, null, 2));
   } finally {
-    await Promise.allSettled(wallets.map((ctx) => ctx.wallet.stop()));
+    await stopWallets(wallets);
   }
 };
 

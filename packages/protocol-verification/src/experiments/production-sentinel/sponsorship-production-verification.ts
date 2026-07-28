@@ -3,9 +3,7 @@ import {
   compositeTargetLedger,
   type CompositeTargetContractType,
 } from '../composite-sponsorship/composite-sponsorship-contract.js';
-import type { Contract as CompactContract } from '@midnight-ntwrk/compact-js';
 import { ledger as sentinelLedger, type SentinelContractType } from '@midnight-sentinel/contract';
-import { configureProviders as configureRepositoryProviders } from '@midnight-sentinel/contract/providers';
 import { SentinelContract } from '@midnight-sentinel/api';
 import {
   sponsorshipAllowlistHash,
@@ -26,7 +24,7 @@ import {
 } from '@midnight-ntwrk/ledger-v8';
 import { createUnprovenCallTx, deployContract } from '@midnight-ntwrk/midnight-js-contracts';
 import assert from 'node:assert/strict';
-import { mkdir, stat, writeFile } from 'node:fs/promises';
+import { stat } from 'node:fs/promises';
 import path from 'node:path';
 import * as Rx from 'rxjs';
 import { packagePath, standaloneConfig } from '../../common/config.js';
@@ -34,6 +32,16 @@ import {
   GENESIS_MINT_WALLET_SEED_ONE,
   GENESIS_MINT_WALLET_SEED_THREE,
 } from '../../common/constants.js';
+import {
+  filledBytes,
+  providersFor,
+  stopWallets,
+  withTimeout,
+  waitForWallClock,
+  waitForWalletState,
+  waitForWalletSync,
+  writeJsonReport,
+} from '../../common/experiment-harness.js';
 
 const PRICE = 100n;
 const TIMEOUT_MS = 360_000;
@@ -47,62 +55,6 @@ const config = {
 };
 const sentinelZkPath = packagePath('../contract/src/managed/sentinel');
 const targetZkPath = packagePath('src/managed/composite-target');
-
-const withTimeout = async <T>(label: string, promise: Promise<T>): Promise<T> => {
-  let timer: NodeJS.Timeout | undefined;
-  try {
-    return await Promise.race([
-      promise,
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new Error(`${label} timed out`)), TIMEOUT_MS);
-      }),
-    ]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-};
-
-const syncedState = (ctx: WalletContext) =>
-  withTimeout(
-    'wallet sync',
-    Rx.firstValueFrom(ctx.wallet.state().pipe(Rx.filter((state) => state.isSynced)))
-  );
-
-const waitUntil = <T>(
-  label: string,
-  ctx: WalletContext,
-  predicate: (state: Awaited<ReturnType<typeof syncedState>>) => T | false
-) =>
-  withTimeout(
-    label,
-    Rx.firstValueFrom(
-      ctx.wallet.state().pipe(
-        Rx.filter((state) => state.isSynced),
-        Rx.map(predicate),
-        Rx.filter((value): value is T => value !== false)
-      )
-    )
-  );
-
-const waitForWallClock = (unixSeconds: bigint) =>
-  withTimeout(
-    'target expiry',
-    new Promise<void>((resolve) => {
-      const check = () => {
-        if (BigInt(Math.floor(Date.now() / 1000)) > unixSeconds) resolve();
-        else setTimeout(check, 250);
-      };
-      check();
-    })
-  );
-
-const configure = <C extends CompactContract.Any>(
-  ctx: WalletContext,
-  store: string,
-  zkPath: string
-) => configureRepositoryProviders<C>(ctx, config, store, zkPath);
-
-const bytes32 = (fill: number) => new Uint8Array(32).fill(fill);
 
 const requireFullZkArtifacts = async () => {
   const required = [
@@ -152,8 +104,9 @@ const main = async () => {
     ]);
     wallets.push(deployer, sponsor, beneficiary);
 
-    const deployTargetProviders = await configure<CompositeTargetContractType>(
+    const deployTargetProviders = await providersFor<CompositeTargetContractType>(
       deployer,
+      config,
       'production-verify-target-deploy',
       targetZkPath
     );
@@ -165,8 +118,9 @@ const main = async () => {
     const allowedTargets = [{ address: targetAddress, entryPoint: 'interact' }];
     const policyHash = sponsorshipAllowlistHash(allowedTargets);
 
-    const deploySentinelProviders = await configure<SentinelContractType>(
+    const deploySentinelProviders = await providersFor<SentinelContractType>(
       deployer,
+      config,
       'production-verify-sentinel-deploy',
       sentinelZkPath
     );
@@ -181,7 +135,7 @@ const main = async () => {
     );
     const sentinelAddress = sentinel.deployedContract!.deployTxData.public.contractAddress;
 
-    const beneficiaryAddressState = await syncedState(beneficiary);
+    const beneficiaryAddressState = await waitForWalletSync(beneficiary, TIMEOUT_MS);
     const fundingRecipe = await deployer.wallet.transferTransaction(
       [
         {
@@ -201,23 +155,26 @@ const main = async () => {
     );
     const funding = await deployer.wallet.finalizeRecipe(fundingRecipe);
     const fundingTxId = await deployer.wallet.submitTransaction(funding);
-    await waitUntil('beneficiary funding', beneficiary, (state) =>
+    await waitForWalletState('beneficiary funding', TIMEOUT_MS, beneficiary, (state) =>
       (state.shielded.balances[shieldedToken().raw] ?? 0n) >= PRICE * 3n ? state : false
     );
 
-    const targetProviders = await configure<CompositeTargetContractType>(
+    const targetProviders = await providersFor<CompositeTargetContractType>(
       beneficiary,
+      config,
       'production-verify-target-beneficiary',
       targetZkPath
     );
-    const beneficiarySentinelProviders = await configure<SentinelContractType>(
+    const beneficiarySentinelProviders = await providersFor<SentinelContractType>(
       beneficiary,
+      config,
       'production-verify-sentinel-beneficiary',
       sentinelZkPath
     );
     await SentinelContract.join(beneficiarySentinelProviders, sentinelAddress);
-    const sponsorSentinelProviders = await configure<SentinelContractType>(
+    const sponsorSentinelProviders = await providersFor<SentinelContractType>(
       sponsor,
+      config,
       'production-verify-sentinel-sponsor',
       sentinelZkPath
     );
@@ -262,7 +219,7 @@ const main = async () => {
       expiry: bigint,
       expectedStatus: 'SucceedEntirely' | 'FailFallible'
     ) => {
-      const before = await syncedState(beneficiary);
+      const before = await waitForWalletSync(beneficiary, TIMEOUT_MS);
       assert.equal(before.dust.balance(new Date()), 0n);
       const exactCoins = [...(before.shielded.state.state as ZswapLocalState).coins].filter(
         (coin) => coin.type === shieldedToken().raw && coin.value === PRICE
@@ -293,7 +250,9 @@ const main = async () => {
       assert(prepared.transaction.length > 0);
 
       const targetCommitment = prepared.targetCommunicationCommitment;
-      if (expectedStatus === 'FailFallible') await waitForWallClock(expiry);
+      if (expectedStatus === 'FailFallible') {
+        await waitForWallClock('target expiry', expiry, TIMEOUT_MS);
+      }
       const inspected = await sponsorSponsorshipApi.inspect({
         transaction: prepared.transaction,
       });
@@ -313,15 +272,16 @@ const main = async () => {
     };
 
     const success = await runScenario(
-      bytes32(0x71),
+      filledBytes(0x71),
       BigInt(Math.floor(Date.now() / 1000) + 900),
       'SucceedEntirely'
     );
     const fallibleExpiry = BigInt(Math.floor(Date.now() / 1000) + 90);
-    const fallibleFailure = await runScenario(bytes32(0x72), fallibleExpiry, 'FailFallible');
+    const fallibleFailure = await runScenario(filledBytes(0x72), fallibleExpiry, 'FailFallible');
 
     const sentinelState = await withTimeout(
       'production Sentinel state',
+      TIMEOUT_MS,
       Rx.firstValueFrom(
         sponsorSentinelProviders.publicDataProvider
           .contractStateObservable(sentinelAddress, { type: 'latest' })
@@ -333,6 +293,7 @@ const main = async () => {
     );
     const targetState = await withTimeout(
       'production target state',
+      TIMEOUT_MS,
       Rx.firstValueFrom(
         targetProviders.publicDataProvider
           .contractStateObservable(targetAddress, { type: 'latest' })
@@ -377,11 +338,10 @@ const main = async () => {
     const reportPath =
       process.env.SPONSORSHIP_VERIFICATION_REPORT ??
       packagePath('src/experiments/production-sentinel/result.json');
-    await mkdir(path.dirname(reportPath), { recursive: true });
-    await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`);
+    await writeJsonReport(reportPath, report);
     console.log(`Production sponsorship verification: ${String(report.verdict).toUpperCase()}`);
     console.log(`Report: ${reportPath}`);
-    await Promise.allSettled(wallets.map((wallet) => wallet.wallet.stop()));
+    await stopWallets(wallets);
   }
 };
 

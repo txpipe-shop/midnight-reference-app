@@ -21,7 +21,6 @@ import {
   createCircuitContext,
   createConstructorContext,
 } from '@midnight-ntwrk/compact-runtime';
-import type { Contract as CompactContract } from '@midnight-ntwrk/compact-js';
 import {
   createUnprovenCallTx,
   createUnprovenCallTxFromInitialStates,
@@ -39,7 +38,6 @@ import {
   type WalletContext,
 } from '@midnight-sentinel/wallet';
 import { createPrivateState } from '@midnight-sentinel/contract';
-import { configureProviders } from '@midnight-sentinel/contract/providers';
 import {
   RewardSplitCompiledContract,
   RewardSplitContractConstructor,
@@ -52,10 +50,17 @@ import {
   type FallibleUserTargetType,
 } from './fallible-user-target-contract.js';
 import assert from 'node:assert/strict';
-import * as Rx from 'rxjs';
+import {
+  filledBytes,
+  providersFor,
+  shieldedCoinKeyOf,
+  stopWallets,
+  withTimeout,
+  waitForWalletState,
+  waitForWalletSync,
+} from '../../common/experiment-harness.js';
 
-const bytes = (fill: number) => new Uint8Array(32).fill(fill);
-const OWNER_SECRET = bytes(0x09);
+const OWNER_SECRET = filledBytes(0x09);
 const BENEFICIARY_SEED = '77'.repeat(32);
 const DEPLOYER_SEED = '00'.repeat(31) + '01';
 const SPONSOR_SEED = '00'.repeat(31) + '03';
@@ -81,35 +86,9 @@ const config = {
   proofServer: 'http://127.0.0.1:6300',
 };
 
-const timeout = async <T>(label: string, promise: Promise<T>): Promise<T> => {
-  let timer: NodeJS.Timeout | undefined;
-  try {
-    return await Promise.race([
-      promise,
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new Error(`${label} timed out`)), TIMEOUT_MS);
-      }),
-    ]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-};
-
-const synced = (ctx: WalletContext) =>
-  timeout(
-    'wallet sync',
-    Rx.firstValueFrom(ctx.wallet.state().pipe(Rx.filter((state) => state.isSynced)))
-  );
-
 const waitBalance = (label: string, ctx: WalletContext, minimum: bigint) =>
-  timeout(
-    label,
-    Rx.firstValueFrom(
-      ctx.wallet.state().pipe(
-        Rx.filter((state) => state.isSynced),
-        Rx.filter((state) => (state.shielded.balances[shieldedToken().raw] ?? 0n) >= minimum)
-      )
-    )
+  waitForWalletState(label, TIMEOUT_MS, ctx, (state) =>
+    (state.shielded.balances[shieldedToken().raw] ?? 0n) >= minimum ? state : false
   );
 
 const address = (ctx: WalletContext) =>
@@ -117,16 +96,6 @@ const address = (ctx: WalletContext) =>
     ShieldedCoinPublicKey.fromHexString(ctx.shieldedSecretKeys.coinPublicKey),
     ShieldedEncryptionPublicKey.fromHexString(ctx.shieldedSecretKeys.encryptionPublicKey)
   );
-
-const coinKey = (ctx: WalletContext) => ({
-  bytes: Uint8Array.from(Buffer.from(ctx.shieldedSecretKeys.coinPublicKey, 'hex')),
-});
-
-const providersFor = async <C extends CompactContract.Any>(
-  ctx: WalletContext,
-  store: string,
-  assets = zkPath
-) => configureProviders<C>(ctx, config, store, assets);
 
 type CallData = Awaited<ReturnType<typeof createUnprovenCallTx>>;
 
@@ -188,9 +157,9 @@ const main = async () => {
     ]);
     wallets.push(deployer, dustSponsor, delegator, beneficiary);
 
-    const sponsorBefore = await synced(dustSponsor);
-    const delegatorBefore = await synced(delegator);
-    const beneficiaryBefore = await synced(beneficiary);
+    const sponsorBefore = await waitForWalletSync(dustSponsor, TIMEOUT_MS);
+    const delegatorBefore = await waitForWalletSync(delegator, TIMEOUT_MS);
+    const beneficiaryBefore = await waitForWalletSync(beneficiary, TIMEOUT_MS);
     const sponsorBalanceBefore = sponsorBefore.shielded.balances[shieldedToken().raw] ?? 0n;
     const delegatorBalanceBefore = delegatorBefore.shielded.balances[shieldedToken().raw] ?? 0n;
     const beneficiaryBalanceBefore = beneficiaryBefore.shielded.balances[shieldedToken().raw] ?? 0n;
@@ -203,27 +172,29 @@ const main = async () => {
         createPrivateState(OWNER_SECRET),
         deployer.shieldedSecretKeys.coinPublicKey
       ),
-      bytes(0x11),
+      filledBytes(0x11),
       Buffer.from(shieldedToken().raw, 'hex'),
-      coinKey(dustSponsor),
+      shieldedCoinKeyOf(dustSponsor),
       SHARE,
       SHARE,
       1n,
-      bytes(0)
+      filledBytes(0)
     );
     const operatorKey = rewardSplitLedger(probe.currentContractState.data).owner;
     const deployerProviders = await providersFor<RewardSplitContractType>(
       deployer,
-      'reward-split-wallet-deployer'
+      config,
+      'reward-split-wallet-deployer',
+      zkPath
     );
     const deployed = await deployContract<RewardSplitContractType>(deployerProviders, {
       compiledContract: RewardSplitCompiledContract,
       privateStateId: PRIVATE_STATE_ID,
       initialPrivateState: createPrivateState(OWNER_SECRET),
       args: [
-        bytes(0x11),
+        filledBytes(0x11),
         Buffer.from(shieldedToken().raw, 'hex'),
-        coinKey(dustSponsor),
+        shieldedCoinKeyOf(dustSponsor),
         SHARE,
         SHARE,
         1n,
@@ -233,6 +204,7 @@ const main = async () => {
     const contractAddress = deployed.deployTxData.public.contractAddress;
     const targetDeployProviders = await providersFor<FallibleUserTargetType>(
       deployer,
+      config,
       'reward-split-target-deployer',
       targetZkPath
     );
@@ -241,7 +213,7 @@ const main = async () => {
     });
     const targetAddress = targetDeployment.deployTxData.public.contractAddress;
 
-    await deployed.callTx.addDelegator(bytes(0x41), coinKey(delegator), 1n, 1n);
+    await deployed.callTx.addDelegator(filledBytes(0x41), shieldedCoinKeyOf(delegator), 1n, 1n);
 
     const funding = await deployer.wallet.transferTransaction(
       [
@@ -271,10 +243,13 @@ const main = async () => {
 
     const beneficiaryProviders = await providersFor<RewardSplitContractType>(
       beneficiary,
-      'reward-split-wallet-beneficiary'
+      config,
+      'reward-split-wallet-beneficiary',
+      zkPath
     );
     const beneficiaryTargetProviders = await providersFor<FallibleUserTargetType>(
       beneficiary,
+      config,
       'reward-split-target-beneficiary',
       targetZkPath
     );
@@ -289,15 +264,15 @@ const main = async () => {
       expiry: bigint,
       expectedStatus: 'SucceedEntirely' | 'FailFallible'
     ) => {
-      const state = await synced(beneficiary);
+      const state = await waitForWalletSync(beneficiary, TIMEOUT_MS);
       const coins = [...(state.shielded.state.state as ZswapLocalState).coins].filter(
         (coin) => coin.type === shieldedToken().raw && coin.value === SHARE
       );
       assert(coins.length >= 2, 'two exact 1 NIGHT coins are required');
       const delegatorCoin = encodeQualifiedShieldedCoinInfo(coins[0]);
       const sponsorCoin = encodeQualifiedShieldedCoinInfo(coins[1]);
-      const privateState = createPrivateState(bytes(0x08));
-      const purchaseId = bytes(0x60 + index);
+      const privateState = createPrivateState(filledBytes(0x08));
+      const purchaseId = filledBytes(0x60 + index);
       const delegatorPayment = {
         nonce: delegatorCoin.nonce,
         color: delegatorCoin.color,
@@ -422,8 +397,9 @@ const main = async () => {
         }
       }
       const txId = await dustSponsor.wallet.submitTransaction(sponsored);
-      const observed = await timeout(
+      const observed = await withTimeout(
         'composite transaction finalization',
+        TIMEOUT_MS,
         beneficiaryProviders.publicDataProvider.watchForTxData(txId)
       );
       assert.equal(observed.status, expectedStatus);
@@ -446,7 +422,7 @@ const main = async () => {
       delegator,
       delegatorBalanceBefore + SHARE * 2n
     );
-    const sponsorAfter = await synced(dustSponsor);
+    const sponsorAfter = await waitForWalletSync(dustSponsor, TIMEOUT_MS);
     const sponsorIncrease =
       (sponsorAfter.shielded.balances[shieldedToken().raw] ?? 0n) - sponsorBalanceBefore;
     const delegatorIncrease =
@@ -466,7 +442,7 @@ const main = async () => {
       })
     );
   } finally {
-    await Promise.allSettled(wallets.map((ctx) => ctx.wallet.stop()));
+    await stopWallets(wallets);
   }
 };
 
