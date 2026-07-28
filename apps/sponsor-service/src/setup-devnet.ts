@@ -87,16 +87,15 @@ const main = async () => {
     wallets.push(deployer, sponsor);
 
     console.log('Deploying sponsorship target...');
-    const targetProviders = await configureProviders(
+    const targetProviders = await configureProviders<CompositeTargetContractType>(
       deployer,
       network,
       `setup-target-${Date.now()}`,
       targetZkPath
     );
-    const target = await deployContract<CompositeTargetContractType>(
-      targetProviders as never,
-      { compiledContract: CompositeTargetCompiledContract } as never
-    );
+    const target = await deployContract<CompositeTargetContractType>(targetProviders, {
+      compiledContract: CompositeTargetCompiledContract,
+    });
     const targetAddress = target.deployTxData.public.contractAddress;
     const targetEntryPoint = 'interact';
 

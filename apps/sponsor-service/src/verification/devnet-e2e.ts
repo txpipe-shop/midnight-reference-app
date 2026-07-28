@@ -525,15 +525,15 @@ const main = async () => {
     }
 
     report.stage = 'contract-deployment';
-    const deployTargetProviders = await configureProviders(
+    const deployTargetProviders = await configureProviders<CompositeTargetContractType>(
       deployer,
       config,
       path.join(runDirectory, 'target-deploy'),
       targetZkPath
     );
     const targetDeployment = await deployContract<CompositeTargetContractType>(
-      deployTargetProviders as never,
-      { compiledContract: CompositeTargetCompiledContract } as never
+      deployTargetProviders,
+      { compiledContract: CompositeTargetCompiledContract }
     );
     const targetAddress = targetDeployment.deployTxData.public.contractAddress;
     const allowedTargets = [{ address: targetAddress, entryPoint: 'interact' }];
@@ -644,7 +644,7 @@ const main = async () => {
       sentinelZkPath
     );
     await SentinelContract.join(beneficiarySentinelProviders, sentinelAddress);
-    const beneficiaryTargetProviders = await configureProviders(
+    const beneficiaryTargetProviders = await configureProviders<CompositeTargetContractType>(
       beneficiary,
       config,
       path.join(runDirectory, 'beneficiary-target'),
@@ -681,8 +681,8 @@ const main = async () => {
     });
 
     const targetCall = (expiry: bigint) =>
-      createUnprovenCallTx(beneficiaryTargetProviders as never, {
-        compiledContract: CompositeTargetCompiledContract as never,
+      createUnprovenCallTx(beneficiaryTargetProviders, {
+        compiledContract: CompositeTargetCompiledContract,
         contractAddress: targetAddress,
         circuitId: 'interact',
         args: [expiry],

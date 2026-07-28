@@ -10,6 +10,7 @@ import {
   shieldedToken,
   type ZswapLocalState,
 } from '@midnight-ntwrk/ledger-v8';
+import type { Contract as CompactContract } from '@midnight-ntwrk/compact-js';
 import { createUnprovenCallTx, deployContract } from '@midnight-ntwrk/midnight-js-contracts';
 import {
   ShieldedAddress,
@@ -137,8 +138,11 @@ const transcriptShape = (callData: {
 const hasDust = (tx: Transaction<SignatureEnabled, Proof, Binding>) =>
   [...(tx.intents?.values() ?? [])].some((intent) => intent.dustActions !== undefined);
 
-const configure = async (ctx: WalletContext, store: string, zkPath: string) =>
-  configureRepositoryProviders(ctx, config, store, zkPath);
+const configure = async <C extends CompactContract.Any>(
+  ctx: WalletContext,
+  store: string,
+  zkPath: string
+) => configureRepositoryProviders<C>(ctx, config, store, zkPath);
 
 const main = async () => {
   const startedAt = new Date().toISOString();
@@ -170,27 +174,27 @@ const main = async () => {
 
     const sponsorId = bigintBytes(sponsor.dustSecretKey.publicKey);
     const paymentColor = Buffer.from(shieldedToken().raw, 'hex');
-    const deploySponsorshipProviders = await configure(
+    const deploySponsorshipProviders = await configure<CompositeSponsorshipContractType>(
       deployer,
       'composite-deploy-sponsorship',
       sponsorshipZkPath
     );
-    const deployTargetProviders = await configure(
+    const deployTargetProviders = await configure<CompositeTargetContractType>(
       deployer,
       'composite-deploy-target',
       targetZkPath
     );
 
     const sponsorshipDeployment = await deployContract<CompositeSponsorshipContractType>(
-      deploySponsorshipProviders as never,
+      deploySponsorshipProviders,
       {
         compiledContract: CompositeSponsorshipCompiledContract,
         args: [sponsorId, paymentColor, PRICE],
-      } as never
+      }
     );
     const targetDeployment = await deployContract<CompositeTargetContractType>(
-      deployTargetProviders as never,
-      { compiledContract: CompositeTargetCompiledContract } as never
+      deployTargetProviders,
+      { compiledContract: CompositeTargetCompiledContract }
     );
     const sponsorshipAddress = sponsorshipDeployment.deployTxData.public.contractAddress;
     const targetAddress = targetDeployment.deployTxData.public.contractAddress;
@@ -218,12 +222,12 @@ const main = async () => {
       (state.shielded.balances[shieldedToken().raw] ?? 0n) >= FUNDING_COIN * 4n ? state : false
     );
 
-    const sponsorshipProviders = await configure(
+    const sponsorshipProviders = await configure<CompositeSponsorshipContractType>(
       beneficiary,
       'composite-beneficiary-sponsorship',
       sponsorshipZkPath
     );
-    const targetProviders = await configure(
+    const targetProviders = await configure<CompositeTargetContractType>(
       beneficiary,
       'composite-beneficiary-target',
       targetZkPath
@@ -248,8 +252,8 @@ const main = async () => {
       const qualified = encodeQualifiedShieldedCoinInfo(paymentCoin);
       const payment = { nonce: qualified.nonce, color: qualified.color, value: PRICE };
 
-      const targetCallData = await createUnprovenCallTx(targetProviders as never, {
-        compiledContract: CompositeTargetCompiledContract as never,
+      const targetCallData = await createUnprovenCallTx(targetProviders, {
+        compiledContract: CompositeTargetCompiledContract,
         contractAddress: targetAddress,
         circuitId: 'interact',
         args: [expiry],
@@ -276,22 +280,19 @@ const main = async () => {
       );
       const epHash = entryPointHash('interact');
 
-      const purchaseCallData = await createUnprovenCallTx(
-        sponsorshipProviders as never,
-        {
-          compiledContract: CompositeSponsorshipCompiledContract as never,
-          contractAddress: sponsorshipAddress,
-          circuitId: 'purchaseSponsorship',
-          args: [
-            purchaseId,
-            sponsorId,
-            payment,
-            Buffer.from(targetAddress, 'hex'),
-            Buffer.from(epHash, 'hex'),
-            targetCommitmentBytes,
-          ],
-        } as never
-      );
+      const purchaseCallData = await createUnprovenCallTx(sponsorshipProviders, {
+        compiledContract: CompositeSponsorshipCompiledContract,
+        contractAddress: sponsorshipAddress,
+        circuitId: 'purchaseSponsorship',
+        args: [
+          purchaseId,
+          sponsorId,
+          payment,
+          Buffer.from(targetAddress, 'hex'),
+          Buffer.from(epHash, 'hex'),
+          targetCommitmentBytes,
+        ],
+      });
       assert(purchaseCallData.public.partitionedTranscript[0]);
       assert.equal(purchaseCallData.public.partitionedTranscript[1], undefined);
 

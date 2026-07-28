@@ -3,7 +3,8 @@ import {
   compositeTargetLedger,
   type CompositeTargetContractType,
 } from '../composite-sponsorship/composite-sponsorship-contract.js';
-import { ledger as sentinelLedger } from '@midnight-sentinel/contract';
+import type { Contract as CompactContract } from '@midnight-ntwrk/compact-js';
+import { ledger as sentinelLedger, type SentinelContractType } from '@midnight-sentinel/contract';
 import { configureProviders as configureRepositoryProviders } from '@midnight-sentinel/contract/providers';
 import { SentinelContract } from '@midnight-sentinel/api';
 import {
@@ -95,8 +96,11 @@ const waitForWallClock = (unixSeconds: bigint) =>
     })
   );
 
-const configure = (ctx: WalletContext, store: string, zkPath: string) =>
-  configureRepositoryProviders(ctx, config, store, zkPath);
+const configure = <C extends CompactContract.Any>(
+  ctx: WalletContext,
+  store: string,
+  zkPath: string
+) => configureRepositoryProviders<C>(ctx, config, store, zkPath);
 
 const bytes32 = (fill: number) => new Uint8Array(32).fill(fill);
 
@@ -148,20 +152,20 @@ const main = async () => {
     ]);
     wallets.push(deployer, sponsor, beneficiary);
 
-    const deployTargetProviders = await configure(
+    const deployTargetProviders = await configure<CompositeTargetContractType>(
       deployer,
       'production-verify-target-deploy',
       targetZkPath
     );
     const targetDeployment = await deployContract<CompositeTargetContractType>(
-      deployTargetProviders as never,
-      { compiledContract: CompositeTargetCompiledContract } as never
+      deployTargetProviders,
+      { compiledContract: CompositeTargetCompiledContract }
     );
     const targetAddress = targetDeployment.deployTxData.public.contractAddress;
     const allowedTargets = [{ address: targetAddress, entryPoint: 'interact' }];
     const policyHash = sponsorshipAllowlistHash(allowedTargets);
 
-    const deploySentinelProviders = await configure(
+    const deploySentinelProviders = await configure<SentinelContractType>(
       deployer,
       'production-verify-sentinel-deploy',
       sentinelZkPath
@@ -201,18 +205,18 @@ const main = async () => {
       (state.shielded.balances[shieldedToken().raw] ?? 0n) >= PRICE * 3n ? state : false
     );
 
-    const targetProviders = await configure(
+    const targetProviders = await configure<CompositeTargetContractType>(
       beneficiary,
       'production-verify-target-beneficiary',
       targetZkPath
     );
-    const beneficiarySentinelProviders = await configure(
+    const beneficiarySentinelProviders = await configure<SentinelContractType>(
       beneficiary,
       'production-verify-sentinel-beneficiary',
       sentinelZkPath
     );
     await SentinelContract.join(beneficiarySentinelProviders, sentinelAddress);
-    const sponsorSentinelProviders = await configure(
+    const sponsorSentinelProviders = await configure<SentinelContractType>(
       sponsor,
       'production-verify-sentinel-sponsor',
       sentinelZkPath
@@ -265,8 +269,8 @@ const main = async () => {
       );
       assert(exactCoins.length > 0, 'exact sponsorship payment coin not found');
 
-      const targetCall = await createUnprovenCallTx(targetProviders as never, {
-        compiledContract: CompositeTargetCompiledContract as never,
+      const targetCall = await createUnprovenCallTx(targetProviders, {
+        compiledContract: CompositeTargetCompiledContract,
         contractAddress: targetAddress,
         circuitId: 'interact',
         args: [expiry],

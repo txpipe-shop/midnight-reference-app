@@ -21,6 +21,7 @@ import {
   createCircuitContext,
   createConstructorContext,
 } from '@midnight-ntwrk/compact-runtime';
+import type { Contract as CompactContract } from '@midnight-ntwrk/compact-js';
 import {
   createUnprovenCallTx,
   createUnprovenCallTxFromInitialStates,
@@ -121,8 +122,11 @@ const coinKey = (ctx: WalletContext) => ({
   bytes: Uint8Array.from(Buffer.from(ctx.shieldedSecretKeys.coinPublicKey, 'hex')),
 });
 
-const providersFor = async (ctx: WalletContext, store: string, assets = zkPath) =>
-  configureProviders(ctx, config, store, assets);
+const providersFor = async <C extends CompactContract.Any>(
+  ctx: WalletContext,
+  store: string,
+  assets = zkPath
+) => configureProviders<C>(ctx, config, store, assets);
 
 type CallData = Awaited<ReturnType<typeof createUnprovenCallTx>>;
 
@@ -208,34 +212,33 @@ const main = async () => {
       bytes(0)
     );
     const operatorKey = rewardSplitLedger(probe.currentContractState.data).owner;
-    const deployerProviders = await providersFor(deployer, 'reward-split-wallet-deployer');
-    const deployed = await deployContract<RewardSplitContractType>(
-      deployerProviders as never,
-      {
-        compiledContract: RewardSplitCompiledContract,
-        privateStateId: PRIVATE_STATE_ID,
-        initialPrivateState: createPrivateState(OWNER_SECRET),
-        args: [
-          bytes(0x11),
-          Buffer.from(shieldedToken().raw, 'hex'),
-          coinKey(dustSponsor),
-          SHARE,
-          SHARE,
-          1n,
-          operatorKey,
-        ],
-      } as never
+    const deployerProviders = await providersFor<RewardSplitContractType>(
+      deployer,
+      'reward-split-wallet-deployer'
     );
+    const deployed = await deployContract<RewardSplitContractType>(deployerProviders, {
+      compiledContract: RewardSplitCompiledContract,
+      privateStateId: PRIVATE_STATE_ID,
+      initialPrivateState: createPrivateState(OWNER_SECRET),
+      args: [
+        bytes(0x11),
+        Buffer.from(shieldedToken().raw, 'hex'),
+        coinKey(dustSponsor),
+        SHARE,
+        SHARE,
+        1n,
+        operatorKey,
+      ],
+    });
     const contractAddress = deployed.deployTxData.public.contractAddress;
-    const targetDeployProviders = await providersFor(
+    const targetDeployProviders = await providersFor<FallibleUserTargetType>(
       deployer,
       'reward-split-target-deployer',
       targetZkPath
     );
-    const targetDeployment = await deployContract<FallibleUserTargetType>(
-      targetDeployProviders as never,
-      { compiledContract: FallibleUserTargetCompiledContract } as never
-    );
+    const targetDeployment = await deployContract<FallibleUserTargetType>(targetDeployProviders, {
+      compiledContract: FallibleUserTargetCompiledContract,
+    });
     const targetAddress = targetDeployment.deployTxData.public.contractAddress;
 
     await deployed.callTx.addDelegator(bytes(0x41), coinKey(delegator), 1n, 1n);
@@ -266,8 +269,11 @@ const main = async () => {
     );
     void beneficiaryState;
 
-    const beneficiaryProviders = await providersFor(beneficiary, 'reward-split-wallet-beneficiary');
-    const beneficiaryTargetProviders = await providersFor(
+    const beneficiaryProviders = await providersFor<RewardSplitContractType>(
+      beneficiary,
+      'reward-split-wallet-beneficiary'
+    );
+    const beneficiaryTargetProviders = await providersFor<FallibleUserTargetType>(
       beneficiary,
       'reward-split-target-beneficiary',
       targetZkPath
@@ -297,23 +303,21 @@ const main = async () => {
         color: delegatorCoin.color,
         value: SHARE,
       };
+      await beneficiaryProviders.privateStateProvider.set(PRIVATE_STATE_ID, privateState);
 
-      const delegatorCall = await createUnprovenCallTx(
-        beneficiaryProviders as never,
-        {
-          compiledContract: RewardSplitCompiledContract,
-          contractAddress,
-          circuitId: 'purchaseDelegatorReward',
-          initialPrivateState: privateState,
-          additionalCoinEncPublicKeyMappings: new Map([
-            [
-              delegator.shieldedSecretKeys.coinPublicKey,
-              delegator.shieldedSecretKeys.encryptionPublicKey,
-            ],
-          ]),
-          args: [delegatorPayment],
-        } as never
-      );
+      const delegatorCall = await createUnprovenCallTx(beneficiaryProviders, {
+        compiledContract: RewardSplitCompiledContract,
+        contractAddress,
+        circuitId: 'purchaseDelegatorReward',
+        privateStateId: PRIVATE_STATE_ID,
+        additionalCoinEncPublicKeyMappings: new Map([
+          [
+            delegator.shieldedSecretKeys.coinPublicKey,
+            delegator.shieldedSecretKeys.encryptionPublicKey,
+          ],
+        ]),
+        args: [delegatorPayment],
+      });
 
       const chainAndState =
         await beneficiaryProviders.publicDataProvider.queryZSwapAndContractState(contractAddress);
@@ -351,15 +355,12 @@ const main = async () => {
         },
         beneficiary.shieldedSecretKeys.encryptionPublicKey
       );
-      const targetCall = await createUnprovenCallTx(
-        beneficiaryTargetProviders as never,
-        {
-          compiledContract: FallibleUserTargetCompiledContract,
-          contractAddress: targetAddress,
-          circuitId: 'interact',
-          args: [expiry],
-        } as never
-      );
+      const targetCall = await createUnprovenCallTx(beneficiaryTargetProviders, {
+        compiledContract: FallibleUserTargetCompiledContract,
+        contractAddress: targetAddress,
+        circuitId: 'interact',
+        args: [expiry],
+      });
       const targetChainAndState =
         await beneficiaryTargetProviders.publicDataProvider.queryZSwapAndContractState(
           targetAddress

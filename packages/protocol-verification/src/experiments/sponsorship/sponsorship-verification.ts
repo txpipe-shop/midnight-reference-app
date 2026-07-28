@@ -128,7 +128,7 @@ const inspect = (
 };
 
 const configureProviders = async (ctx: WalletContext, store: string) => {
-  return configureRepositoryProviders(ctx, config, store, zkPath);
+  return configureRepositoryProviders<SponsorshipContractType>(ctx, config, store, zkPath);
 };
 
 const main = async () => {
@@ -168,13 +168,10 @@ const main = async () => {
       deployer,
       'sponsorship-verification-deployer'
     );
-    const deployed = await deployContract<SponsorshipContractType>(
-      deployerProviders as never,
-      {
-        compiledContract: SponsorshipCompiledContract,
-        args: [sponsorId, paymentColor, PRICE],
-      } as never
-    );
+    const deployed = await deployContract<SponsorshipContractType>(deployerProviders, {
+      compiledContract: SponsorshipCompiledContract,
+      args: [sponsorId, paymentColor, PRICE],
+    });
     const contractAddress = deployed.deployTxData.public.contractAddress;
 
     const fundRecipe = await deployer.wallet.transferTransaction(
@@ -215,8 +212,8 @@ const main = async () => {
       beneficiary,
       'sponsorship-verification-beneficiary'
     );
-    const unsubmitted = await createUnprovenCallTx(beneficiaryProviders as never, {
-      compiledContract: SponsorshipCompiledContract as never,
+    const unsubmitted = await createUnprovenCallTx(beneficiaryProviders, {
+      compiledContract: SponsorshipCompiledContract,
       contractAddress,
       circuitId: 'purchaseSponsorship',
       args: [sponsorId, payment],
