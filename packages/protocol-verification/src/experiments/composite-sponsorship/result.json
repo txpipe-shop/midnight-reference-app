@@ -1,5 +1,5 @@
 {
-  "startedAt": "2026-07-24T22:28:47.085Z",
+  "startedAt": "2026-07-28T21:57:32.621Z",
   "versions": {
     "compiler": "0.31.1",
     "language": "0.23.0",
@@ -16,32 +16,32 @@
     "proofServer": true
   },
   "verdict": "confirmed",
-  "finishedAt": "2026-07-24T22:33:02.187Z",
+  "finishedAt": "2026-07-28T22:01:44.399Z",
   "contractAddresses": {
-    "sponsorship": "5e66fcfc90a76c1b86768835be9dabebec502634a8bd96bed43e2ab7e0aca5b5",
-    "target": "1618f878d8eec83b53365320c110268fef2181898c3faee4c35875a3919efa44"
+    "sponsorship": "034aae41469317ba83530c52016c0e75f4213067a6864f48c9b44ce1751d14e6",
+    "target": "1048dc1884b222eb945897811e3ccf423910ce88b172e9e1817c7c591a0f9ac3"
   },
   "transactionIds": {
-    "funding": "00ea8f8ab4c3412abc878ef92dc5027bed70efab307c41afedca29cac26b2fef0a",
-    "success": "007b068aa0cdd687394cd01a005443dfe122748d8c2641f9ee34ae90d20878123a",
-    "fallibleFailure": "00840600ce9e0da5e0ea4535d22d9514a80ac3faff220469c1a0ff53bdfa43d1ae"
+    "funding": "003beda3be616a0e49d37b644b6c3731e1cf476fc0b6643cb668bbb607052f8869",
+    "success": "002b00caa07d3644b2a833f57f2ac76359bc06402eeed9f3e4ebefa7b509fe4c72",
+    "fallibleFailure": "00ecaa8d5e04a593dcc038da27a1d25fa107dc2167888dfd6628af67b8712a23c8"
   },
   "scenarios": {
     "success": {
-      "txId": "007b068aa0cdd687394cd01a005443dfe122748d8c2641f9ee34ae90d20878123a",
+      "txId": "002b00caa07d3644b2a833f57f2ac76359bc06402eeed9f3e4ebefa7b509fe4c72",
       "status": "SucceedEntirely",
-      "feeEstimate": "300000008022385",
-      "targetCommunicationCommitment": "73f1b7604328b50a967b732ab05cf6189b0d113be24dbc71be85a607a2b24ada19",
-      "purchaseCommunicationCommitment": "7328a196af465d3f6902d6903dde525c0d0c34aef377ba9ee1ca1876feb82d6521",
+      "feeEstimate": "756474184609677",
+      "targetCommunicationCommitment": "731044cf400de08496efc427b8eb60a3eb80926ad0ba826509838fcca94f57d613",
+      "purchaseCommunicationCommitment": "738e3f419efb757c5a77c12487b91eae681a1dc18bfc53e2ff20b217563a293613",
       "intentsBeforeSponsorship": 2,
       "intentsAfterSponsorship": 3
     },
     "fallibleFailure": {
-      "txId": "00840600ce9e0da5e0ea4535d22d9514a80ac3faff220469c1a0ff53bdfa43d1ae",
+      "txId": "00ecaa8d5e04a593dcc038da27a1d25fa107dc2167888dfd6628af67b8712a23c8",
       "status": "FailFallible",
-      "feeEstimate": "300000006247586",
-      "targetCommunicationCommitment": "73e0bcd3ff8a65081e14bfbdfe109927e3468e54055e95dd45f6075b010626463b",
-      "purchaseCommunicationCommitment": "73453e6cac05236b80236666670cf40393d57a5ab8b0e76c871395e512e676d83e",
+      "feeEstimate": "659574309029169",
+      "targetCommunicationCommitment": "73572a2bc30586c16737e8b1d1ad4f0b1792632e1d9cac2c21d6a3148b7416ca18",
+      "purchaseCommunicationCommitment": "7303452b42e91f7bd4e19d13f6015a0662c8634b9415f8894f9b2924846b04a01d",
       "intentsBeforeSponsorship": 2,
       "intentsAfterSponsorship": 3
     }
