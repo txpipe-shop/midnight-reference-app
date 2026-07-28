@@ -4,7 +4,7 @@ import CompactStandardLibrary;
 
 export struct DelegatorSlot {
   nightIdentity: Bytes<32>;
-  nightRewardAddress: Bytes<64>;
+  nightRewardAddress: Bytes<96>;
   rewardKey: ZswapCoinPublicKey;
   rewardEncryptionKey: Bytes<32>;
   verifiedRegisteredAmount: Uint<128>;
@@ -81,7 +81,7 @@ constructor(
 ///////// ELIGIBILITY OPERATOR CIRCUITS /////////
 export circuit addDelegator(
   nightIdentity: Bytes<32>,
-  nightRewardAddress: Bytes<64>,
+  nightRewardAddress: Bytes<96>,
   rewardKey: ZswapCoinPublicKey,
   rewardEncryptionKey: Bytes<32>,
   registeredAmount: Uint<128>,
@@ -121,7 +121,7 @@ export circuit addDelegator(
 
 export circuit updateDelegator(
   nightIdentity: Bytes<32>,
-  nightRewardAddress: Bytes<64>,
+  nightRewardAddress: Bytes<96>,
   rewardKey: ZswapCoinPublicKey,
   rewardEncryptionKey: Bytes<32>,
   registeredAmount: Uint<128>,

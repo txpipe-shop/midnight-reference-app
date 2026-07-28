@@ -1,7 +1,11 @@
 import { SentinelContract } from '@midnight-sentinel/api';
+import { sponsorshipAllowlistHash } from '@midnight-sentinel/api/sponsorship';
 import {
-  sponsorshipAllowlistHash,
-} from '@midnight-sentinel/api/sponsorship';
+  createHttpMidnightRegistrationProvider,
+  enrollmentSigningBytes,
+  type EnrollmentPayload,
+  type SignedEnrollment,
+} from '@midnight-sentinel/api/sponsorship/eligibility';
 import {
   createMidnightSponsorSponsorshipApi,
   dustPublicKeyToBytes,
@@ -10,6 +14,7 @@ import {
 import { configureProviders } from '@midnight-sentinel/contract/providers';
 import {
   getBalancesAndAddresses,
+  getNetworkId,
   printBalances,
   type WalletContext,
 } from '@midnight-sentinel/wallet';
@@ -45,30 +50,43 @@ async function handleCircuits(
         }
         break;
       case '4':
-        console.error(
-          'Midnight-only enrollment requires the unshielded NIGHT registration scanner; use the API after configuring that scanner.'
-        );
+        try {
+          const serviceUrl =
+            (await rli.question(`Eligibility service URL [${config.eligibilityService}]: `)) ||
+            config.eligibilityService;
+          const raw = await rli.question('Signed enrollment JSON: ');
+          const enrollment = JSON.parse(raw) as SignedEnrollment;
+          const response = await fetch(`${serviceUrl.replace(/\/$/, '')}/v1/enrollments`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(enrollment),
+          });
+          console.log(await response.text());
+          if (!response.ok) {
+            throw new Error(`Enrollment service returned HTTP ${response.status}`);
+          }
+        } catch (error) {
+          console.error('Enrollment failed:', error);
+        }
         break;
       case '5':
         try {
-          const identity = (
-            await rli.question('Delegator identity (32-byte hex): ')
-          ).replace(/^0x/, '');
-          await contract.removeDelegator(
-            Uint8Array.from(Buffer.from(identity, 'hex'))
+          const identity = (await rli.question('Delegator identity (32-byte hex): ')).replace(
+            /^0x/,
+            ''
           );
+          await contract.removeDelegator(Uint8Array.from(Buffer.from(identity, 'hex')));
         } catch (error) {
           console.error('Removal failed:', error);
         }
         break;
       case '6':
         try {
-          const authority = (
-            await rli.question('New operator authority (32-byte hex): ')
-          ).replace(/^0x/, '');
-          await contract.rotateEligibilityOperator(
-            Uint8Array.from(Buffer.from(authority, 'hex'))
+          const authority = (await rli.question('New operator authority (32-byte hex): ')).replace(
+            /^0x/,
+            ''
           );
+          await contract.rotateEligibilityOperator(Uint8Array.from(Buffer.from(authority, 'hex')));
         } catch (error) {
           console.error('Rotation failed:', error);
         }
@@ -101,44 +119,34 @@ export async function runCli(
           config,
           walletDetails.privateStateStoreName
         );
-        const sponsorShare = BigInt(
-          (await rli.question('Sponsor NIGHT share [1]: ')) || '1'
-        );
-        const delegatorShare = BigInt(
-          (await rli.question('Delegator NIGHT share [1]: ')) || '1'
-        );
+        const sponsorShare = BigInt((await rli.question('Sponsor NIGHT share [1]: ')) || '1');
+        const delegatorShare = BigInt((await rli.question('Delegator NIGHT share [1]: ')) || '1');
         const minimumRegisteredNight = BigInt(
           (await rli.question('Minimum registered NIGHT [1]: ')) || '1'
         );
         const operatorHex = (
           await rli.question('Eligibility operator authority key (32-byte hex): ')
-        ).trim().replace(/^0x/, '');
+        )
+          .trim()
+          .replace(/^0x/, '');
         if (!/^[0-9a-fA-F]{64}$/.test(operatorHex)) {
           throw new Error('Eligibility operator key must be 32-byte hex');
         }
         const targetAddress = (
           await rli.question('Initial allowed target contract address: ')
         ).trim();
-        const targetEntryPoint = (
-          await rli.question('Initial allowed target circuit: ')
-        ).trim();
+        const targetEntryPoint = (await rli.question('Initial allowed target circuit: ')).trim();
         const policyHash = sponsorshipAllowlistHash([
           { address: targetAddress, entryPoint: targetEntryPoint },
         ]);
         contract = await SentinelContract.deploy(
           providers,
-          nativeNightSponsorshipConfig(
-            walletCtx,
-            policyHash,
-            {
-              sponsorShare,
-              delegatorShare,
-              minimumRegisteredNight,
-              initialEligibilityOperator: Uint8Array.from(
-                Buffer.from(operatorHex, 'hex')
-              ),
-            }
-          )
+          nativeNightSponsorshipConfig(walletCtx, policyHash, {
+            sponsorShare,
+            delegatorShare,
+            minimumRegisteredNight,
+            initialEligibilityOperator: Uint8Array.from(Buffer.from(operatorHex, 'hex')),
+          })
         );
 
         console.log(
@@ -171,9 +179,10 @@ export async function runCli(
           const targetAddress = (await rli.question('Allowed target contract address: ')).trim();
           const targetEntryPoint = (await rli.question('Allowed target circuit: ')).trim();
           const maxFee = BigInt(await rli.question('Maximum DUST fee: '));
-          const sponsorDustAddress = (
-            await rli.question('Campaign sponsor DUST address: ')
-          ).trim();
+          const sponsorDustAddress = (await rli.question('Campaign sponsor DUST address: ')).trim();
+          const eligibilityService =
+            (await rli.question(`Eligibility service URL [${config.eligibilityService}]: `)) ||
+            config.eligibilityService;
           const raw = (await rli.question('Prepared transaction (hex): ')).trim();
           const allowedTargets = [{ address: targetAddress, entryPoint: targetEntryPoint }];
           const providers = await configureProviders(
@@ -186,13 +195,7 @@ export async function runCli(
               sentinelAddress,
               sponsorId: dustPublicKeyToBytes(walletCtx.dustSecretKey.publicKey),
               sponsorDustAddress,
-              registrationProvider: {
-                async getStatus() {
-                  throw new Error(
-                    'Midnight registration scanner is not configured'
-                  );
-                },
-              },
+              registrationProvider: createHttpMidnightRegistrationProvider(eligibilityService),
               policyHash: sponsorshipAllowlistHash(allowedTargets),
               allowedTargets,
               minTtlMs: 30_000,
@@ -237,6 +240,38 @@ export async function runCli(
         break;
       }
       case '6':
+        try {
+          const sentinelAddress = (await rli.question('Sentinel contract address: ')).trim();
+          const sponsorDustAddress = (await rli.question('Campaign sponsor DUST address: ')).trim();
+          const nonce = (await rli.question('Enrollment nonce [1]: ')) || '1';
+          const expiresInMinutes = Number(
+            (await rli.question('Expires in minutes [60]: ')) || '60'
+          );
+          if (!Number.isFinite(expiresInMinutes) || expiresInMinutes <= 0) {
+            throw new Error('Expiry must be a positive number of minutes');
+          }
+          const payload: EnrollmentPayload = {
+            version: 1,
+            network: getNetworkId(),
+            sentinelAddress,
+            sponsorDustAddress,
+            nightRewardAddress: walletCtx.unshieldedKeystore.getBech32Address().toString(),
+            nightVerificationKey: walletCtx.unshieldedKeystore.getPublicKey(),
+            shieldedCoinPublicKey: walletCtx.shieldedSecretKeys.coinPublicKey,
+            shieldedEncryptionPublicKey: walletCtx.shieldedSecretKeys.encryptionPublicKey,
+            nonce: BigInt(nonce).toString(),
+            expiresAt: new Date(Date.now() + expiresInMinutes * 60_000).toISOString(),
+          };
+          const enrollment: SignedEnrollment = {
+            payload,
+            signature: walletCtx.unshieldedKeystore.signData(enrollmentSigningBytes(payload)),
+          };
+          console.log(JSON.stringify(enrollment));
+        } catch (error) {
+          console.error('Could not create enrollment:', error);
+        }
+        break;
+      case '7':
         console.log('Exiting...');
         return;
       default:

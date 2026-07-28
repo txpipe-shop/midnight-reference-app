@@ -4,7 +4,7 @@ import {
   sampleContractAddress,
 } from '@midnight-ntwrk/compact-runtime';
 import { Contract, ledger } from '../managed/sentinel/contract/index.js';
-import type { PrivateState } from '../private-state.js';
+import { deriveSentinelAuthority, type PrivateState } from '../private-state.js';
 
 const bytes = (fill: number) => new Uint8Array(32).fill(fill);
 const equalBytes = (a: Uint8Array, b: Uint8Array) =>
@@ -17,17 +17,13 @@ const sponsorId = bytes(0x11);
 const color = bytes(0);
 const sponsorRewardKey = { bytes: bytes(0x21) };
 const sponsorRewardEncryptionKey = bytes(0x22);
-const delegatorKeys = [
-  { bytes: bytes(0x31) },
-  { bytes: bytes(0x32) },
-  { bytes: bytes(0x33) },
-];
+const delegatorKeys = [{ bytes: bytes(0x31) }, { bytes: bytes(0x32) }, { bytes: bytes(0x33) }];
 const delegatorEncryptionKeys = [bytes(0x34), bytes(0x35), bytes(0x36)];
 const delegatorIds = [bytes(0x41), bytes(0x42), bytes(0x43)];
 const delegatorNightAddresses = [
-  new Uint8Array(64).fill(0x44),
-  new Uint8Array(64).fill(0x45),
-  new Uint8Array(64).fill(0x46),
+  new Uint8Array(96).fill(0x44),
+  new Uint8Array(96).fill(0x45),
+  new Uint8Array(96).fill(0x46),
 ];
 const policyHash = bytes(0x51);
 const targetAddress = bytes(0x52);
@@ -57,6 +53,9 @@ const constructorResult = (secretKey: Uint8Array, initialOperator: Uint8Array) =
 
 const operatorProbe = constructorResult(operatorSecret, bytes(0));
 const operatorKey = ledger(operatorProbe.currentContractState.data).owner;
+if (!equalBytes(operatorKey, deriveSentinelAuthority(operatorSecret))) {
+  throw new Error('off-chain eligibility authority derivation does not match Compact');
+}
 const rotatedOperatorProbe = constructorResult(rotatedOperatorSecret, bytes(0));
 const rotatedOperatorKey = ledger(rotatedOperatorProbe.currentContractState.data).owner;
 const initial = () => constructorResult(ownerSecret, operatorKey);
@@ -79,12 +78,9 @@ const context = (state: StateResult, secretKey: Uint8Array) =>
         state.context.currentQueryContext.state,
         { secretKey }
       )
-    : createCircuitContext(
-        contractAddress,
-        coinPublicKey,
-        state.currentContractState,
-        { secretKey }
-      );
+    : createCircuitContext(contractAddress, coinPublicKey, state.currentContractState, {
+        secretKey,
+      });
 
 const add = (state: StateResult, index: number, secret = operatorSecret) =>
   contract.circuits.addDelegator(
@@ -101,12 +97,7 @@ const add = (state: StateResult, index: number, secret = operatorSecret) =>
 const remove = (state: StateResult, index: number, secret = operatorSecret) =>
   contract.circuits.removeDelegator(context(state, secret), delegatorIds[index]);
 
-const update = (
-  state: StateResult,
-  index: number,
-  nonce: bigint,
-  secret = operatorSecret
-) =>
+const update = (state: StateResult, index: number, nonce: bigint, secret = operatorSecret) =>
   contract.circuits.updateDelegator(
     context(state, secret),
     delegatorIds[index],
@@ -125,12 +116,7 @@ const purchase = (state: StateResult, index: number) =>
     value: share,
   });
 
-const deliver = (
-  state: StateResult,
-  index: number,
-  paymentColor = color,
-  paymentValue = share
-) =>
+const deliver = (state: StateResult, index: number, paymentColor = color, paymentValue = share) =>
   contract.circuits.deliverSponsorReward(
     context(state, ownerSecret),
     bytes(0x60 + index),
@@ -210,12 +196,7 @@ for (let index = 0; index < 4; index += 1) {
   }
 }
 
-const expectedRotation = [
-  delegatorIds[0],
-  delegatorIds[1],
-  delegatorIds[2],
-  delegatorIds[0],
-];
+const expectedRotation = [delegatorIds[0], delegatorIds[1], delegatorIds[2], delegatorIds[0]];
 for (let index = 0; index < expectedRotation.length; index += 1) {
   if (!equalBytes(rewarded[index], expectedRotation[index])) {
     throw new Error(`unexpected delegator at rotation position ${index}`);
@@ -257,10 +238,7 @@ expectReject(
   'Not the eligibility operator'
 );
 const maintained = remove(rotated, 1, rotatedOperatorSecret);
-const paused = contract.circuits.setSponsorshipEnabled(
-  context(maintained, ownerSecret),
-  false
-);
+const paused = contract.circuits.setSponsorshipEnabled(context(maintained, ownerSecret), false);
 expectReject('paused campaign', () => purchase(paused, 11), 'Sponsorship is paused');
 
 const finalLedger = ledger(paused.context.currentQueryContext.state);

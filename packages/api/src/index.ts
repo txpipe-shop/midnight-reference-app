@@ -19,7 +19,7 @@ import {
   type SentinelContractType,
 } from '@midnight-sentinel/contract';
 import { getNetworkId, WalletContext } from '@midnight-sentinel/wallet';
-import { firstValueFrom, map, take, type Observable } from 'rxjs';
+import { map, type Observable } from 'rxjs';
 
 export const toHex = (arr: Uint8Array) =>
   '0x' +
@@ -64,18 +64,43 @@ export interface SentinelDerivedState {
   sponsorshipReceipts: Ledger['sponsorshipReceipts'];
 }
 
+const deriveSentinelState = (data: Parameters<typeof ledger>[0]): SentinelDerivedState => {
+  const ledgerState = ledger(data);
+  return {
+    owner: toHex(ledgerState.owner),
+    sponsorshipSponsorId: ledgerState.sponsorshipSponsorId,
+    sponsorshipAcceptedColor: ledgerState.sponsorshipAcceptedColor,
+    sponsorshipFixedPrice: ledgerState.sponsorshipFixedPrice,
+    sponsorshipSponsorShare: ledgerState.sponsorshipSponsorShare,
+    sponsorshipDelegatorShare: ledgerState.sponsorshipDelegatorShare,
+    sponsorshipMinimumRegisteredNight: ledgerState.sponsorshipMinimumRegisteredNight,
+    sponsorshipPolicyHash: ledgerState.sponsorshipPolicyHash,
+    sponsorshipEnabled: ledgerState.sponsorshipEnabled,
+    eligibilityOperator: ledgerState.eligibilityOperator,
+    delegatorCount: ledgerState.delegatorCount,
+    rewardCursor: ledgerState.rewardCursor,
+    delegatorSlots: ledgerState.delegatorSlots,
+    delegatorPositions: ledgerState.delegatorPositions,
+    sponsorshipPurchases: ledgerState.sponsorshipPurchases,
+    sponsorshipReceipts: ledgerState.sponsorshipReceipts,
+  };
+};
+
 export class SentinelContract {
   readonly providers: SentinelContractProviders;
   readonly deployedContract: SentinelContractDeployed | null;
+  readonly contractAddress: ContractAddress;
   readonly state$: Observable<SentinelDerivedState>;
 
   private constructor(
     providers: SentinelContractProviders,
     deployedContract: SentinelContractDeployed | null,
+    contractAddress: ContractAddress,
     state$: Observable<SentinelDerivedState>
   ) {
     this.providers = providers;
     this.deployedContract = deployedContract;
+    this.contractAddress = contractAddress;
     this.state$ = state$;
   }
 
@@ -104,33 +129,10 @@ export class SentinelContract {
     const contractAddress = deployedContract.deployTxData.public.contractAddress;
     const state$ = providers.publicDataProvider
       .contractStateObservable(contractAddress, { type: 'latest' })
-      .pipe(
-        map((contractState) => {
-          const ledgerState = ledger(contractState.data);
-          return {
-            owner: toHex(ledgerState.owner),
-            sponsorshipSponsorId: ledgerState.sponsorshipSponsorId,
-            sponsorshipAcceptedColor: ledgerState.sponsorshipAcceptedColor,
-            sponsorshipFixedPrice: ledgerState.sponsorshipFixedPrice,
-            sponsorshipSponsorShare: ledgerState.sponsorshipSponsorShare,
-            sponsorshipDelegatorShare: ledgerState.sponsorshipDelegatorShare,
-            sponsorshipMinimumRegisteredNight:
-              ledgerState.sponsorshipMinimumRegisteredNight,
-            sponsorshipPolicyHash: ledgerState.sponsorshipPolicyHash,
-            sponsorshipEnabled: ledgerState.sponsorshipEnabled,
-            eligibilityOperator: ledgerState.eligibilityOperator,
-            delegatorCount: ledgerState.delegatorCount,
-            rewardCursor: ledgerState.rewardCursor,
-            delegatorSlots: ledgerState.delegatorSlots,
-            delegatorPositions: ledgerState.delegatorPositions,
-            sponsorshipPurchases: ledgerState.sponsorshipPurchases,
-            sponsorshipReceipts: ledgerState.sponsorshipReceipts,
-          };
-        })
-      );
+      .pipe(map((contractState) => deriveSentinelState(contractState.data)));
 
     console.debug('Deployment fees: ', deployedContract.deployTxData.public.fees);
-    return new SentinelContract(providers, deployedContract, state$);
+    return new SentinelContract(providers, deployedContract, contractAddress, state$);
   }
 
   static async join(
@@ -147,33 +149,10 @@ export class SentinelContract {
 
     const state$ = providers.publicDataProvider
       .contractStateObservable(contractAddress, { type: 'latest' })
-      .pipe(
-        map((contractState) => {
-          const ledgerState = ledger(contractState.data);
-          return {
-            owner: toHex(ledgerState.owner),
-            sponsorshipSponsorId: ledgerState.sponsorshipSponsorId,
-            sponsorshipAcceptedColor: ledgerState.sponsorshipAcceptedColor,
-            sponsorshipFixedPrice: ledgerState.sponsorshipFixedPrice,
-            sponsorshipSponsorShare: ledgerState.sponsorshipSponsorShare,
-            sponsorshipDelegatorShare: ledgerState.sponsorshipDelegatorShare,
-            sponsorshipMinimumRegisteredNight:
-              ledgerState.sponsorshipMinimumRegisteredNight,
-            sponsorshipPolicyHash: ledgerState.sponsorshipPolicyHash,
-            sponsorshipEnabled: ledgerState.sponsorshipEnabled,
-            eligibilityOperator: ledgerState.eligibilityOperator,
-            delegatorCount: ledgerState.delegatorCount,
-            rewardCursor: ledgerState.rewardCursor,
-            delegatorSlots: ledgerState.delegatorSlots,
-            delegatorPositions: ledgerState.delegatorPositions,
-            sponsorshipPurchases: ledgerState.sponsorshipPurchases,
-            sponsorshipReceipts: ledgerState.sponsorshipReceipts,
-          };
-        })
-      );
+      .pipe(map((contractState) => deriveSentinelState(contractState.data)));
 
     console.log('[join] Contract joined');
-    return new SentinelContract(providers, deployedContract, state$);
+    return new SentinelContract(providers, deployedContract, contractAddress, state$);
   }
 
   async delegate(key: string, value: bigint) {
@@ -329,8 +308,14 @@ export class SentinelContract {
     });
   }
 
-  readState(): Promise<SentinelDerivedState> {
-    return firstValueFrom(this.state$.pipe(take(1)));
+  async readState(): Promise<SentinelDerivedState> {
+    const contractState = await this.providers.publicDataProvider.queryContractState(
+      this.contractAddress
+    );
+    if (!contractState) {
+      throw new Error(`Sentinel state not found: ${this.contractAddress}`);
+    }
+    return deriveSentinelState(contractState.data);
   }
 
   private static async getPrivateState(

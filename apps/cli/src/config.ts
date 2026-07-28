@@ -9,6 +9,7 @@ export interface Config {
   readonly indexerWS: string;
   readonly node: string;
   readonly proofServer: string;
+  readonly eligibilityService: string;
 }
 
 export const currentDir = path.resolve(new URL(import.meta.url).pathname, '..');
@@ -30,4 +31,5 @@ export class StandaloneConfig implements Config {
   indexerWS = 'ws://127.0.0.1:8088/api/v3/graphql/ws';
   node = 'http://127.0.0.1:9944';
   proofServer = 'http://127.0.0.1:6300';
+  eligibilityService = 'http://127.0.0.1:8089';
 }

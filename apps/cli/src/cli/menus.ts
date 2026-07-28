@@ -7,7 +7,8 @@ ${DIVIDER}
   [3] (Sponsor) Inspect, add only DUST, and submit
   [4] Start ZSwap to request DUST sponsorship
   [5] Get balances
-  [6] Exit
+  [6] Create signed delegator enrollment
+  [7] Exit
 ${DIVIDER}
 `;
 

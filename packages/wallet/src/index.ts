@@ -23,8 +23,7 @@ import {
 import { Config, WalletContext } from './utils/types.js';
 
 export const buildWallet = async (config: Config, seed: string): Promise<WalletContext> => {
-  // Sets networkId for local undeployed testnet
-  setNetworkId('undeployed');
+  setNetworkId(config.networkId ?? 'undeployed');
   // Derive HD keys and initialize the three sub-wallets
   const { wallet, shieldedSecretKeys, dustSecretKey, unshieldedKeystore } = await withStatus(
     'Building wallet',
@@ -73,7 +72,7 @@ export const buildWallet = async (config: Config, seed: string): Promise<WalletC
  * DUST-less beneficiaries that will be funded after initialization.
  */
 export const buildUnfundedWallet = async (config: Config, seed: string): Promise<WalletContext> => {
-  setNetworkId('undeployed');
+  setNetworkId(config.networkId ?? 'undeployed');
   const keys = deriveKeysFromSeed(seed);
   const shieldedSecretKeys = ledger.ZswapSecretKeys.fromSeed(keys[Roles.Zswap]);
   const dustSecretKey = ledger.DustSecretKey.fromSeed(keys[Roles.Dust]);

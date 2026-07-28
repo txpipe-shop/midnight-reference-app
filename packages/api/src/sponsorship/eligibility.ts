@@ -1,4 +1,6 @@
 import { createHash } from 'node:crypto';
+import { addressFromKey, verifySignature } from '@midnight-ntwrk/ledger-v8';
+import { MidnightBech32m, UnshieldedAddress } from '@midnight-ntwrk/wallet-sdk-address-format';
 
 export type Hex32 = string;
 
@@ -67,10 +69,7 @@ const canonicalPayload = (payload: EnrollmentPayload) => ({
   sponsorDustAddress: payload.sponsorDustAddress,
   nightRewardAddress: payload.nightRewardAddress,
   nightVerificationKey: payload.nightVerificationKey.toLowerCase(),
-  shieldedCoinPublicKey: normalizedHex32(
-    payload.shieldedCoinPublicKey,
-    'shieldedCoinPublicKey'
-  ),
+  shieldedCoinPublicKey: normalizedHex32(payload.shieldedCoinPublicKey, 'shieldedCoinPublicKey'),
   shieldedEncryptionPublicKey: normalizedHex32(
     payload.shieldedEncryptionPublicKey,
     'shieldedEncryptionPublicKey'
@@ -118,10 +117,7 @@ export const verifyEnrollment = (
     canonical.sentinelAddress !== normalizedHex32(expected.sentinelAddress, 'sentinelAddress') ||
     canonical.sponsorDustAddress !== expected.sponsorDustAddress
   ) {
-    throw new EligibilityError(
-      'ENROLLMENT_INVALID',
-      'Enrollment does not match the campaign'
-    );
+    throw new EligibilityError('ENROLLMENT_INVALID', 'Enrollment does not match the campaign');
   }
   if (new Date(canonical.expiresAt).getTime() <= (expected.now ?? new Date()).getTime()) {
     throw new EligibilityError('ENROLLMENT_EXPIRED', 'Enrollment has expired');
@@ -148,11 +144,62 @@ export interface DustGenerationStatus {
   registered: boolean;
   nightBalance: bigint;
   finalizedBlock: bigint;
+  synchronized?: boolean;
 }
 
 export interface MidnightRegistrationProvider {
   getStatus(nightRewardAddress: string): Promise<DustGenerationStatus>;
 }
+
+export const createMidnightEnrollmentVerifier = (network: string): EnrollmentSignatureVerifier => ({
+  verify: ({ verificationKey, address, message, signature }) => {
+    try {
+      const decoded = UnshieldedAddress.codec.decode(network, MidnightBech32m.parse(address));
+      return (
+        decoded.hexString === addressFromKey(verificationKey) &&
+        verifySignature(verificationKey, message, signature)
+      );
+    } catch {
+      return false;
+    }
+  },
+});
+
+export const createHttpMidnightRegistrationProvider = (
+  baseUrl: string,
+  fetchImpl: typeof fetch = fetch
+): MidnightRegistrationProvider => ({
+  async getStatus(nightRewardAddress) {
+    const response = await fetchImpl(
+      `${baseUrl.replace(/\/$/, '')}/v1/eligibility/${encodeURIComponent(nightRewardAddress)}`
+    );
+    if (!response.ok) {
+      throw new EligibilityError(
+        'ELIGIBILITY_QUERY_FAILED',
+        `Eligibility service returned HTTP ${response.status}`
+      );
+    }
+    const value = (await response.json()) as {
+      nightRewardAddress: string;
+      dustAddress?: string;
+      registered: boolean;
+      nightBalance: string;
+      finalizedBlock: string;
+      synchronized: boolean;
+    };
+    if (!value.synchronized) {
+      throw new EligibilityError(
+        'ELIGIBILITY_QUERY_FAILED',
+        'Eligibility status is not synchronized'
+      );
+    }
+    return {
+      ...value,
+      nightBalance: BigInt(value.nightBalance),
+      finalizedBlock: BigInt(value.finalizedBlock),
+    };
+  },
+});
 
 export const assertEligible = (
   status: DustGenerationStatus,
@@ -160,6 +207,7 @@ export const assertEligible = (
   minimumNight: bigint
 ) => {
   if (
+    status.synchronized === false ||
     !status.registered ||
     status.dustAddress !== sponsorDustAddress ||
     status.nightBalance < minimumNight
@@ -203,13 +251,10 @@ export interface EligibilityQueueOperator {
 
 const paddedAddress = (address: string) => {
   const encoded = Buffer.from(address, 'utf8');
-  if (encoded.length > 64) {
-    throw new EligibilityError(
-      'ENROLLMENT_INVALID',
-      'NIGHT reward address exceeds 64 bytes'
-    );
+  if (encoded.length > 96) {
+    throw new EligibilityError('ENROLLMENT_INVALID', 'NIGHT reward address exceeds 96 bytes');
   }
-  const result = new Uint8Array(64);
+  const result = new Uint8Array(96);
   result.set(encoded);
   return result;
 };
@@ -222,17 +267,10 @@ export const enrollDelegator = async (options: {
   verificationBlock: bigint;
   operator: EligibilityQueueOperator;
 }) => {
-  const verified = verifyEnrollment(
-    options.enrollment,
-    options.campaign,
-    options.verifier
-  );
+  const verified = verifyEnrollment(options.enrollment, options.campaign, options.verifier);
   const current = await options.operator.lookup(verified.identity);
   if (current && verified.nonce <= current.enrollmentNonce) {
-    throw new EligibilityError(
-      'ENROLLMENT_REPLAYED',
-      'Enrollment nonce must increase'
-    );
+    throw new EligibilityError('ENROLLMENT_REPLAYED', 'Enrollment nonce must increase');
   }
   const status = assertEligible(
     await options.registrationProvider.getStatus(verified.nightRewardAddress),
@@ -243,9 +281,7 @@ export const enrollDelegator = async (options: {
     identity: verified.identity,
     nightRewardAddress: paddedAddress(verified.nightRewardAddress),
     rewardKey: Uint8Array.from(Buffer.from(verified.shieldedCoinPublicKey, 'hex')),
-    rewardEncryptionKey: Uint8Array.from(
-      Buffer.from(verified.shieldedEncryptionPublicKey, 'hex')
-    ),
+    rewardEncryptionKey: Uint8Array.from(Buffer.from(verified.shieldedEncryptionPublicKey, 'hex')),
     registeredAmount: status.nightBalance,
     verificationBlock: options.verificationBlock,
     enrollmentNonce: verified.nonce,
