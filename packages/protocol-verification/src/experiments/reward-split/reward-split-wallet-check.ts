@@ -247,6 +247,7 @@ const main = async () => {
       'reward-split-wallet-beneficiary',
       zkPath
     );
+    beneficiaryProviders.privateStateProvider.setContractAddress(contractAddress);
     const beneficiaryTargetProviders = await providersFor<FallibleUserTargetType>(
       beneficiary,
       config,
