@@ -20,16 +20,20 @@ export struct SponsorshipReceipt {
   sponsorRewardDelivered: Boolean;
 }
 
+export struct SponsorshipSponsorConfig {
+  id: Bytes<32>;
+  rewardKey: ZswapCoinPublicKey;
+  rewardEncryptionKey: Bytes<32>;
+  share: Uint<64>;
+  policyHash: Bytes<32>;
+}
+
 ///////// IMMUTABLE CAMPAIGN CONFIGURATION /////////
-export sealed ledger sponsorshipSponsorId: Bytes<32>;
+export sealed ledger sponsorshipSponsor: SponsorshipSponsorConfig;
 export sealed ledger sponsorshipAcceptedColor: Bytes<32>;
 export sealed ledger sponsorshipFixedPrice: Uint<64>;
-export sealed ledger sponsorshipSponsorShare: Uint<64>;
 export sealed ledger sponsorshipDelegatorShare: Uint<64>;
-export sealed ledger sponsorshipSponsorRewardKey: ZswapCoinPublicKey;
-export sealed ledger sponsorshipSponsorRewardEncryptionKey: Bytes<32>;
 export sealed ledger sponsorshipMinimumRegisteredNight: Uint<128>;
-export sealed ledger sponsorshipPolicyHash: Bytes<32>;
 
 ///////// ADMINISTRATION AND PUBLIC QUEUE /////////
 export ledger owner: Bytes<32>;
@@ -38,6 +42,7 @@ export ledger sponsorshipEnabled: Boolean;
 export ledger delegatorSlots: Map<Uint<64>, DelegatorSlot>;
 export ledger delegatorPositions: Map<Bytes<32>, Uint<64>>;
 export ledger delegatorCount: Uint<64>;
+export ledger pausedDelegatorCount: Uint<64>;
 export ledger rewardCursor: Uint<64>;
 
 ///////// PURCHASE ACCOUNTING /////////
@@ -59,22 +64,25 @@ constructor(
   assert(sponsorShare > 0, "Sponsor share must be positive");
   assert(delegatorShare > 0, "Delegator share must be positive");
 
-  sponsorshipSponsorId = disclose(sponsorId);
+  sponsorshipSponsor = disclose(
+    SponsorshipSponsorConfig {
+      id: sponsorId,
+      rewardKey: sponsorRewardKey,
+      rewardEncryptionKey: sponsorRewardEncryptionKey,
+      share: sponsorShare,
+      policyHash: policyHash
+    }
+  );
   sponsorshipAcceptedColor = disclose(acceptedColor);
-  sponsorshipSponsorRewardKey = disclose(sponsorRewardKey);
-  sponsorshipSponsorRewardEncryptionKey =
-    disclose(sponsorRewardEncryptionKey);
-  sponsorshipSponsorShare = disclose(sponsorShare);
   sponsorshipDelegatorShare = disclose(delegatorShare);
   sponsorshipFixedPrice =
     disclose((sponsorShare + delegatorShare) as Uint<64>);
   sponsorshipMinimumRegisteredNight = disclose(minimumRegisteredNight);
-  sponsorshipPolicyHash = disclose(policyHash);
-
   owner = disclose(callerKey());
   eligibilityOperator = disclose(initialEligibilityOperator);
   sponsorshipEnabled = disclose(true);
   delegatorCount = disclose(0);
+  pausedDelegatorCount = disclose(0);
   rewardCursor = disclose(0);
 }
 
@@ -89,6 +97,7 @@ export circuit addDelegator(
   enrollmentNonce: Uint<64>
 ): [] {
   assert(isEligibilityOperator(), "Not the eligibility operator");
+  assert(sponsorshipEnabled, "Sponsorship is paused");
   const publicIdentity = disclose(nightIdentity);
   const publicNightRewardAddress = disclose(nightRewardAddress);
   const publicRewardKey = disclose(rewardKey);
@@ -129,6 +138,7 @@ export circuit updateDelegator(
   enrollmentNonce: Uint<64>
 ): [] {
   assert(isEligibilityOperator(), "Not the eligibility operator");
+  assert(sponsorshipEnabled, "Sponsorship is paused");
   const publicIdentity = disclose(nightIdentity);
   const publicNightRewardAddress = disclose(nightRewardAddress);
   const publicRewardKey = disclose(rewardKey);
@@ -164,6 +174,7 @@ export circuit updateDelegator(
 
 export circuit removeDelegator(nightIdentity: Bytes<32>): [] {
   assert(isEligibilityOperator(), "Not the eligibility operator");
+  assert(sponsorshipEnabled, "Sponsorship is paused");
   const publicIdentity = disclose(nightIdentity);
   assert(delegatorPositions.member(publicIdentity), "Unknown delegator");
 
@@ -202,7 +213,6 @@ export circuit removeDelegator(nightIdentity: Bytes<32>): [] {
 // a later fallible call fails.
 export circuit purchaseDelegatorReward(payment: ShieldedCoinInfo): [] {
   const publicPayment = disclose(payment);
-  assert(sponsorshipEnabled, "Sponsorship is paused");
   assert(delegatorCount > 0, "NO_ELIGIBLE_DELEGATOR");
   assert(publicPayment.color == nativeToken(), "Wrong payment asset");
   assert(
@@ -256,7 +266,7 @@ export circuit deliverSponsorReward(
     "Wrong payment asset"
   );
   assert(
-    publicPayment.value == sponsorshipSponsorShare,
+    publicPayment.value == sponsorshipSponsor.share,
     "Wrong sponsor payment amount"
   );
 
@@ -272,9 +282,9 @@ export circuit deliverSponsorReward(
   const sponsorSend = sendImmediateShielded(
     publicPayment,
     left<ZswapCoinPublicKey, ContractAddress>(
-      sponsorshipSponsorRewardKey
+      sponsorshipSponsor.rewardKey
     ),
-    sponsorshipSponsorShare as Uint<128>
+    sponsorshipSponsor.share as Uint<128>
   );
   assert(!sponsorSend.change.is_some, "SPONSOR_REWARD_DELIVERY_FAILED");
 
@@ -299,7 +309,19 @@ export circuit rotateEligibilityOperator(newOperator: Bytes<32>): [] {
 
 export circuit setSponsorshipEnabled(enabled: Boolean): [] {
   assert(isOwner(), "You are not the owner of this contract.");
-  sponsorshipEnabled = disclose(enabled);
+  const publicEnabled = disclose(enabled);
+  if (publicEnabled) {
+    if (!sponsorshipEnabled) {
+      delegatorCount = pausedDelegatorCount;
+      pausedDelegatorCount = 0;
+    }
+  } else {
+    if (sponsorshipEnabled) {
+      pausedDelegatorCount = delegatorCount;
+      delegatorCount = 0;
+    }
+  }
+  sponsorshipEnabled = publicEnabled;
 }
 
 ///////// HELPERS /////////

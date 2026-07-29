@@ -46,6 +46,20 @@ pnpm verify:protocol:local
 pnpm verify:protocol:devnet:production
 ```
 
+## Partitioning conclusion
+
+Guaranteed/fallible partitioning is determined by weighted transcript cost
+and operation shape, not by raw operation count. A 48-operation version of
+`purchaseDelegatorReward` remained fallible because its `rewardCursor` update
+traversed a nested ledger-state path. Consolidating sponsor-only fields reduced
+the top-level ledger width and flattened that update. The resulting
+49-operation transcript is guaranteed-only even though it contains more
+operations.
+
+The partition probe retains both phase invariants as regression checks:
+`purchaseDelegatorReward` must be guaranteed-only and
+`deliverSponsorReward` must be fallible-only.
+
 ## Explicit result
 
 **Confirmed on 2026-07-27.** Deterministic production runtime checks passed.

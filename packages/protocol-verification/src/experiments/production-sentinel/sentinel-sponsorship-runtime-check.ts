@@ -243,13 +243,25 @@ expectReject(
 );
 const maintained = remove(rotated, 1, rotatedOperatorSecret);
 const paused = contract.circuits.setSponsorshipEnabled(context(maintained, ownerSecret), false);
-expectReject('paused campaign', () => purchase(paused, 11), 'Sponsorship is paused');
+expectReject('paused campaign', () => purchase(paused, 11), 'NO_ELIGIBLE_DELEGATOR');
+expectReject(
+  'queue mutation while paused',
+  () => remove(paused, 2, rotatedOperatorSecret),
+  'Sponsorship is paused'
+);
+const resumed = contract.circuits.setSponsorshipEnabled(context(paused, ownerSecret), true);
+const resumedLedger = ledger(resumed.context.currentQueryContext.state);
+if (resumedLedger.delegatorCount !== 1n || resumedLedger.pausedDelegatorCount !== 0n) {
+  throw new Error('resuming sponsorship did not restore the delegator queue');
+}
+const pausedAgain = contract.circuits.setSponsorshipEnabled(context(resumed, ownerSecret), false);
 
-const finalLedger = ledger(paused.context.currentQueryContext.state);
+const finalLedger = ledger(pausedAgain.context.currentQueryContext.state);
 if (
-  finalLedger.delegatorCount !== 1n ||
+  finalLedger.delegatorCount !== 0n ||
+  finalLedger.pausedDelegatorCount !== 1n ||
   finalLedger.sponsorshipFixedPrice !== price ||
-  finalLedger.sponsorshipSponsorShare !== share ||
+  finalLedger.sponsorshipSponsor.share !== share ||
   finalLedger.sponsorshipDelegatorShare !== share
 ) {
   throw new Error('final campaign configuration or queue state is incorrect');

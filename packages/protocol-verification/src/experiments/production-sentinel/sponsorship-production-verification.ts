@@ -1,3 +1,20 @@
+/**
+ * Production sponsorship transaction flow:
+ * 1. Deploy a target contract and a Sentinel contract whose sponsorship policy allows only the
+ *    target's `interact` entry point, register one eligible reward delegator, then fund the
+ *    DUST-free beneficiary with exact NIGHT coins.
+ * 2. Build the target contract's `interact(expiry)` call before proof generation. Pass the call's
+ *    cryptographic commitment to Sentinel's `deliverSponsorReward` call so the resulting receipt
+ *    identifies the exact target interaction covered by the sponsorship.
+ * 3. Build one ordered intent containing the guaranteed `purchaseDelegatorReward`, fallible
+ *    `deliverSponsorReward`, and checkpointed target calls; prove it, have the beneficiary balance
+ *    and sign its NIGHT effects, and serialize the finalized transaction without DUST.
+ * 4. Have the sponsor inspect the serialized request against its allowlist and campaign policy,
+ *    estimate the fee, attach only the required DUST funding, verify that the committed request
+ *    was not changed, and submit the transaction.
+ * 5. Run one transaction before target expiry and one after expiry, then verify that both record
+ *    guaranteed sponsorship purchases while only the first executes the target's fallible effects.
+ */
 import {
   CompositeTargetCompiledContract,
   compositeTargetLedger,
@@ -43,9 +60,12 @@ import {
   writeJsonReport,
 } from '../../common/experiment-harness.js';
 
-const PRICE = 100n;
+const SPONSOR_SHARE = 1n;
+const DELEGATOR_SHARE = 1n;
+const PAYMENT_COIN_COUNT = 4;
 const TIMEOUT_MS = 360_000;
 const BENEFICIARY_SEED = '42'.repeat(32);
+const TEST_DELEGATOR_REWARD_ADDRESS = 'production-verification-delegator';
 const TTL = () => new Date(Date.now() + 30 * 60_000);
 const config = {
   ...standaloneConfig,
@@ -58,7 +78,7 @@ const targetZkPath = packagePath('src/managed/composite-target');
 
 const requireFullZkArtifacts = async () => {
   const required = [
-    path.join(sentinelZkPath, 'keys/purchaseSponsorship.verifier'),
+    path.join(sentinelZkPath, 'keys/purchaseDelegatorReward.verifier'),
     path.join(sentinelZkPath, 'keys/setSponsorshipEnabled.verifier'),
     path.join(targetZkPath, 'keys/interact.verifier'),
   ];
@@ -127,22 +147,48 @@ const main = async () => {
     const sentinel = await SentinelContract.deploy(
       deploySentinelProviders,
       nativeNightSponsorshipConfig(sponsor, policyHash, {
-        sponsorShare: 1n,
-        delegatorShare: 1n,
+        sponsorShare: SPONSOR_SHARE,
+        delegatorShare: DELEGATOR_SHARE,
         minimumRegisteredNight: 1n,
         initialEligibilityOperator: new Uint8Array(32),
       })
     );
     const sentinelAddress = sentinel.deployedContract!.deployTxData.public.contractAddress;
+    const deployedSentinelState = await withTimeout(
+      'deployed Sentinel state',
+      TIMEOUT_MS,
+      Rx.firstValueFrom(sentinel.state$)
+    );
+    await sentinel.rotateEligibilityOperator(
+      Uint8Array.from(Buffer.from(deployedSentinelState.owner.slice(2), 'hex'))
+    );
+    const paddedRewardAddress = Buffer.alloc(96);
+    paddedRewardAddress.write(TEST_DELEGATOR_REWARD_ADDRESS);
+    await sentinel.addDelegator({
+      identity: filledBytes(0x61),
+      nightRewardAddress: paddedRewardAddress,
+      rewardKey: Uint8Array.from(Buffer.from(beneficiary.shieldedSecretKeys.coinPublicKey, 'hex')),
+      rewardEncryptionKey: Uint8Array.from(
+        Buffer.from(beneficiary.shieldedSecretKeys.encryptionPublicKey, 'hex')
+      ),
+      registeredAmount: 1n,
+      verificationBlock: 0n,
+      enrollmentNonce: 1n,
+    });
+    await withTimeout(
+      'Sentinel delegator registration',
+      TIMEOUT_MS,
+      Rx.firstValueFrom(sentinel.state$.pipe(Rx.filter((state) => state.delegatorCount === 1n)))
+    );
 
     const beneficiaryAddressState = await waitForWalletSync(beneficiary, TIMEOUT_MS);
     const fundingRecipe = await deployer.wallet.transferTransaction(
       [
         {
           type: 'shielded',
-          outputs: Array.from({ length: 3 }, () => ({
+          outputs: Array.from({ length: PAYMENT_COIN_COUNT }, () => ({
             type: shieldedToken().raw,
-            amount: PRICE,
+            amount: SPONSOR_SHARE,
             receiverAddress: beneficiaryAddressState.shielded.address,
           })),
         },
@@ -156,7 +202,10 @@ const main = async () => {
     const funding = await deployer.wallet.finalizeRecipe(fundingRecipe);
     const fundingTxId = await deployer.wallet.submitTransaction(funding);
     await waitForWalletState('beneficiary funding', TIMEOUT_MS, beneficiary, (state) =>
-      (state.shielded.balances[shieldedToken().raw] ?? 0n) >= PRICE * 3n ? state : false
+      (state.shielded.balances[shieldedToken().raw] ?? 0n) >=
+      SPONSOR_SHARE * BigInt(PAYMENT_COIN_COUNT)
+        ? state
+        : false
     );
 
     const targetProviders = await providersFor<CompositeTargetContractType>(
@@ -222,9 +271,12 @@ const main = async () => {
       const before = await waitForWalletSync(beneficiary, TIMEOUT_MS);
       assert.equal(before.dust.balance(new Date()), 0n);
       const exactCoins = [...(before.shielded.state.state as ZswapLocalState).coins].filter(
-        (coin) => coin.type === shieldedToken().raw && coin.value === PRICE
+        (coin) => coin.type === shieldedToken().raw && coin.value === SPONSOR_SHARE
       );
-      assert(exactCoins.length > 0, 'exact sponsorship payment coin not found');
+      assert(
+        exactCoins.length >= 2,
+        'two exact NIGHT payment coins are required for the sponsor and delegator shares'
+      );
 
       const targetCall = await createUnprovenCallTx(targetProviders, {
         compiledContract: CompositeTargetCompiledContract,

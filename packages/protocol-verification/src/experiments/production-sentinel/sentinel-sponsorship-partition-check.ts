@@ -15,8 +15,26 @@ import { deriveKeysFromSeed } from '../../../../wallet/dist/utils/index.js';
 
 setNetworkId('undeployed');
 
-const bytes = (fill: number, length = 32) => new Uint8Array(length).fill(fill);
-const privateState = { secretKey: bytes(1) };
+const filledBytes = (fill: number, length = 32) => new Uint8Array(length).fill(fill);
+const LOCAL_SECRET_KEY = filledBytes(0x01);
+const SPONSOR_ID = filledBytes(0x02);
+const NATIVE_NIGHT_COLOR = filledBytes(0x00);
+const PROBE_ELIGIBILITY_OPERATOR = filledBytes(0x00);
+const SPONSORSHIP_POLICY_HASH = filledBytes(0x05);
+const DELEGATOR_ID = filledBytes(0x06);
+const DELEGATOR_NIGHT_REWARD_ADDRESS = filledBytes(0x07, 96);
+const DELEGATOR_PAYMENT_NONCE = filledBytes(0x0a);
+const PURCHASE_ID = filledBytes(0x0b);
+const SPONSOR_PAYMENT_NONCE = filledBytes(0x0c);
+const TARGET_ADDRESS = filledBytes(0x0d);
+const TARGET_ENTRY_POINT_HASH = filledBytes(0x0e);
+const TARGET_COMMUNICATION_COMMITMENT = 15n;
+const SPONSOR_SHARE = 1n;
+const DELEGATOR_SHARE = 1n;
+const MINIMUM_REGISTERED_NIGHT = 1n;
+const DELEGATOR_VERIFICATION_BLOCK = 1n;
+const DELEGATOR_ENROLLMENT_NONCE = 1n;
+const privateState = { secretKey: LOCAL_SECRET_KEY };
 const shieldedKeys = (seed: string) =>
   ZswapSecretKeys.fromSeed(deriveKeysFromSeed(seed)[Roles.Zswap]);
 const beneficiaryKeys = shieldedKeys('77'.repeat(32));
@@ -34,38 +52,38 @@ const runtime = new Contract({
 });
 const probe = runtime.initialState(
   createConstructorContext(privateState, coinPublicKey),
-  bytes(2),
-  bytes(0),
+  SPONSOR_ID,
+  NATIVE_NIGHT_COLOR,
   { bytes: Buffer.from(sponsorCoinPublicKey, 'hex') },
   Buffer.from(sponsorEncryptionPublicKey, 'hex'),
-  1n,
-  1n,
-  1n,
-  bytes(0),
-  bytes(5)
+  SPONSOR_SHARE,
+  DELEGATOR_SHARE,
+  MINIMUM_REGISTERED_NIGHT,
+  PROBE_ELIGIBILITY_OPERATOR,
+  SPONSORSHIP_POLICY_HASH
 );
 const operator = ledger(probe.currentContractState.data).owner;
 const initial = runtime.initialState(
   createConstructorContext(privateState, coinPublicKey),
-  bytes(2),
-  bytes(0),
+  SPONSOR_ID,
+  NATIVE_NIGHT_COLOR,
   { bytes: Buffer.from(sponsorCoinPublicKey, 'hex') },
   Buffer.from(sponsorEncryptionPublicKey, 'hex'),
-  1n,
-  1n,
-  1n,
+  SPONSOR_SHARE,
+  DELEGATOR_SHARE,
+  MINIMUM_REGISTERED_NIGHT,
   operator,
-  bytes(5)
+  SPONSORSHIP_POLICY_HASH
 );
 const queued = runtime.circuits.addDelegator(
   createCircuitContext(contractAddress, coinPublicKey, initial.currentContractState, privateState),
-  bytes(6),
-  bytes(7, 96),
+  DELEGATOR_ID,
+  DELEGATOR_NIGHT_REWARD_ADDRESS,
   { bytes: Buffer.from(delegatorCoinPublicKey, 'hex') },
   Buffer.from(delegatorEncryptionPublicKey, 'hex'),
-  1n,
-  1n,
-  1n
+  MINIMUM_REGISTERED_NIGHT,
+  DELEGATOR_VERIFICATION_BLOCK,
+  DELEGATOR_ENROLLMENT_NONCE
 );
 const provider = new NodeZkConfigProvider(
   new URL('../../../../contract/src/managed/sentinel', import.meta.url).pathname
@@ -85,7 +103,13 @@ const delegator = await createUnprovenCallTxFromInitialStates(
   {
     ...common,
     circuitId: 'purchaseDelegatorReward',
-    args: [{ nonce: bytes(10), color: bytes(0), value: 1n }],
+    args: [
+      {
+        nonce: DELEGATOR_PAYMENT_NONCE,
+        color: NATIVE_NIGHT_COLOR,
+        value: DELEGATOR_SHARE,
+      },
+    ],
     initialContractState: queuedState,
     additionalCoinEncPublicKeyMappings: new Map([
       [delegatorCoinPublicKey, delegatorEncryptionPublicKey],
@@ -100,7 +124,17 @@ const sponsor = await createUnprovenCallTxFromInitialStates(
   {
     ...common,
     circuitId: 'deliverSponsorReward',
-    args: [bytes(11), { nonce: bytes(12), color: bytes(0), value: 1n }, bytes(13), bytes(14), 15n],
+    args: [
+      PURCHASE_ID,
+      {
+        nonce: SPONSOR_PAYMENT_NONCE,
+        color: NATIVE_NIGHT_COLOR,
+        value: SPONSOR_SHARE,
+      },
+      TARGET_ADDRESS,
+      TARGET_ENTRY_POINT_HASH,
+      TARGET_COMMUNICATION_COMMITMENT,
+    ],
     initialContractState: post,
     additionalCoinEncPublicKeyMappings: new Map([
       [sponsorCoinPublicKey, sponsorEncryptionPublicKey],

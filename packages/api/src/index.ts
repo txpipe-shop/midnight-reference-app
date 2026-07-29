@@ -52,6 +52,7 @@ export interface SentinelDerivedState {
   sponsorshipEnabled: boolean;
   eligibilityOperator: Uint8Array;
   delegatorCount: bigint;
+  pausedDelegatorCount: bigint;
   rewardCursor: bigint;
   delegatorSlots: Ledger['delegatorSlots'];
   delegatorPositions: Ledger['delegatorPositions'];
@@ -63,16 +64,17 @@ const deriveSentinelState = (data: Parameters<typeof ledger>[0]): SentinelDerive
   const ledgerState = ledger(data);
   return {
     owner: toHex(ledgerState.owner),
-    sponsorshipSponsorId: ledgerState.sponsorshipSponsorId,
+    sponsorshipSponsorId: ledgerState.sponsorshipSponsor.id,
     sponsorshipAcceptedColor: ledgerState.sponsorshipAcceptedColor,
     sponsorshipFixedPrice: ledgerState.sponsorshipFixedPrice,
-    sponsorshipSponsorShare: ledgerState.sponsorshipSponsorShare,
+    sponsorshipSponsorShare: ledgerState.sponsorshipSponsor.share,
     sponsorshipDelegatorShare: ledgerState.sponsorshipDelegatorShare,
     sponsorshipMinimumRegisteredNight: ledgerState.sponsorshipMinimumRegisteredNight,
-    sponsorshipPolicyHash: ledgerState.sponsorshipPolicyHash,
+    sponsorshipPolicyHash: ledgerState.sponsorshipSponsor.policyHash,
     sponsorshipEnabled: ledgerState.sponsorshipEnabled,
     eligibilityOperator: ledgerState.eligibilityOperator,
     delegatorCount: ledgerState.delegatorCount,
+    pausedDelegatorCount: ledgerState.pausedDelegatorCount,
     rewardCursor: ledgerState.rewardCursor,
     delegatorSlots: ledgerState.delegatorSlots,
     delegatorPositions: ledgerState.delegatorPositions,

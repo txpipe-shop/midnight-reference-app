@@ -319,17 +319,17 @@ export const prepareSponsoredTransaction = async (
     (coin) =>
       coin.type === bytesHex(campaign.sponsorshipAcceptedColor) &&
       (coin.value === campaign.sponsorshipDelegatorShare ||
-        coin.value === campaign.sponsorshipSponsorShare)
+        coin.value === campaign.sponsorshipSponsor.share)
   );
   const delegatorCoin = paymentCoins.find(
     (coin) => coin.value === campaign.sponsorshipDelegatorShare
   );
   const sponsorCoin = paymentCoins.find(
-    (coin) => coin.value === campaign.sponsorshipSponsorShare && coin !== delegatorCoin
+    (coin) => coin.value === campaign.sponsorshipSponsor.share && coin !== delegatorCoin
   );
   if (!delegatorCoin || !sponsorCoin) {
     throw new Error(
-      `Exact ${campaign.sponsorshipDelegatorShare} and ${campaign.sponsorshipSponsorShare} NIGHT payment coins are required`
+      `Exact ${campaign.sponsorshipDelegatorShare} and ${campaign.sponsorshipSponsor.share} NIGHT payment coins are required`
     );
   }
 
@@ -343,7 +343,7 @@ export const prepareSponsoredTransaction = async (
   const sponsorPayment = {
     nonce: encodedSponsor.nonce,
     color: encodedSponsor.color,
-    value: campaign.sponsorshipSponsorShare,
+    value: campaign.sponsorshipSponsor.share,
   };
   const purchaseId = options.purchaseId ?? randomPurchaseId();
   if (purchaseId.length !== 32) throw new Error('purchaseId must be exactly 32 bytes');
@@ -389,8 +389,8 @@ export const prepareSponsoredTransaction = async (
       initialPrivateState: delegatorCall.private.nextPrivateState,
       additionalCoinEncPublicKeyMappings: new Map([
         [
-          bytesHex(campaign.sponsorshipSponsorRewardKey.bytes),
-          bytesHex(campaign.sponsorshipSponsorRewardEncryptionKey),
+          bytesHex(campaign.sponsorshipSponsor.rewardKey.bytes),
+          bytesHex(campaign.sponsorshipSponsor.rewardEncryptionKey),
         ],
       ]),
     },
@@ -693,8 +693,8 @@ export const inspectSponsorshipRequest = async (
   const [, contractState] = queried;
   const before = sentinelLedger(contractState.data);
   if (
-    !bytesEqual(before.sponsorshipSponsorId, policy.sponsorId) ||
-    !bytesEqual(before.sponsorshipPolicyHash, policy.policyHash) ||
+    !bytesEqual(before.sponsorshipSponsor.id, policy.sponsorId) ||
+    !bytesEqual(before.sponsorshipSponsor.policyHash, policy.policyHash) ||
     !before.sponsorshipEnabled
   ) {
     throw new SponsorshipPolicyError(

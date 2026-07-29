@@ -1,5 +1,5 @@
 {
-  "startedAt": "2026-07-27T17:09:31.611Z",
+  "startedAt": "2026-07-29T16:54:54.095Z",
   "versions": {
     "compiler": "0.31.1",
     "language": "0.23.0",
@@ -15,38 +15,7 @@
     "indexer": true,
     "proofServer": true
   },
-  "verdict": "confirmed",
-  "finishedAt": "2026-07-27T17:13:14.650Z",
-  "contractAddresses": {
-    "sentinel": "3a662406c9471c19802a9f0b1a3e8c1947cb7307a3d3ef8e551424ea8b4aeff0",
-    "target": "2b663675b0d1da3113b333dd4c6d411a637984a1f72e5a1a883a12b641ccd745"
-  },
-  "transactionIds": {
-    "funding": "006b030cd67734dbeebe7a7f31d9dc50783c23e9a988797ba2cf6ad6329c97d3aa",
-    "success": "00978dfabb863490674864c173ddc9022f01fe70a1d4961c565039a2570083b58a",
-    "fallibleFailure": "00e55ee6e29e41dbfd7a5c1634f23bb6d81b0283f761647c32a8138ca93e19cb9d"
-  },
-  "scenarios": {
-    "success": {
-      "txId": "00978dfabb863490674864c173ddc9022f01fe70a1d4961c565039a2570083b58a",
-      "status": "SucceedEntirely",
-      "feeEstimate": "300000000000037",
-      "purchaseId": "7171717171717171717171717171717171717171717171717171717171717171",
-      "targetCommunicationCommitment": "7367dd27856ce46568cd8699597cc0ae2d6862d7712f78629486ec2b62f752ff54"
-    },
-    "fallibleFailure": {
-      "txId": "00e55ee6e29e41dbfd7a5c1634f23bb6d81b0283f761647c32a8138ca93e19cb9d",
-      "status": "FailFallible",
-      "feeEstimate": "300000000000017",
-      "purchaseId": "7272727272727272727272727272727272727272727272727272727272727272",
-      "targetCommunicationCommitment": "7399bd1eefec7b654f202933b423f390ad11f56634b1ec5e0a49327718c2543a38"
-    }
-  },
-  "postState": {
-    "sponsorshipRevenue": "200",
-    "sponsorshipPurchases": "2",
-    "receiptCount": "2",
-    "targetGuaranteedExecutions": "2",
-    "targetFallibleExecutions": "1"
-  }
+  "verdict": "inconclusive",
+  "finishedAt": "2026-07-29T16:57:13.973Z",
+  "error": "Transaction contains shielded movements beyond the exact sponsorship payment and claimed call effects: {\"externalInputs\":1,\"externalOutputs\":0,\"externalTransients\":0}"
 }
