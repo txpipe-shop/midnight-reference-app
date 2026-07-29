@@ -72,9 +72,7 @@
     "VP-05": {
       "verdict": "confirmed",
       "evidence": {
-        "sponsorAddedOnly": [
-          "dust"
-        ],
+        "sponsorAddedOnly": ["dust"],
         "dustActionPresent": true
       }
     },
