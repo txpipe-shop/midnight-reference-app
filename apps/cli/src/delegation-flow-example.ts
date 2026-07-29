@@ -17,6 +17,8 @@
  */
 
 import { SentinelContract } from '@midnight-sentinel/api';
+import { sponsorshipAllowlistHash } from '@midnight-sentinel/api/sponsorship';
+import { nativeNightSponsorshipConfig } from '@midnight-sentinel/api/sponsorship/midnight';
 import { configureProviders } from '@midnight-sentinel/contract/providers';
 import {
   buildWallet,
@@ -127,7 +129,12 @@ const main = async () => {
   console.log('\n=== 3. Admin deploys SentinelContract ===');
   const providers = await configureProviders(admin, config, 'delegation-contract');
 
-  const contract = await SentinelContract.deploy(providers);
+  const contract = await SentinelContract.deploy(
+    providers,
+    nativeNightSponsorshipConfig(admin, sponsorshipAllowlistHash([]), {
+      initialEligibilityOperator: new Uint8Array(32),
+    })
+  );
   console.log(
     '  ✓ Contract deployed at:',
     contract.deployedContract?.deployTxData.public.contractAddress

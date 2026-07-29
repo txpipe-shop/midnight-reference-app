@@ -3,6 +3,7 @@ import { WalletFacade } from '@midnight-ntwrk/wallet-sdk-facade';
 import { UnshieldedKeystore } from '@midnight-ntwrk/wallet-sdk-unshielded-wallet';
 
 export interface Config {
+  readonly networkId?: string;
   readonly privateStateStoreName: string;
   readonly logDir: string;
   readonly zkConfigPath: string;

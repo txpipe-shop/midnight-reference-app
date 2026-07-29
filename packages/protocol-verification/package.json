@@ -1,0 +1,62 @@
+{
+  "name": "@midnight-sentinel/protocol-verification",
+  "private": true,
+  "type": "module",
+  "main": "dist/experiments/composite-sponsorship/composite-sponsorship-contract.js",
+  "types": "dist/experiments/composite-sponsorship/composite-sponsorship-contract.d.ts",
+  "exports": {
+    "./sponsorship": {
+      "types": "./dist/experiments/sponsorship/sponsorship-contract.d.ts",
+      "import": "./dist/experiments/sponsorship/sponsorship-contract.js"
+    },
+    "./composite-sponsorship": {
+      "types": "./dist/experiments/composite-sponsorship/composite-sponsorship-contract.d.ts",
+      "import": "./dist/experiments/composite-sponsorship/composite-sponsorship-contract.js"
+    },
+    "./reward-split": {
+      "types": "./dist/experiments/reward-split/reward-split-contract.d.ts",
+      "import": "./dist/experiments/reward-split/reward-split-contract.js"
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf dist .turbo src/managed node_modules",
+    "compact:sponsorship": "compact compile +0.31.1 src/experiments/sponsorship/sponsorship.compact src/managed/sponsorship",
+    "compact:sponsorship:no-zk": "compact compile +0.31.1 --skip-zk src/experiments/sponsorship/sponsorship.compact src/managed/sponsorship",
+    "compact:reward-split": "compact compile +0.31.1 src/experiments/reward-split/reward-split.compact src/managed/reward-split && compact compile +0.31.1 src/experiments/reward-split/fallible-user-target.compact src/managed/fallible-user-target",
+    "compact:reward-split:no-zk": "compact compile +0.31.1 --skip-zk src/experiments/reward-split/reward-split.compact src/managed/reward-split && compact compile +0.31.1 --skip-zk src/experiments/reward-split/fallible-user-target.compact src/managed/fallible-user-target",
+    "compact:composite": "compact compile +0.31.1 src/experiments/composite-sponsorship/composite-sponsorship.compact src/managed/composite-sponsorship && compact compile +0.31.1 src/experiments/composite-sponsorship/composite-target.compact src/managed/composite-target",
+    "compact:composite:no-zk": "compact compile +0.31.1 --skip-zk src/experiments/composite-sponsorship/composite-sponsorship.compact src/managed/composite-sponsorship && compact compile +0.31.1 --skip-zk src/experiments/composite-sponsorship/composite-target.compact src/managed/composite-target",
+    "compact:all": "pnpm compact:sponsorship && pnpm compact:reward-split && pnpm compact:composite",
+    "compact:all:no-zk": "pnpm compact:sponsorship:no-zk && pnpm compact:reward-split:no-zk && pnpm compact:composite:no-zk",
+    "check": "pnpm compact:all:no-zk && tsc --project tsconfig.build.json --noEmit",
+    "build": "pnpm compact:all && tsc --project tsconfig.build.json && mkdir -p dist/managed && cp -Rf src/managed/. dist/managed/",
+    "build:sponsor-fixtures": "pnpm compact:composite && tsc --project tsconfig.fixtures.json && mkdir -p dist/managed && cp -Rf src/managed/composite-sponsorship src/managed/composite-target dist/managed/",
+    "verify:local": "pnpm --dir ../contract check && pnpm --dir ../wallet build && pnpm compact:all:no-zk && tsx src/experiments/sponsorship/sponsorship-runtime-check.ts && tsx src/experiments/reward-split/reward-split-runtime-check.ts && tsx src/experiments/reward-split/reward-split-partition-check.ts && tsx src/experiments/production-sentinel/sentinel-sponsorship-runtime-check.ts",
+    "verify:reward-split": "pnpm --dir ../wallet build && pnpm compact:reward-split && tsx src/experiments/reward-split/reward-split-wallet-check.ts",
+    "verify:devnet:sponsorship": "pnpm --dir ../wallet build && pnpm compact:sponsorship && tsx src/experiments/sponsorship/sponsorship-verification.ts",
+    "verify:devnet:composite": "pnpm --dir ../wallet build && pnpm compact:composite && tsx src/experiments/composite-sponsorship/sponsorship-composite-verification.ts",
+    "verify:devnet:production": "pnpm --dir ../contract build && pnpm compact:composite && pnpm --dir ../api build && pnpm --dir ../wallet build && tsx src/experiments/production-sentinel/sponsorship-production-verification.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-js": "2.5.1",
+    "@midnight-ntwrk/compact-runtime": "0.16.0",
+    "@midnight-ntwrk/ledger-v8": "8.0.3",
+    "@midnight-ntwrk/midnight-js-contracts": "4.1.1",
+    "@midnight-ntwrk/midnight-js-http-client-proof-provider": "4.1.1",
+    "@midnight-ntwrk/midnight-js-node-zk-config-provider": "4.1.1",
+    "@midnight-ntwrk/midnight-js-types": "4.1.1",
+    "@midnight-ntwrk/wallet-sdk-address-format": "3.1.0-rc.0",
+    "@midnight-sentinel/api": "workspace:*",
+    "@midnight-sentinel/contract": "workspace:*",
+    "@midnight-sentinel/wallet": "workspace:*",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

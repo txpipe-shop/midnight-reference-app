@@ -23,8 +23,7 @@ import {
 import { Config, WalletContext } from './utils/types.js';
 
 export const buildWallet = async (config: Config, seed: string): Promise<WalletContext> => {
-  // Sets networkId for local undeployed testnet
-  setNetworkId('undeployed');
+  setNetworkId(config.networkId ?? 'undeployed');
   // Derive HD keys and initialize the three sub-wallets
   const { wallet, shieldedSecretKeys, dustSecretKey, unshieldedKeystore } = await withStatus(
     'Building wallet',
@@ -64,6 +63,34 @@ export const buildWallet = async (config: Config, seed: string): Promise<WalletC
   // Register NIGHT UTXOs for dust generation (required for tx fees on Preprod/Preview)
   await registerForDustGeneration(wallet, unshieldedKeystore);
 
+  return { wallet, shieldedSecretKeys, dustSecretKey, unshieldedKeystore };
+};
+
+/**
+ * Builds and synchronizes a wallet without waiting for funds or registering
+ * NIGHT for DUST generation. Verification harnesses use this for deliberately
+ * DUST-less beneficiaries that will be funded after initialization.
+ */
+export const buildUnfundedWallet = async (config: Config, seed: string): Promise<WalletContext> => {
+  setNetworkId(config.networkId ?? 'undeployed');
+  const keys = deriveKeysFromSeed(seed);
+  const shieldedSecretKeys = ledger.ZswapSecretKeys.fromSeed(keys[Roles.Zswap]);
+  const dustSecretKey = ledger.DustSecretKey.fromSeed(keys[Roles.Dust]);
+  const unshieldedKeystore = createKeystore(keys[Roles.NightExternal], getNetworkId());
+  const wallet = await WalletFacade.init({
+    configuration: buildInitConfig(config),
+    shielded: (walletConfig) =>
+      ShieldedWallet(walletConfig).startWithSecretKeys(shieldedSecretKeys),
+    unshielded: (walletConfig) =>
+      UnshieldedWallet(walletConfig).startWithPublicKey(PublicKey.fromKeyStore(unshieldedKeystore)),
+    dust: (walletConfig) =>
+      DustWallet(walletConfig).startWithSecretKey(
+        dustSecretKey,
+        ledger.LedgerParameters.initialParameters().dust
+      ),
+  });
+  await wallet.start(shieldedSecretKeys, dustSecretKey);
+  await waitForSync(wallet);
   return { wallet, shieldedSecretKeys, dustSecretKey, unshieldedKeystore };
 };
 
@@ -124,5 +151,6 @@ export {
   type Addresses,
   type Balances,
 } from './utils/balances.js';
+export { signTransactionIntents } from './utils/index.js';
 export { WalletContext } from './utils/types.js';
-export { getNetworkId };
+export { getNetworkId, setNetworkId };

@@ -1,0 +1,21 @@
+{
+  "startedAt": "2026-07-29T16:54:54.095Z",
+  "versions": {
+    "compiler": "0.31.1",
+    "language": "0.23.0",
+    "ledger": "8.0.3",
+    "midnightJs": "4.1.1",
+    "node": "0.22.5",
+    "indexer": "4.2.1",
+    "proofServer": "8.1.0",
+    "network": "undeployed"
+  },
+  "health": {
+    "node": true,
+    "indexer": true,
+    "proofServer": true
+  },
+  "verdict": "inconclusive",
+  "finishedAt": "2026-07-29T16:57:13.973Z",
+  "error": "Transaction contains shielded movements beyond the exact sponsorship payment and claimed call effects: {\"externalInputs\":1,\"externalOutputs\":0,\"externalTransients\":0}"
+}

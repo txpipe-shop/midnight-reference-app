@@ -25,7 +25,7 @@ export default defineConfig({
       name: 'wasm-module-resolver',
       resolveId(source, importer) {
         if (
-          source === '@midnight-ntwrk/onchain-runtime-v2' &&
+          source === '@midnight-ntwrk/onchain-runtime-v3' &&
           importer &&
           importer.includes('@midnight-ntwrk/compact-runtime')
         ) {
@@ -42,6 +42,18 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'vite-plugin-node-polyfills/shims/buffer': path.resolve(
+        __dirname,
+        './node_modules/vite-plugin-node-polyfills/shims/buffer/dist/index.js'
+      ),
+      'vite-plugin-node-polyfills/shims/process': path.resolve(
+        __dirname,
+        './node_modules/vite-plugin-node-polyfills/shims/process/dist/index.js'
+      ),
+      'vite-plugin-node-polyfills/shims/global': path.resolve(
+        __dirname,
+        './node_modules/vite-plugin-node-polyfills/shims/global/dist/index.js'
+      ),
     },
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.wasm'],
     mainFields: ['browser', 'module', 'main'],
@@ -51,7 +63,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('@midnight-ntwrk/onchain-runtime-v2')) {
+          if (id.includes('@midnight-ntwrk/onchain-runtime-v3')) {
             return 'wasm';
           }
         },
@@ -75,9 +87,9 @@ export default defineConfig({
     },
     include: ['@midnight-ntwrk/compact-runtime'],
     exclude: [
-      '@midnight-ntwrk/onchain-runtime-v2',
-      '@midnight-ntwrk/onchain-runtime-v2/midnight_onchain_runtime_wasm_bg.wasm',
-      '@midnight-ntwrk/onchain-runtime-v2/midnight_onchain_runtime_wasm.js',
+      '@midnight-ntwrk/onchain-runtime-v3',
+      '@midnight-ntwrk/onchain-runtime-v3/midnight_onchain_runtime_wasm_bg.wasm',
+      '@midnight-ntwrk/onchain-runtime-v3/midnight_onchain_runtime_wasm.js',
     ],
   },
 });

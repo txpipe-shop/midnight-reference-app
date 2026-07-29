@@ -1,0 +1,42 @@
+{
+  "name": "@midnight-sentinel/sponsor-service",
+  "type": "module",
+  "scripts": {
+    "clean": "rm -rf dist .turbo node_modules",
+    "build": "tsc --project tsconfig.build.json",
+    "check": "tsc --project tsconfig.build.json --noEmit",
+    "dev": "tsx src/index.ts",
+    "operator:bootstrap": "tsx src/operator-bootstrap.ts",
+    "setup:devnet": "pnpm --dir ../../packages/contract build && pnpm --dir ../../packages/protocol-verification build:sponsor-fixtures && pnpm --dir ../../packages/api build && tsx src/setup-devnet.ts",
+    "start": "node dist/index.js",
+    "test": "tsx --test test/*.test.ts",
+    "test:e2e:devnet": "pnpm --dir ../../packages/contract build && pnpm --dir ../../packages/protocol-verification build:sponsor-fixtures && pnpm --dir ../../packages/api build && tsx src/verification/devnet-e2e.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@midnight-ntwrk/ledger-v8": "8.0.3",
+    "@midnight-ntwrk/midnight-js-contracts": "4.1.1",
+    "@midnight-ntwrk/wallet-sdk-address-format": "3.1.0-rc.0",
+    "@midnight-sentinel/api": "workspace:*",
+    "@midnight-sentinel/contract": "workspace:*",
+    "@midnight-sentinel/wallet": "workspace:*",
+    "fastify": "^5.6.2",
+    "graphql-ws": "^6.0.6",
+    "rxjs": "^7.8.2",
+    "ws": "^8.18.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@midnight-sentinel/protocol-verification": "workspace:*",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "engineStrict": true
+}

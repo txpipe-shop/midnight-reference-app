@@ -15,6 +15,8 @@
  */
 
 import { SentinelContract } from '@midnight-sentinel/api';
+import { sponsorshipAllowlistHash } from '@midnight-sentinel/api/sponsorship';
+import { nativeNightSponsorshipConfig } from '@midnight-sentinel/api/sponsorship/midnight';
 import { configureProviders } from '@midnight-sentinel/contract/providers';
 import {
   buildWallet,
@@ -99,7 +101,12 @@ const main = async () => {
   const providers = await configureProviders(ctxA, config, 'zswap-sponsor-contract');
 
   console.log('  Deploying Sentinel contract...');
-  const contract = await SentinelContract.deploy(providers);
+  const contract = await SentinelContract.deploy(
+    providers,
+    nativeNightSponsorshipConfig(ctxC, sponsorshipAllowlistHash([]), {
+      initialEligibilityOperator: new Uint8Array(32),
+    })
+  );
   console.log('  ✓ Contract deployed');
   await sleep(10_000);
 

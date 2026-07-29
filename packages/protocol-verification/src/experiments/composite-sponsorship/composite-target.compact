@@ -1,0 +1,55 @@
+pragma language_version 0.23;
+
+import CompactStandardLibrary;
+
+export ledger guaranteedExecutions: Counter;
+export ledger fallibleExecutions: Counter;
+export ledger falliblePadding00: Counter;
+export ledger falliblePadding01: Counter;
+export ledger falliblePadding02: Counter;
+export ledger falliblePadding03: Counter;
+export ledger falliblePadding04: Counter;
+export ledger falliblePadding05: Counter;
+export ledger falliblePadding06: Counter;
+export ledger falliblePadding07: Counter;
+export ledger falliblePadding08: Counter;
+export ledger falliblePadding09: Counter;
+export ledger falliblePadding10: Counter;
+export ledger falliblePadding11: Counter;
+export ledger falliblePadding12: Counter;
+export ledger falliblePadding13: Counter;
+export ledger falliblePadding14: Counter;
+export ledger falliblePadding15: Counter;
+
+export circuit interact(expiry: Uint<64>): [] {
+  guaranteedExecutions.increment(1);
+
+  kernel.checkpoint();
+
+  assert(
+    kernel.blockTimeLessThan(disclose(expiry)),
+    "Target interaction expired"
+  );
+
+  // The ledger maximizes the portion placed in the guaranteed phase. A tiny
+  // post-checkpoint suffix therefore remains guaranteed despite `ckpt`.
+  // Repeated public writes make this test-only suffix exceed the guaranteed
+  // time-to-dismiss budget so partitioning leaves it in the fallible phase.
+  fallibleExecutions.increment(1);
+  falliblePadding00.increment(1);
+  falliblePadding01.increment(1);
+  falliblePadding02.increment(1);
+  falliblePadding03.increment(1);
+  falliblePadding04.increment(1);
+  falliblePadding05.increment(1);
+  falliblePadding06.increment(1);
+  falliblePadding07.increment(1);
+  falliblePadding08.increment(1);
+  falliblePadding09.increment(1);
+  falliblePadding10.increment(1);
+  falliblePadding11.increment(1);
+  falliblePadding12.increment(1);
+  falliblePadding13.increment(1);
+  falliblePadding14.increment(1);
+  falliblePadding15.increment(1);
+}

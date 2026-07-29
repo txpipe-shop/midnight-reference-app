@@ -1,5 +1,3 @@
-import { RuleActions } from "@/components/rule-actions";
-import { Rules } from "@/components/rules";
 import { Button } from "@/components/ui/button";
 import type { SentinelContract, SentinelDerivedState } from "@midnight-sentinel/api";
 import { ArrowLeft } from "lucide-react";
@@ -32,14 +30,16 @@ export function ContractView({
         {contractState ? (
           <div className="space-y-6">
             <div className="space-y-2 p-4 border rounded-md">
-              <h3 className="text-lg font-semibold">Admin</h3>
-              <p className="font-mono text-sm break-all">{contractState.adminString}</p>
+              <h3 className="text-lg font-semibold">Owner</h3>
+              <p className="font-mono text-sm break-all">{contractState.owner}</p>
             </div>
 
             <div className="space-y-2 p-4 border rounded-md">
-              <h3 className="text-lg font-semibold">Rules</h3>
-              <RuleActions contract={contract} />
-              <Rules rules={contractState.rules} />
+              <h3 className="text-lg font-semibold">Sponsorship campaign</h3>
+              <p>Enabled: {contractState.sponsorshipEnabled ? "yes" : "no"}</p>
+              <p>Price: {contractState.sponsorshipFixedPrice.toString()}</p>
+              <p>Revenue: {contractState.sponsorshipRevenue.toString()}</p>
+              <p>Purchases: {contractState.sponsorshipPurchases.toString()}</p>
             </div>
           </div>
         ) : (

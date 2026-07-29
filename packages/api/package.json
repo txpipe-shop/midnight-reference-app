@@ -15,6 +15,21 @@
       "types": "./dist/browser.d.ts",
       "import": "./dist/browser.js",
       "require": "./dist/browser.js"
+    },
+    "./sponsorship": {
+      "types": "./dist/sponsorship/index.d.ts",
+      "import": "./dist/sponsorship/index.js",
+      "require": "./dist/sponsorship/index.js"
+    },
+    "./sponsorship/midnight": {
+      "types": "./dist/sponsorship/midnight.d.ts",
+      "import": "./dist/sponsorship/midnight.js",
+      "require": "./dist/sponsorship/midnight.js"
+    },
+    "./sponsorship/eligibility": {
+      "types": "./dist/sponsorship/eligibility.d.ts",
+      "import": "./dist/sponsorship/eligibility.js",
+      "require": "./dist/sponsorship/eligibility.js"
     }
   },
   "scripts": {
@@ -23,15 +38,15 @@
     "build": "tsc --project ./tsconfig.build.json"
   },
   "dependencies": {
-    "@midnight-ntwrk/compact-js": "2.5.0",
-    "@midnight-ntwrk/compact-runtime": "0.15.0",
+    "@midnight-ntwrk/compact-js": "2.5.1",
+    "@midnight-ntwrk/compact-runtime": "0.16.0",
     "@midnight-ntwrk/dapp-connector-api": "4.0.1",
     "@midnight-ntwrk/ledger-v8": "8.0.3",
-    "@midnight-ntwrk/midnight-js-contracts": "4.0.4",
-    "@midnight-ntwrk/midnight-js-fetch-zk-config-provider": "4.0.4",
-    "@midnight-ntwrk/midnight-js-http-client-proof-provider": "4.0.4",
-    "@midnight-ntwrk/midnight-js-indexer-public-data-provider": "4.0.4",
-    "@midnight-ntwrk/midnight-js-types": "4.0.4",
+    "@midnight-ntwrk/midnight-js-contracts": "4.1.1",
+    "@midnight-ntwrk/midnight-js-fetch-zk-config-provider": "4.1.1",
+    "@midnight-ntwrk/midnight-js-http-client-proof-provider": "4.1.1",
+    "@midnight-ntwrk/midnight-js-indexer-public-data-provider": "4.1.1",
+    "@midnight-ntwrk/midnight-js-types": "4.1.1",
     "@midnight-ntwrk/wallet-sdk-address-format": "3.1.0-rc.0",
     "@midnight-sentinel/contract": "workspace:*",
     "@midnight-sentinel/wallet": "workspace:*",
