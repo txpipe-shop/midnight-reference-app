@@ -1,3 +1,16 @@
+/**
+ * Composite transaction flow:
+ * 1. Deploy the sponsorship and target contracts, then fund the beneficiary.
+ * 2. Create an unproven `interact(expiry)` call to the target contract and extract its
+ *    communication commitment. Include that commitment in a `purchaseSponsorship` call so the
+ *    purchase identifies the exact target interaction being sponsored, then create a fee-free
+ *    shielded transfer to the recipient.
+ * 3. Merge and prove those actions, then let the beneficiary balance, sign, and finalize them
+ *    without DUST while preserving the target's communication commitment.
+ * 4. Serialize the transaction for the sponsor, who adds and finalizes the DUST fee funding.
+ * 5. Submit the sponsored transaction and verify both the entirely successful case and the case
+ *    where the target's fallible segment expires while its guaranteed effects still execute.
+ */
 import {
   Binding,
   ContractCall,
