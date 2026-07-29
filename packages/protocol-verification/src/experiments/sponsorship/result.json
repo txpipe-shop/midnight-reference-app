@@ -1,6 +1,6 @@
 {
-  "startedAt": "2026-07-24T18:16:43.520Z",
-  "finishedAt": "2026-07-24T18:18:20.102Z",
+  "startedAt": "2026-07-29T17:59:29.768Z",
+  "finishedAt": "2026-07-29T18:01:08.194Z",
   "versions": {
     "compiler": "0.31.1",
     "language": "0.23.0",
@@ -16,10 +16,10 @@
     "indexer": true,
     "proofServer": true
   },
-  "contractAddress": "55864945c3cf316707ace03faade1b48ba633136092c2e4a46aa2bec026c7641",
+  "contractAddress": "176238db5febdb9cbb9fa104969ffc9e644d6b00bf3f573f01b8765496d4ea84",
   "transactionIds": {
-    "funding": "00bba19100d112fad246df49491c87954aba831b6b5027538f6951a880881760bd",
-    "purchase": "00bcfee3846fbd326a0580d907b5d75fc3459c4bc924042ea2831de4e580e516ae"
+    "funding": "00c865da1450ebf6e5ecfa1dcf710b503d92326d6fbb821886595b2dc0e5d7688b",
+    "purchase": "006c7e89681c0f12c28df1f4dbe68783bb61580f07a77d59b19f524f5b78a3dc19"
   },
   "checks": {
     "VP-01": {
@@ -63,16 +63,18 @@
         "roundTrip": true,
         "intents": 1,
         "calls": 1,
-        "contractAddress": "55864945c3cf316707ace03faade1b48ba633136092c2e4a46aa2bec026c7641",
+        "contractAddress": "176238db5febdb9cbb9fa104969ffc9e644d6b00bf3f573f01b8765496d4ea84",
         "entryPoint": "purchaseSponsorship",
-        "ttl": "2026-07-24T19:17:55.000Z",
-        "feeEstimate": "300000116978494"
+        "ttl": "2026-07-29T19:00:44.000Z",
+        "feeEstimate": "543464362338303"
       }
     },
     "VP-05": {
       "verdict": "confirmed",
       "evidence": {
-        "sponsorAddedOnly": ["dust"],
+        "sponsorAddedOnly": [
+          "dust"
+        ],
         "dustActionPresent": true
       }
     },
