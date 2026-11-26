@@ -9,7 +9,8 @@
     "compact": "compact compile +0.36.1 src/pool.compact src/managed/pool",
     "compact:no-zk": "compact compile +0.36.1 --skip-zk src/pool.compact src/managed/pool",
     "check": "tsc --project tsconfig.json --noEmit",
-    "test": "tsx --test test/*.test.ts",
+    "test": "pnpm compact:no-zk && tsx --test test/*.test.ts",
+    "devnet:preflight": "tsx devnet/preflight.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint ."

@@ -1,0 +1,53 @@
+# Ledger 9 devnet for the DUST pool.
+#
+# Versions are from the Midnight support matrix (2026-11-25): node 2.1.101,
+# indexer 4.4.101, proof server 9.0.2. The matrix lists version numbers, not
+# image tags. CONFIRM EACH TAG against the registry before relying on it — in
+# particular the indexer image name (a "standalone"/devnet variant may differ
+# from the published indexer version) and whether the node tag is published as
+# 2.1.101 or under a devnet tag.
+#
+#   docker compose -f packages/dust-pool/compose.ledger9.yml up -d
+services:
+  proof-server:
+    container_name: 'pool-proof-server'
+    image: 'midnightntwrk/proof-server:9.0.2' # confirm tag
+    command: ['midnight-proof-server -v']
+    ports:
+      - '6300:6300'
+    environment:
+      RUST_BACKTRACE: 'full'
+
+  indexer:
+    container_name: 'pool-indexer'
+    image: 'midnightntwrk/indexer-standalone:4.4.101' # confirm image name and tag
+    env_file: ../../standalone.env.example
+    ports:
+      - '8088:8088'
+    environment:
+      RUST_LOG: 'indexer=info,indexer_api=info,info'
+      APP__APPLICATION__NETWORK_ID: 'undeployed'
+    healthcheck:
+      test: ['CMD-SHELL', 'cat /var/run/indexer-standalone/running']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    depends_on:
+      node:
+        condition: service_healthy
+
+  node:
+    image: 'midnightntwrk/midnight-node:2.1.101' # confirm tag
+    container_name: 'pool-node'
+    ports:
+      - '9944:9944'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9944/health']
+      interval: 2s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    environment:
+      CFG_PRESET: 'dev'
+      SIDECHAIN_BLOCK_BENEFICIARY: '04bcf7ad3be7a5c790460be82a713af570f22e0f801f6659ab8e84a52be6969e'
