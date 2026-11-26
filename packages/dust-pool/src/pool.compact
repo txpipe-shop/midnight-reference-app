@@ -1,0 +1,303 @@
+pragma language_version >= 0.28;
+
+import CompactStandardLibrary;
+
+// DUST pool for ledger 9.
+//
+// Delegators register their NIGHT to the pool's DUST public key and stay
+// passive. The operator holds the DUST secret key and does one thing: it signs
+// DUST spends that pay other people's fees. It never holds revenue. Every fill
+// pays this contract, and the contract splits each epoch's revenue pro rata to
+// the NIGHT that backed the pool during that epoch.
+//
+// A contract cannot read DUST state on ledger 9, so the facts it cannot check
+// are published instead, in a form anyone can audit from public chain data:
+// for every DUST UTXO ("note") the pool owns, the operator must store the
+// note's commitment and its nullifier, and prove in this circuit that the two
+// belong together under the pool's DUST key. A watcher that sees one of these
+// nullifiers spent outside a `settle` call has proof of an off-pool spend.
+
+///////// TYPES /////////
+
+export struct Note {
+  cm: Field;            // commitment of the pool's current DUST UTXO for this NIGHT
+  nul: Field;           // nullifier of that UTXO, proven from the DUST secret key
+  night: Uint<64>;      // Stars of backing NIGHT
+  owner: UserAddress;   // the registered NIGHT address; payouts go to it
+  joinEpoch: Uint<64>;  // earns from the epoch after this one
+  leaveEpoch: Uint<64>; // earns through this epoch, once retired
+  retired: Boolean;
+  started: Boolean;     // false until the first claim
+  claimedAcc: Uint<128>;
+  lastFee: Uint<64>;    // Specks declared by the last settle, for the auditor
+}
+
+///////// SEALED CONFIGURATION /////////
+
+export sealed ledger dustKey: Field;            // the pool's DUST public key
+export sealed ledger operatorPayout: UserAddress;
+export sealed ledger operatorFeeBps: Uint<16>;  // share of revenue, in basis points
+export sealed ledger starsPerDust: Uint<64>;    // price floor: Stars of NIGHT per DUST
+export sealed ledger minNight: Uint<64>;        // smallest note worth enrolling
+export sealed ledger epochStart: Uint<64>;      // seconds since the Unix epoch
+export sealed ledger epochLength: Uint<64>;     // seconds
+
+///////// STATE /////////
+
+export ledger notes: Map<Bytes<32>, Note>;      // keyed by the backing NIGHT's initial nonce
+export ledger revenue: Map<Uint<64>, Counter>;  // per epoch, in units of 1000 Stars
+export ledger joinedAt: Map<Uint<64>, Uint<64>>;  // Stars enrolled during each epoch
+export ledger leftAt: Map<Uint<64>, Uint<64>>;    // Stars retired during each epoch
+export ledger activeNight: Uint<64>;            // Stars earning in the epoch being closed
+export ledger nextClose: Uint<64>;              // the next epoch to close
+export ledger acc: Uint<128>;                   // cumulative revenue per Star, scaled
+export ledger accAt: Map<Uint<64>, Uint<128>>;  // acc after each closed epoch
+export ledger carry: Uint<64>;                  // revenue of epochs with no active NIGHT
+export ledger credits: Map<UserAddress, Uint<64>>;
+
+///////// WITNESSES /////////
+
+// The pool's DUST secret key. Only its holder can enroll, settle or retire.
+witness dustSecretKey(): Field;
+// Opening of the DUST UTXO being published: [initial value, nonce, creation time].
+witness noteOpening(): [Uint<128>, Field, Uint<64>];
+// Integer division is done off chain and checked on chain.
+witness quotient(numerator: Uint<200>, denominator: Uint<64>): Uint<128>;
+
+///////// CONSTANTS /////////
+
+// Fr::from_le_bytes of the ledger's domain separators (ledger/src/dust.rs).
+pure circuit tagPk(): Field { return 129885046047182601170347117 as Field; }   // "mdn:dust:pk"
+pure circuit tagCm(): Field { return 132241506922134554131981421 as Field; }   // "mdn:dust:cm"
+pure circuit tagNul(): Field { return 33566345920215630575903335533 as Field; } // "mdn:dust:nul"
+
+pure circuit scale(): Uint<64> { return 1000000000000000000; }
+pure circuit specksPerDust(): Uint<64> { return 1000000000000000; }
+pure circuit starsPerUnit(): Uint<64> { return 1000; }
+
+///////// DUST NOTE ARITHMETIC /////////
+
+// These three circuits reproduce the ledger's own definitions, so a value
+// computed here equals the one the ledger stores for the same UTXO.
+
+export pure circuit dustPublicKey(sk: Field): Field {
+  return transientHash<Vector<2, Field>>([tagPk(), sk]);
+}
+
+export pure circuit dustCommitment(
+  value: Uint<128>, owner: Field, nonce: Field, ctime: Uint<64>
+): Field {
+  return transientHash<Vector<5, Field>>(
+    [tagCm(), value as Field, owner, nonce, ctime as Field]);
+}
+
+export pure circuit dustNullifier(
+  value: Uint<128>, sk: Field, nonce: Field, ctime: Uint<64>
+): Field {
+  return transientHash<Vector<5, Field>>(
+    [tagNul(), value as Field, sk, nonce, ctime as Field]);
+}
+
+// Reads the secret key and one note opening, checks the key is the pool's,
+// and returns the note's commitment and nullifier.
+circuit provenNote(): [Field, Field] {
+  const sk = dustSecretKey();
+  assert(dustPublicKey(sk) == dustKey, "not the pool's DUST key");
+  const o = noteOpening();
+  const cm = dustCommitment(o[0], dustKey, o[1], o[2]);
+  const nul = dustNullifier(o[0], sk, o[1], o[2]);
+  return [disclose(cm), disclose(nul)];
+}
+
+///////// HELPERS /////////
+
+// floor(numerator / denominator), with the quotient supplied by a witness.
+circuit div(numerator: Uint<200>, denominator: Uint<64>): Uint<128> {
+  assert(denominator > 0, "division by zero");
+  const q = disclose(quotient(numerator, denominator));
+  assert(q * denominator <= numerator, "quotient too large");
+  assert(numerator - q * denominator < denominator, "quotient too small");
+  return q;
+}
+
+// True while the block time lies inside the given epoch.
+circuit inEpoch(epoch: Uint<64>): Boolean {
+  const begin = epochStart + epoch * epochLength;
+  return blockTimeGte(begin as Uint<64>)
+      && blockTimeLt((begin + epochLength) as Uint<64>);
+}
+
+///////// CONSTRUCTOR /////////
+
+constructor(
+  poolDustKey: Field,
+  payout: UserAddress,
+  feeBps: Uint<16>,
+  priceFloor: Uint<64>,
+  minimumNight: Uint<64>,
+  start: Uint<64>,
+  length: Uint<64>
+) {
+  assert(feeBps <= 10000, "fee above 100%");
+  assert(length > 0, "empty epoch");
+  dustKey = disclose(poolDustKey);
+  operatorPayout = disclose(payout);
+  operatorFeeBps = disclose(feeBps);
+  starsPerDust = disclose(priceFloor);
+  minNight = disclose(minimumNight);
+  epochStart = disclose(start);
+  epochLength = disclose(length);
+  revenue.insert(0, default<Counter>);
+  revenue.insert(1, default<Counter>);
+  joinedAt.insert(0, 0);
+  leftAt.insert(0, 0);
+}
+
+///////// OPERATOR CIRCUITS /////////
+
+// Publishes a new DUST UTXO of the pool. `id` is the initial nonce of the
+// backing NIGHT UTXO and `owner` its address; both are public chain data that
+// the auditor checks against the DustInitialUtxo event.
+export circuit enroll(
+  id: Bytes<32>, night: Uint<64>, owner: UserAddress, epoch: Uint<64>
+): [] {
+  const pId = disclose(id);
+  const pNight = disclose(night);
+  const pOwner = disclose(owner);
+  const pEpoch = disclose(epoch);
+  const note = provenNote();
+  assert(!notes.member(pId), "note already enrolled");
+  assert(pNight >= minNight, "below the minimum NIGHT");
+  assert(inEpoch(pEpoch), "wrong epoch");
+  notes.insert(pId, Note {
+    cm: note[0], nul: note[1], night: pNight, owner: pOwner,
+    joinEpoch: pEpoch, leaveEpoch: 0, retired: false,
+    started: false, claimedAcc: 0, lastFee: 0
+  });
+  if (!joinedAt.member(pEpoch)) { joinedAt.insert(pEpoch, 0); }
+  joinedAt.insert(pEpoch, (joinedAt.lookup(pEpoch) + pNight) as Uint<64>);
+}
+
+// Records one fill. Goes in the operator's fee intent, next to the DustSpend
+// that consumes `notes[id].nul`. It takes the payment the beneficiary left in
+// the transaction and replaces the note with the UTXO that spend creates.
+//   vFee   Specks paid by the DustSpend
+//   units  payment, in units of 1000 Stars of NIGHT
+export circuit settle(
+  id: Bytes<32>, epoch: Uint<64>, vFee: Uint<64>, units: Uint<16>
+): [] {
+  const pId = disclose(id);
+  const pEpoch = disclose(epoch);
+  const pFee = disclose(vFee);
+  const pUnits = disclose(units);
+  const next = provenNote();
+  const note = notes.lookup(pId);
+  assert(!note.retired, "note is retired");
+  assert(inEpoch(pEpoch), "wrong epoch");
+  // Price floor: payment in Stars per Speck must reach starsPerDust per DUST.
+  assert(pUnits * starsPerUnit() * specksPerDust() >= pFee * starsPerDust,
+         "payment below the price floor");
+  revenue.lookup(pEpoch).increment(pUnits);
+  receiveUnshielded(nativeToken(), (pUnits * starsPerUnit()) as Uint<128>);
+  notes.insert(pId, Note {
+    cm: next[0], nul: next[1], night: note.night, owner: note.owner,
+    joinEpoch: note.joinEpoch, leaveEpoch: note.leaveEpoch, retired: false,
+    started: note.started, claimedAcc: note.claimedAcc, lastFee: pFee
+  });
+}
+
+// Marks a note whose backing NIGHT was spent or re-registered elsewhere.
+export circuit retire(id: Bytes<32>, epoch: Uint<64>): [] {
+  const pId = disclose(id);
+  const pEpoch = disclose(epoch);
+  const sk = dustSecretKey();
+  assert(dustPublicKey(sk) == dustKey, "not the pool's DUST key");
+  const note = notes.lookup(pId);
+  assert(!note.retired, "note already retired");
+  assert(inEpoch(pEpoch), "wrong epoch");
+  notes.insert(pId, Note {
+    cm: note.cm, nul: note.nul, night: note.night, owner: note.owner,
+    joinEpoch: note.joinEpoch, leaveEpoch: pEpoch, retired: true,
+    started: note.started, claimedAcc: note.claimedAcc, lastFee: note.lastFee
+  });
+  if (note.joinEpoch == pEpoch) {
+    // Never became active: undo the pending join.
+    joinedAt.insert(pEpoch, (joinedAt.lookup(pEpoch) - note.night) as Uint<64>);
+  } else {
+    if (!leftAt.member(pEpoch)) { leftAt.insert(pEpoch, 0); }
+    leftAt.insert(pEpoch, (leftAt.lookup(pEpoch) + note.night) as Uint<64>);
+  }
+}
+
+///////// PERMISSIONLESS CIRCUITS /////////
+
+// Closes the oldest open epoch once its time has passed and distributes its
+// revenue: the operator's fee to the operator, the rest per Star of NIGHT
+// that was active during the epoch.
+export circuit closeEpoch(): [] {
+  const e = nextClose;
+  const end = epochStart + (e + 1) * epochLength;
+  assert(blockTimeGte(end as Uint<64>), "epoch still open");
+
+  const gross = revenue.lookup(e).read() * starsPerUnit() + carry;
+  const fee = div((gross * operatorFeeBps) as Uint<200>, 10000);
+  const net = (gross - fee) as Uint<64>;
+
+  if (activeNight > 0) {
+    const perStar = div((net * scale()) as Uint<200>, activeNight);
+    acc = (acc + perStar) as Uint<128>;
+    carry = 0;
+    if (fee > 0) {
+      const had = credits.member(operatorPayout) ? credits.lookup(operatorPayout) : 0;
+      credits.insert(operatorPayout, (had + fee) as Uint<64>);
+    }
+  } else {
+    // Nobody to pay: keep the whole amount for the next epoch.
+    carry = gross as Uint<64>;
+  }
+  accAt.insert(e, acc);
+
+  const joinedNow = joinedAt.member(e) ? joinedAt.lookup(e) : 0;
+  const leftNow = leftAt.member(e) ? leftAt.lookup(e) : 0;
+  activeNight = (activeNight + joinedNow - leftNow) as Uint<64>;
+  nextClose = (e + 1) as Uint<64>;
+  // Keep one epoch of revenue buckets open ahead of the current one.
+  revenue.insert((e + 2) as Uint<64>, default<Counter>);
+}
+
+// Moves a note's accrued share into its owner's credit. Anyone may call it.
+export circuit claim(id: Bytes<32>): [] {
+  const pId = disclose(id);
+  const note = notes.lookup(pId);
+  assert(note.joinEpoch < nextClose, "join epoch not closed yet");
+  const base = note.started ? note.claimedAcc : accAt.lookup(note.joinEpoch);
+  // A retired note earns through the epoch it left in, once that epoch is closed.
+  if (note.retired) {
+    assert(note.leaveEpoch < nextClose, "leave epoch not closed yet");
+  }
+  const lastEpoch = note.retired ? note.leaveEpoch : (nextClose - 1) as Uint<64>;
+  const upTo = lastEpoch > note.joinEpoch ? accAt.lookup(lastEpoch) : base;
+  const earned = upTo > base
+    ? div((note.night * (upTo - base)) as Uint<200>, scale())
+    : 0;
+  notes.insert(pId, Note {
+    cm: note.cm, nul: note.nul, night: note.night, owner: note.owner,
+    joinEpoch: note.joinEpoch, leaveEpoch: note.leaveEpoch, retired: note.retired,
+    started: true, claimedAcc: upTo > base ? upTo : base, lastFee: note.lastFee
+  });
+  if (earned > 0) {
+    const had = credits.member(note.owner) ? credits.lookup(note.owner) : 0;
+    credits.insert(note.owner, (had + earned) as Uint<64>);
+  }
+}
+
+// Pays an address its credit. Anyone may call it; the money can only go to
+// the address that earned it, so a delegator's wallet can stay cold.
+export circuit payout(owner: UserAddress): [] {
+  const pOwner = disclose(owner);
+  const amount = credits.lookup(pOwner);
+  assert(amount > 0, "nothing to pay");
+  credits.insert(pOwner, 0);
+  sendUnshielded(nativeToken(), amount as Uint<128>,
+                 right<ContractAddress, UserAddress>(pOwner));
+}
