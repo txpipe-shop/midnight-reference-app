@@ -217,7 +217,10 @@ test('a retired note earns through its leave epoch and no further', async () => 
   await pool.closeEpoch();
   await pool.settle(operator(dustUtxo(1n, 1, startOf(1n))), alice.id, 1n, 1n, 2_000n);
   await pool.retire(operator(), bob.id, 1n);
-  await assert.rejects(pool.settle(operator(dustUtxo(1n, 1, startOf(1n))), bob.id, 1n, 1n, 1n), /note is retired/);
+  await assert.rejects(
+    pool.settle(operator(dustUtxo(1n, 1, startOf(1n))), bob.id, 1n, 1n, 1n),
+    /note is retired/
+  );
   await assert.rejects(pool.claim(bob.id), /leave epoch not closed yet/);
 
   // Epoch 2: 2 NIGHT more, now earned by Alice alone.
@@ -247,7 +250,13 @@ test('a dishonest quotient witness is rejected', async () => {
       ],
     });
     const id = randomBytes(32);
-    await pool.enroll(operator(dustUtxo(0n, 0, EPOCH_START)), id, 100n * STARS_PER_NIGHT, randomBytes(32), 0n);
+    await pool.enroll(
+      operator(dustUtxo(0n, 0, EPOCH_START)),
+      id,
+      100n * STARS_PER_NIGHT,
+      randomBytes(32),
+      0n
+    );
     await pool.settle(operator(dustUtxo(1n, 1, EPOCH_START)), id, 0n, 1n, 2_000n);
     pool.now = startOf(1n);
     await assert.rejects(pool.closeEpoch(), message);

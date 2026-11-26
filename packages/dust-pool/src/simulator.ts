@@ -116,3 +116,6 @@ export class PoolSimulator {
     return this.run('payout', NOBODY, [{ bytes: owner }]);
   }
 }
+
+/** The DUST nullifiers the contract has recorded as settled. */
+export const spentNullifiersOf = (ledger: Ledger): bigint[] => [...ledger.spentNullifiers];

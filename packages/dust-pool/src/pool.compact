@@ -45,6 +45,7 @@ export sealed ledger epochLength: Uint<64>;     // seconds
 ///////// STATE /////////
 
 export ledger notes: Map<Bytes<32>, Note>;      // keyed by the backing NIGHT's initial nonce
+export ledger spentNullifiers: Set<Field>;      // every DUST nullifier a settle consumed
 export ledger revenue: Map<Uint<64>, Counter>;  // per epoch, in units of 1000 Stars
 export ledger joinedAt: Map<Uint<64>, Uint<64>>;  // Stars enrolled during each epoch
 export ledger leftAt: Map<Uint<64>, Uint<64>>;    // Stars retired during each epoch
@@ -199,6 +200,10 @@ export circuit settle(
          "payment below the price floor");
   revenue.lookup(pEpoch).increment(pUnits);
   receiveUnshielded(nativeToken(), (pUnits * starsPerUnit()) as Uint<128>);
+  // Record the nullifier this fill consumed. An auditor compares this set to
+  // the DUST nullifiers the pool key actually spent on chain: any spend not
+  // in this set is pooled DUST the operator diverted.
+  spentNullifiers.insert(note.nul);
   notes.insert(pId, Note {
     cm: next[0], nul: next[1], night: note.night, owner: note.owner,
     joinEpoch: note.joinEpoch, leaveEpoch: note.leaveEpoch, retired: false,
