@@ -1,0 +1,27 @@
+{
+  "name": "@midnight-sentinel/dust-pool",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Passive DUST pool with an auditable operator, for Midnight ledger 9",
+  "scripts": {
+    "clean": "rm -rf dist .turbo src/managed node_modules",
+    "compact": "compact compile +0.36.1 src/pool.compact src/managed/pool",
+    "compact:no-zk": "compact compile +0.36.1 --skip-zk src/pool.compact src/managed/pool",
+    "check": "tsc --project tsconfig.json --noEmit",
+    "test": "pnpm compact:no-zk && tsx --test test/*.test.ts",
+    "devnet:preflight": "tsx devnet/preflight.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "0.21.0",
+    "@midnightntwrk/ledger-v9": "1.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
