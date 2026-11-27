@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { test } from 'node:test';
 import * as L from '@midnightntwrk/ledger-v9';
-import { openingOf, publishedNoteOf, SPECKS_PER_DUST, STARS_PER_NIGHT } from '../src/notes.js';
+import { publishedNoteOf, SPECKS_PER_DUST, STARS_PER_NIGHT } from '../src/notes.js';
 import {
   Chain,
   DustWallet,
